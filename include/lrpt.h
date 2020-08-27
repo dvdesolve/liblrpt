@@ -63,10 +63,6 @@
 
 /*************************************************************************************************/
 
-#define LRPT_M_2PI 6.28318530717958647692
-
-/*************************************************************************************************/
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -84,10 +80,14 @@ typedef enum lrpt_demod_mode__ {
 /*************************************************************************************************/
 
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length);
+LRPT_API bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length);
 LRPT_API void lrpt_iq_data_free(lrpt_iq_data_t *handle);
+LRPT_API bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname);
+LRPT_API bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname);
+
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length);
-LRPT_API bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length);
 LRPT_API void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle);
+LRPT_API bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length);
 
 /* TODO check integer types */
 LRPT_API bool lrpt_demodulator_exec(

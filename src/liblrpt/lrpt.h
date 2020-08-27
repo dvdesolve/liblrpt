@@ -27,6 +27,16 @@
 
 /*************************************************************************************************/
 
+#define LRPT_M_2PI 6.28318530717958647692
+
+/*************************************************************************************************/
+
+/* Storage for raw I/Q pair */
+typedef struct lrpt_iq_raw__ {
+    double i;
+    double q;
+} lrpt_iq_raw_t;
+
 /* Storage type for raw I/Q data */
 struct lrpt_iq_data__ {
     /* I and Q samples storage */

@@ -20,6 +20,7 @@
 #include "demod.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/dsp.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -36,5 +37,15 @@ bool lrpt_demodulator_exec(
         const double pll_thresh,
         const lrpt_demod_mode_t mode,
         const uint32_t symbol_rate) {
+    lrpt_dsp_filter_data_t *filter = lrpt_dsp_filter_init(input, 115000, ((double)1024000 / (double)2), 5.0, 6, LRPT_DSP_FILTER_TYPE_LOWPASS);
+
+    if (!filter)
+        return false;
+
+    if (!lrpt_dsp_filter_apply(filter))
+        return false;
+
+    lrpt_dsp_filter_deinit(filter);
+
     return true;
 }

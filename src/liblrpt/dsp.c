@@ -27,10 +27,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*************************************************************************************************/
 
-/* Initialize recursive Chebyshev filter */
+/* lrpt_dsp_filter_init()
+ *
+ * Initializes recursive Chebyshev filter.
+ */
 lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
         lrpt_iq_data_t * const iq_data,
         const uint32_t bandwidth,
@@ -200,9 +204,12 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
 
 /*************************************************************************************************/
 
-/* Apply recursive Chebyshev filter (used as low pass) */
+/* lrpt_dsp_filter_apply()
+ *
+ * Applies recursive Chebyshev filter to raw IQ data (currently used as low pass).
+ */
 bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
-    /* Return immediately if handle is incorrect */
+    /* Return immediately if handle is empty */
     if (!handle)
         return false;
 
@@ -210,8 +217,14 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
     const uint8_t npp1 = handle->npoles + 1;
     const size_t len = handle->iq_data->len;
 
-    for (size_t i = 0; i < 2; i++) {
-        double * const samples_buf = buffs[i];
+    for (size_t k = 0; k < 2; k++) {
+        /* Zero x and y arrays when we move to another samples */
+        if (k == 1) {
+            memset(handle->x, 0, sizeof(double) * npp1);
+            memset(handle->y, 0, sizeof(double) * npp1);
+        }
+
+        double * const samples_buf = buffs[k];
 
         /* Filter samples in the buffer */
         for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
@@ -253,6 +266,10 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
 
 /*************************************************************************************************/
 
+/* lrpt_dsp_filter_deinit()
+ *
+ * Frees allocated Chebyshev filter structure.
+ */
 void lrpt_dsp_filter_deinit(lrpt_dsp_filter_data_t *handle) {
     if (!handle)
         return;
