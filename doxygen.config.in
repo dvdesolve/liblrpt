@@ -1,0 +1,30 @@
+# TODO use CMake configure_file() capabilities
+PROJECT_NAME            = "@PROJECT_NAME@"
+# TODO use CMake configure_file() capabilities
+PROJECT_NUMBER          = @PROJECT_VERSION@
+PROJECT_BRIEF           = "@PROJECT_DESCRIPTION@"
+NUM_PROC_THREADS        = 0
+QUIET                   = YES
+
+OUTPUT_DIRECTORY        = @CMAKE_CURRENT_BINARY_DIR@/share/doc
+INPUT                   = @CMAKE_CURRENT_SOURCE_DIR@/README.md @CMAKE_CURRENT_SOURCE_DIR@/include/lrpt.h
+
+USE_MDFILE_AS_MAINPAGE  = README.md
+BRIEF_MEMBER_DESC       = YES
+REPEAT_BRIEF            = YES
+ALWAYS_DETAILED_SEC     = YES
+JAVADOC_AUTOBRIEF       = YES
+VERBATIM_HEADERS        = NO
+OPTIMIZE_OUTPUT_FOR_C   = YES
+
+HIDE_UNDOC_MEMBERS      = YES
+SHOW_INCLUDE_FILES      = YES
+GENERATE_TODOLIST       = YES
+MAX_INITIALIZER_LINES   = 0
+WARN_NO_PARAMDOC        = YES
+
+HTML_TIMESTAMP          = YES
+
+GENERATE_LATEX          = NO
+
+GENERATE_MAN            = YES

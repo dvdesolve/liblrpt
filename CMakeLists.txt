@@ -22,9 +22,9 @@ project(liblrpt VERSION 0.1.0 LANGUAGES C DESCRIPTION "Demodulate, decode and po
 include(GNUInstallDirs)
 
 # default build type
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
-endif()
+endif ()
 
 # prevent agressive and unsafe optimizations
 # (by default CMake uses -O3 level)
@@ -34,3 +34,29 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 
 # build project
 add_subdirectory(src)
+
+
+# optionally build documentation
+option(BUILD_DOC "Build API documentation" ON)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
+    find_package(Doxygen)
+
+    if (DOXYGEN_FOUND)
+        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/share/doc)
+
+        configure_file(doxygen.config.in doxygen.config @ONLY)
+
+        add_custom_target(doc ALL
+            COMMAND Doxygen::doxygen doxygen.config
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generate API documentation with Doxygen"
+            VERBATIM)
+
+        # actually install documentation
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/share/doc/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR})
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/share/doc/man/ DESTINATION ${CMAKE_INSTALL_MANDIR})
+    else (DOXYGEN_FOUND)
+        message(WARNING "Doxygen need to be installed to generate documentation")
+    endif (DOXYGEN_FOUND)
+endif ()

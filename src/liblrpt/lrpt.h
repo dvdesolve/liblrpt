@@ -31,28 +31,22 @@
 
 /*************************************************************************************************/
 
-/* Storage for raw I/Q pair */
+/* Storage for single raw I/Q pair */
 typedef struct lrpt_iq_raw__ {
-    double i;
-    double q;
+    double i; /* I sample value */
+    double q; /* Q sample value */
 } lrpt_iq_raw_t;
 
 /* Storage type for raw I/Q data */
 struct lrpt_iq_data__ {
-    /* I and Q samples storage */
-    lrpt_iq_raw_t *iq;
-
-    /* Total number of I/Q samples pairs */
-    size_t len;
+    lrpt_iq_raw_t *iq; /* Array of I/Q pairs */
+    size_t len; /* Total number of I/Q pairs */
 };
 
 /* Storage type for QPSK soft symbols data */
 struct lrpt_qpsk_data__ {
-    /* QPSK soft symbols storage */
-    int8_t *s;
-
-    /* Total number of QPSK soft symbols */
-    size_t len;
+    int8_t *s; /* Array of QPSK soft symbols */
+    size_t len; /* Total number of QPSK soft symbols */
 };
 
 /*************************************************************************************************/

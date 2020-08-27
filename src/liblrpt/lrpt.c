@@ -30,7 +30,7 @@
 /*************************************************************************************************/
 
 /* Number of I/Q samples pairs written to file per once */
-const size_t LRPT_IQ_DATA_WRITE_N = 1024;
+static const size_t LRPT_IQ_DATA_WRITE_N = 1024;
 
 /*************************************************************************************************/
 
@@ -117,6 +117,8 @@ bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
  *
  * Loads I/Q data from file of internal library format.
  * Storage will be resized to fit acquired data.
+ *
+ * TODO stabilize internal format!
  */
 bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
     if (!handle)
@@ -158,6 +160,8 @@ bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
 /* lrpt_iq_data_save_to_file()
  *
  * Saves raw I/Q data to file using internal library format.
+ *
+ * TODO stabilize internal format!
  */
 bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
     if (!handle || (handle->len == 0) || !handle->iq)
