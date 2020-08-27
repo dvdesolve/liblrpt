@@ -49,22 +49,17 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length) {
     handle->len = length;
 
     if (length > 0) {
-        handle->i = (double *)calloc(length, sizeof(double));
-        handle->q = (double *)calloc(length, sizeof(double));
+        handle->iq = (lrpt_iq_raw_t *)calloc(length, sizeof(lrpt_iq_raw_t));
 
         /* Return <NULL> only if allocation attempt has failed */
-        if (!handle->i || !handle->q) {
-            free(handle->i);
-            free(handle->q);
+        if (!handle->iq) {
             free(handle);
 
             return NULL;
         }
     }
-    else {
-        handle->i = NULL;
-        handle->q = NULL;
-    }
+    else
+        handle->iq = NULL;
 
     return handle;
 }
@@ -79,8 +74,7 @@ void lrpt_iq_data_free(lrpt_iq_data_t *handle) {
     if (!handle)
         return;
 
-    free(handle->i);
-    free(handle->q);
+    free(handle->iq);
     free(handle);
 }
 
@@ -93,28 +87,25 @@ void lrpt_iq_data_free(lrpt_iq_data_t *handle) {
  */
 bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
     /* We accept only valid handles or simple empty handles */
-    if (!handle || ((handle->len > 0) && (!handle->i || !handle->q)))
+    if (!handle || ((handle->len > 0) && !handle->iq))
         return false;
 
     /* In case of zero length create empty handle */
     if (new_length == 0) {
-        free(handle->i);
-        free(handle->q);
+        free(handle->iq);
 
         handle->len = 0;
-        handle->i = NULL;
-        handle->q = NULL;
+        handle->iq = NULL;
     }
     else {
-        double * const new_i = (double *)reallocarray(handle->i, new_length, sizeof(double));
-        double * const new_q = (double *)reallocarray(handle->q, new_length, sizeof(double));
+        lrpt_iq_raw_t * const new_iq =
+            (lrpt_iq_raw_t *)reallocarray(handle->iq, new_length, sizeof(lrpt_iq_raw_t));
 
-        if (!new_i || !new_q)
+        if (!new_iq)
             return false;
         else {
             handle->len = new_length;
-            handle->i = new_i;
-            handle->q = new_q;
+            handle->iq = new_iq;
         }
     }
 
@@ -141,40 +132,23 @@ bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
     const size_t n = (size_t)(ftell(fh) / sizeof(lrpt_iq_raw_t));
     fseek(fh, 0, SEEK_SET);
 
-    /* Read entire file into memory */
-    /* TODO usable only for reasonably small files! Better approach is to read raw I/Q samples
-     * by chunks in user code! */
-    lrpt_iq_raw_t *iq = (lrpt_iq_raw_t *)calloc(n, sizeof(lrpt_iq_raw_t));
-
-    if (!iq) {
+    /* Resize storage */
+    if (!lrpt_iq_data_resize(handle, n)) {
         fclose(fh);
 
         return false;
     }
 
-    if (fread(iq, sizeof(lrpt_iq_raw_t), n, fh) != n) {
-        free(iq);
+    /* Read entire file */
+    /* TODO usable only for reasonably small files! Better approach is to read raw I/Q samples
+     * by chunks in user code! */
+    if (fread(handle->iq, sizeof(lrpt_iq_raw_t), n, fh) != n) {
         fclose(fh);
 
         return false;
     }
 
     fclose(fh);
-
-    /* Resize final storage */
-    if (!lrpt_iq_data_resize(handle, n)) {
-        free(iq);
-
-        return false;
-    }
-
-    /* Transfer I/Q samples to storage */
-    for (size_t k = 0; k < n; k++) {
-        handle->i[k] = iq[k].i;
-        handle->q[k] = iq[k].q;
-    }
-
-    free(iq);
 
     return true;
 }
@@ -186,7 +160,7 @@ bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
  * Saves raw I/Q data to file using internal library format.
  */
 bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
-    if (!handle || (handle->len == 0) || !handle->i || !handle->q)
+    if (!handle || (handle->len == 0) || !handle->iq)
         return false;
 
     FILE *fh = fopen(fname, "w");
@@ -196,15 +170,8 @@ bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
 
     const size_t l = handle->len;
 
-    /* Allocate intermediate buffer for chunked write and determine necessary number of writes */
+    /* Determine necessary number of writes */
     const size_t nwrites = l / LRPT_IQ_DATA_WRITE_N;
-    lrpt_iq_raw_t *iq = (lrpt_iq_raw_t *)calloc(LRPT_IQ_DATA_WRITE_N, sizeof(lrpt_iq_raw_t));
-
-    if (!iq) {
-        fclose(fh);
-
-        return false;
-    }
 
     for (size_t k = 0; k <= nwrites; k++) {
         /* Number of I/Q samples to write in that round */
@@ -218,22 +185,15 @@ bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
         if (towrite == 0)
             break;
 
-        /* Get exactly <towrite> samples from I/Q storage */
-        for (size_t kk = 0; kk < towrite; kk++) {
-            iq[kk].i = handle->i[k * LRPT_IQ_DATA_WRITE_N + kk];
-            iq[kk].q = handle->q[k * LRPT_IQ_DATA_WRITE_N + kk];
-        }
-
         /* Write them to file; cleanup in case of error */
-        if (fwrite(iq, sizeof(lrpt_iq_raw_t), towrite, fh) != towrite) {
-            free(iq);
+        if (fwrite(handle->iq + k * LRPT_IQ_DATA_WRITE_N,
+                    sizeof(lrpt_iq_raw_t), towrite, fh) != towrite) {
             fclose(fh);
 
             return false;
         }
     }
 
-    free(iq);
     fclose(fh);
 
     return true;

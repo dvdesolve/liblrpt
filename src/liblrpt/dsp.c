@@ -213,23 +213,29 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
     if (!handle)
         return false;
 
-    double * const buffs[2] = { handle->iq_data->i, handle->iq_data->q };
     const uint8_t npp1 = handle->npoles + 1;
     const size_t len = handle->iq_data->len;
+    lrpt_iq_raw_t * const samples = handle->iq_data->iq;
 
+    /* I samples first, then Q */
     for (size_t k = 0; k < 2; k++) {
-        /* Zero x and y arrays when we move to another samples */
+        /* Zero x and y arrays when we move from I to Q samples */
         if (k == 1) {
             memset(handle->x, 0, sizeof(double) * npp1);
             memset(handle->y, 0, sizeof(double) * npp1);
         }
 
-        double * const samples_buf = buffs[k];
-
         /* Filter samples in the buffer */
         for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
+            double *sample;
+
+            if (k == 0)
+                sample = &(samples[buf_idx].i);
+            else
+                sample = &(samples[buf_idx].q);
+
             /* Calculate and save filtered samples */
-            double yn0 = samples_buf[buf_idx] * handle->a[0];
+            double yn0 = *sample * handle->a[0];
 
             for (uint8_t idx = 1; idx < npp1; idx++) {
                 /* Summate contribution of past input samples */
@@ -254,10 +260,10 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
             handle->y[handle->ring_idx] = yn0;
 
             /* Save current input sample to x ring buffer */
-            handle->x[handle->ring_idx] = samples_buf[buf_idx];
+            handle->x[handle->ring_idx] = *sample;
 
             /* Return filtered samples */
-            samples_buf[buf_idx] = yn0;
+            *sample = yn0;
         }
     }
 

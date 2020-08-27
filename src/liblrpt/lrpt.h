@@ -40,8 +40,7 @@ typedef struct lrpt_iq_raw__ {
 /* Storage type for raw I/Q data */
 struct lrpt_iq_data__ {
     /* I and Q samples storage */
-    double *i;
-    double *q;
+    lrpt_iq_raw_t *iq;
 
     /* Total number of I/Q samples pairs */
     size_t len;
