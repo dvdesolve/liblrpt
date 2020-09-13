@@ -13,6 +13,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
+ *
+ * NOTE: source code of this module is based on xdemorse application and adapted for liblrpt
+ * internal use!
  */
 
 /*************************************************************************************************/
@@ -34,6 +37,7 @@
 /* lrpt_dsp_filter_init()
  *
  * Initializes recursive Chebyshev filter.
+ * If allocation was unsuccessfull <NULL> is returned.
  */
 lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
         lrpt_iq_data_t * const iq_data,
@@ -56,6 +60,13 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
     /* Initialize filter parameters */
     handle->cutoff = (double)(bandwidth / 2) / sample_rate;
     handle->ripple = ripple;
+
+    /* Number of poles should be even and not greater than 252 to fit in uint8_t type */
+    if ((num_poles > 252) || ((num_poles % 2) == 1)) {
+        free(handle);
+        return NULL;
+    }
+
     handle->npoles = num_poles;
     handle->type = type;
     handle->ring_idx = 0;
@@ -207,24 +218,24 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
 /* lrpt_dsp_filter_apply()
  *
  * Applies recursive Chebyshev filter to raw IQ data (currently used as low pass).
+ * If empty <handle> is given <false> will be returned.
  */
 bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
     /* Return immediately if handle is empty */
     if (!handle)
         return false;
 
+    /* For convenient access purposes */
     const uint8_t npp1 = handle->npoles + 1;
     const size_t len = handle->iq_data->len;
     lrpt_iq_raw_t * const samples = handle->iq_data->iq;
 
+    /* Explicitly zero x and y arrays every filter run */
+    memset(handle->x, 0, sizeof(double) * npp1);
+    memset(handle->y, 0, sizeof(double) * npp1);
+
     /* I samples first, then Q */
     for (size_t k = 0; k < 2; k++) {
-        /* Zero x and y arrays when we move from I to Q samples */
-        if (k == 1) {
-            memset(handle->x, 0, sizeof(double) * npp1);
-            memset(handle->y, 0, sizeof(double) * npp1);
-        }
-
         /* Filter samples in the buffer */
         for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
             double *sample;

@@ -44,7 +44,7 @@ typedef struct lrpt_dsp_filter_data__ {
     /* Passband ripple as a percentage */
     double ripple;
 
-    /* Number of poles, must be even */
+    /* Number of poles, must be even. Max value is limited to the 252 */
     uint8_t npoles;
 
     /* Filter type */
@@ -57,7 +57,7 @@ typedef struct lrpt_dsp_filter_data__ {
     double *x, *y;
 
     /* Ring buffer index */
-    uint32_t ring_idx;
+    uint8_t ring_idx;
 
     /* I/Q samples data */
     lrpt_iq_data_t *iq_data;

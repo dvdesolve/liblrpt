@@ -83,14 +83,14 @@ void lrpt_iq_data_free(lrpt_iq_data_t *handle) {
 /* lrpt_iq_data_resize()
  *
  * Resizes storage of I/Q data. Requires properly initialized storage passed with <handle>.
- * If <new_length> is zero then storage will be empty.
+ * If <new_length> is zero then storage will be empty but valid.
  */
 bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
     /* We accept only valid handles or simple empty handles */
     if (!handle || ((handle->len > 0) && !handle->iq))
         return false;
 
-    /* In case of zero length create empty handle */
+    /* In case of zero length create empty but valid handle */
     if (new_length == 0) {
         free(handle->iq);
 
@@ -115,10 +115,10 @@ bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
 
 /* lrpt_iq_data_load_from_file()
  *
- * Loads I/Q data from file of internal library format.
- * Storage will be resized to fit acquired data.
+ * Loads I/Q data from file of internal library format. Storage will be resized to fit
+ * acquired data.
  *
- * TODO stabilize internal format!
+ * TODO should stabilize internal library format
  */
 bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
     if (!handle)
@@ -141,9 +141,7 @@ bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
         return false;
     }
 
-    /* Read entire file */
-    /* TODO usable only for reasonably small files! Better approach is to read raw I/Q samples
-     * by chunks in user code! */
+    /* Read entire file in memory */
     if (fread(handle->iq, sizeof(lrpt_iq_raw_t), n, fh) != n) {
         fclose(fh);
 
@@ -161,7 +159,7 @@ bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
  *
  * Saves raw I/Q data to file using internal library format.
  *
- * TODO stabilize internal format!
+ * TODO should stabilize internal library format
  */
 bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
     if (!handle || (handle->len == 0) || !handle->iq)
@@ -254,7 +252,7 @@ void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle) {
 /* lrpt_qpsk_data_resize()
  *
  * Resizes storage of QPSK soft symbols data. Requires properly initialized storage passed with
- * <handle>. If <new_length> is zero then storage will be empty.
+ * <handle>. If <new_length> is zero then storage will be empty but valid.
  */
 bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length) {
     /* We accept only valid handles or simple empty handles */

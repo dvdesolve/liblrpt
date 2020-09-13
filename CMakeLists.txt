@@ -43,7 +43,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
     find_package(Doxygen)
 
     if (DOXYGEN_FOUND)
-        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/share/doc)
+        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc)
 
         configure_file(doxygen.config.in doxygen.config @ONLY)
 
@@ -54,8 +54,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
             VERBATIM)
 
         # actually install documentation
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/share/doc/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR})
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/share/doc/man/ DESTINATION ${CMAKE_INSTALL_MANDIR})
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR})
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/man/ DESTINATION ${CMAKE_INSTALL_MANDIR})
     else (DOXYGEN_FOUND)
         message(WARNING "Doxygen need to be installed to generate documentation")
     endif (DOXYGEN_FOUND)

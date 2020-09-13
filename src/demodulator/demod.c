@@ -21,12 +21,20 @@
 
 #include "../../include/lrpt.h"
 #include "../liblrpt/dsp.h"
+#include "../liblrpt/lrpt.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
+/* lrpt_demodulator_exec()
+ *
+ * Demodulates given <input> I/Q samples and stores QPSK soft-symbol samples in <output>.
+ * Requires parameters for RRC filter (order and alpha factor), PLL (bandwidth and threshold),
+ * interpolation factor, symbol rate and QPSK mode.
+ * <output> will be resized automatically to fit necessary chunk of QPSK soft symbols.
+ */
 bool lrpt_demodulator_exec(
         lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output,
@@ -37,14 +45,39 @@ bool lrpt_demodulator_exec(
         const double pll_thresh,
         const lrpt_demod_mode_t mode,
         const uint32_t symbol_rate) {
-    lrpt_dsp_filter_data_t *filter = lrpt_dsp_filter_init(input, 115000, ((double)1024000 / (double)2), 5.0, 6, LRPT_DSP_FILTER_TYPE_LOWPASS);
+    /* Library defaults */
+    static const double DSP_FILTER_RIPPLE = 5.0;
+    static const uint8_t DSP_FILTER_NUMPOLES = 6;
+
+    /* Return immediately if no valid input or output were given */
+    if (!input || !output)
+        return false;
+
+    /* Resize output data structure if it is more than twice shorter than input I/Q data */
+    if (output->len < (2 * input->len))
+        if (!lrpt_qpsk_data_resize(output, 2 * input->len))
+            return false;
+
+    /* Prepare DSP filter */
+    lrpt_dsp_filter_data_t *filter = lrpt_dsp_filter_init(
+            input, /* I/Q storage */
+            115000, /* Bandwidth of LRPT signal according to the config file */
+            ((double)1024000 / (double)2), /* Sample rate (RTLSDR uses 1024000 samples/sec and
+                                              decimation of 2
+                                            */
+            DSP_FILTER_RIPPLE,
+            DSP_FILTER_NUMPOLES,
+            LRPT_DSP_FILTER_TYPE_LOWPASS
+            );
 
     if (!filter)
         return false;
 
+    /* Try to apply our filter */
     if (!lrpt_dsp_filter_apply(filter))
         return false;
 
+    /* Cleanup */
     lrpt_dsp_filter_deinit(filter);
 
     return true;

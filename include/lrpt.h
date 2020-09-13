@@ -84,9 +84,9 @@ typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
 /** Available PSK demodulator modes */
 typedef enum lrpt_demod_mode__ {
-    LRPT_DEMOD_MODE_QPSK,   /**< Plain QPSK mode */
-    LRPT_DEMOD_MODE_DOQPSK, /**< Differential offset QPSK mode */
-    LRPT_DEMOD_MODE_IDOQPSK /**< Interleaved differential offset QPSK mode */
+    LRPT_DEMOD_MODE_QPSK,   /**< Plain QPSK */
+    LRPT_DEMOD_MODE_DOQPSK, /**< Differential offset QPSK */
+    LRPT_DEMOD_MODE_IDOQPSK /**< Interleaved differential offset QPSK */
 } lrpt_demod_mode_t;
 
 /*************************************************************************************************/
@@ -96,9 +96,9 @@ typedef enum lrpt_demod_mode__ {
  * Tries to allocate storage for raw I/Q data of requested \p length.
  *
  * \param[in] length Desired length for new I/Q data storage. If zero length is requested,
- * empty storage will be allocated but user can resize it with #lrpt_iq_data_resize().
+ * empty storage will be allocated but user can resize it later with #lrpt_iq_data_resize().
  *
- * \return Returns a pointer to newly allocated storage object and NULL if allocation has failed.
+ * \return Pointer to allocated storage object or NULL if allocation has failed.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length);
 
@@ -115,7 +115,7 @@ LRPT_API void lrpt_iq_data_free(lrpt_iq_data_t *handle);
  * \param[in,out] handle Pointer to the I/Q data storage object.
  * \param[in] new_length New length \p handle will be resized to.
  *
- * \return Returns true on successfull resize and false otherwise (original storage will not be
+ * \return true on successfull resize and false otherwise (original storage will not be
  * touched in that case).
  */
 LRPT_API bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length);
@@ -123,16 +123,20 @@ LRPT_API bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_lengt
 /* TODO describe internal format */
 /** Loads I/Q data from file.
  *
- * Reads raw I/Q data from file with name \p fname and saves it into I/Q storage referebced by
+ * Reads raw I/Q data from file with name \p fname and saves it into I/Q storage referenced by
  * \p handle. Storage will be auto-resized to proper length.
  *
  * \param[in,out] handle Pointer to the I/Q data storage object.
  * \param[in] fname Name of file with raw I/Q data.
  *
- * \return Returns true on successfull reading and false otherwise.
+ * \return true on successfull reading and false otherwise.
  *
  * \note File with I/Q data is expected to be compatible with internal library format, e. g.
- * created with #lrpt_iq_data_save_to_file()!
+ * created with #lrpt_iq_data_save_to_file().
+ *
+ * \warning Current implementation reads the whole file into memory at once. This can lead to
+ * potential problems with large files. Please consider this function as convenient routine for
+ * testing purposes with reasonably small files!
  */
 LRPT_API bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname);
 
@@ -144,9 +148,9 @@ LRPT_API bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fn
  * \param[in] handle Pointer to the I/Q data storage object.
  * \param[in] fname Name of file to save raw I/Q data to.
  *
- * \return Returns true on successfull reading and false otherwise.
+ * \return true on successfull reading and false otherwise.
  *
- * \note Resulting file maintains internal library format and can be read with
+ * \note Resulting file maintains internal library format and can be read back again with
  * #lrpt_iq_data_load_from_file().
  */
 LRPT_API bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname);
@@ -156,10 +160,10 @@ LRPT_API bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fnam
  * Tries to allocate storage for QPSK soft symbol data of requested \p length.
  *
  * \param[in] length Desired length for new QPSK soft symbol data storage. If zero length
- * is requested, empty storage will be allocated but user can resize it with
+ * is requested, empty storage will be allocated but user can resize it manually later with
  * #lrpt_qpsk_data_resize().
  *
- * \return Returns a pointer to newly allocated storage object and NULL if allocation has failed.
+ * \return Pointer to newly allocated storage object or NULL if allocation has failed.
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length);
 
@@ -176,7 +180,7 @@ LRPT_API void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle);
  * \param[in,out] handle Pointer to the QPSK soft symbol data storage object.
  * \param[in] new_length New length \p handle will be resized to.
  *
- * \return Returns true on successfull resize and false otherwise (original storage will not be
+ * \return true on successfull resize and false otherwise (original storage will not be
  * touched in that case).
  */
 LRPT_API bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length);
