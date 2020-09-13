@@ -39,7 +39,7 @@
  * Initializes recursive Chebyshev filter.
  * If allocation was unsuccessfull <NULL> is returned.
  */
-lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
+lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         lrpt_iq_data_t * const iq_data,
         const uint32_t bandwidth,
         const double sample_rate,
@@ -50,9 +50,9 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
     if (!iq_data)
         return NULL;
 
-    /* Try to allocate our handler */
-    lrpt_dsp_filter_data_t *handle =
-        (lrpt_dsp_filter_data_t *)malloc(sizeof(lrpt_dsp_filter_data_t));
+    /* Try to allocate our handle */
+    lrpt_dsp_filter_t *handle =
+        (lrpt_dsp_filter_t *)malloc(sizeof(lrpt_dsp_filter_t));
 
     if (!handle)
         return NULL;
@@ -64,6 +64,7 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
     /* Number of poles should be even and not greater than 252 to fit in uint8_t type */
     if ((num_poles > 252) || ((num_poles % 2) == 1)) {
         free(handle);
+
         return NULL;
     }
 
@@ -88,13 +89,9 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
 
     /* Check for allocation problems */
     if (!ta || !tb || !handle->a || !handle->b || !handle->x || !handle->y) {
+        lrpt_dsp_filter_deinit(handle);
         free(ta);
         free(tb);
-        free(handle->a);
-        free(handle->b);
-        free(handle->x);
-        free(handle->y);
-        free(handle);
 
         return NULL;
     }
@@ -215,12 +212,29 @@ lrpt_dsp_filter_data_t *lrpt_dsp_filter_init(
 
 /*************************************************************************************************/
 
+/* lrpt_dsp_filter_deinit()
+ *
+ * Frees allocated Chebyshev filter object.
+ */
+void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle) {
+    if (!handle)
+        return;
+
+    free(handle->a);
+    free(handle->b);
+    free(handle->x);
+    free(handle->y);
+    free(handle);
+}
+
+/*************************************************************************************************/
+
 /* lrpt_dsp_filter_apply()
  *
  * Applies recursive Chebyshev filter to raw IQ data (currently used as low pass).
  * If empty <handle> is given <false> will be returned.
  */
-bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
+bool lrpt_dsp_filter_apply(lrpt_dsp_filter_t *handle) {
     /* Return immediately if handle is empty */
     if (!handle)
         return false;
@@ -279,21 +293,4 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_data_t *handle) {
     }
 
     return true;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_dsp_filter_deinit()
- *
- * Frees allocated Chebyshev filter structure.
- */
-void lrpt_dsp_filter_deinit(lrpt_dsp_filter_data_t *handle) {
-    if (!handle)
-        return;
-
-    free(handle->a);
-    free(handle->b);
-    free(handle->x);
-    free(handle->y);
-    free(handle);
 }

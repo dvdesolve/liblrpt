@@ -17,30 +17,35 @@
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DEMODULATOR_DEMOD_H
-#define LRPT_DEMODULATOR_DEMOD_H
+#ifndef LRPT_DEMODULATOR_RRC_H
+#define LRPT_DEMODULATOR_RRC_H
 
 /*************************************************************************************************/
 
-#include "agc.h"
-#include "pll.h"
-#include "rrc.h"
-
+#include <complex.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
-/* Demodulator object */
-struct lrpt_demodulator__ {
-    lrpt_demodulator_agc_t *agc; /* AGC object */
-    lrpt_demodulator_pll_t *pll; /* PLL object */
-    lrpt_demodulator_rrc_filter_t *rrc; /* RRC filter object */
-    uint32_t sym_rate; /* Symbol rate */
-    double sym_period; /* Symbol period */
-    uint8_t interp_factor; /* Interpolation factor */
-    uint8_t *lut_isqrt; /* Integer sqrt() lookup table */
-    bool (*demod_func)(complex double, int8_t *); /* Demodulator function */
-};
+/* RRC filter object */
+typedef struct lrpt_demodulator_rrc_filter__ {
+    complex double *memory; /* Filter memory */
+    int16_t idm; /* Index for memory ring buffer */
+    double *coeffs; /* Filter coefficients */
+    uint16_t count; /* Number of filter coefficients */
+} lrpt_demodulator_rrc_filter_t;
+
+/*************************************************************************************************/
+
+lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
+        const uint16_t order,
+        const uint8_t factor,
+        const double osf,
+        const double alpha);
+void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle);
+complex double lrpt_demodulator_rrc_filter_apply(
+        lrpt_demodulator_rrc_filter_t * const handle,
+        const complex double value);
 
 /*************************************************************************************************/
 

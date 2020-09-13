@@ -17,31 +17,39 @@
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DEMODULATOR_DEMOD_H
-#define LRPT_DEMODULATOR_DEMOD_H
-
-/*************************************************************************************************/
-
 #include "agc.h"
-#include "pll.h"
-#include "rrc.h"
 
-#include <stdint.h>
-
-/*************************************************************************************************/
-
-/* Demodulator object */
-struct lrpt_demodulator__ {
-    lrpt_demodulator_agc_t *agc; /* AGC object */
-    lrpt_demodulator_pll_t *pll; /* PLL object */
-    lrpt_demodulator_rrc_filter_t *rrc; /* RRC filter object */
-    uint32_t sym_rate; /* Symbol rate */
-    double sym_period; /* Symbol period */
-    uint8_t interp_factor; /* Interpolation factor */
-    uint8_t *lut_isqrt; /* Integer sqrt() lookup table */
-    bool (*demod_func)(complex double, int8_t *); /* Demodulator function */
-};
+#include <stddef.h>
+#include <stdlib.h>
 
 /*************************************************************************************************/
 
-#endif
+/* lrpt_demodulator_agc_init()
+ *
+ * Allocates and initializes AGC object with target gain value of <target>.
+ */
+lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target) {
+    /* Try to allocate our handle */
+    lrpt_demodulator_agc_t *handle =
+        (lrpt_demodulator_agc_t *)malloc(sizeof(lrpt_demodulator_agc_t));
+
+    if (!handle)
+        return NULL;
+
+    handle->target = target;
+    handle->average = target;
+    handle->gain = 1.0;
+    handle->bias = 0.0;
+
+    return handle;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_agc_deinit()
+ *
+ * Frees previously allocated AGC object
+ */
+void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle) {
+    free(handle);
+}

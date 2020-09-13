@@ -17,63 +17,34 @@
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_DSP_H
-#define LRPT_LIBLRPT_DSP_H
+#ifndef LRPT_DEMODULATOR_PLL_H
+#define LRPT_DEMODULATOR_PLL_H
 
 /*************************************************************************************************/
 
 #include "../../include/lrpt.h"
 
 #include <stdbool.h>
-#include <stdint.h>
 
 /*************************************************************************************************/
 
-/* DSP filter types */
-typedef enum lrpt_dsp_filter_type__ {
-    LRPT_DSP_FILTER_TYPE_LOWPASS,
-    LRPT_DSP_FILTER_TYPE_HIGHPASS,
-    LRPT_DSP_FILTER_TYPE_BANDPASS
-} lrpt_dsp_filter_type_t;
-
-/* DSP filter object */
-typedef struct lrpt_dsp_filter__ {
-    /* Cutoff frequency as a fraction of sample rate */
-    double cutoff;
-
-    /* Passband ripple as a percentage */
-    double ripple;
-
-    /* Number of poles, must be even. Max value is limited to the 252 */
-    uint8_t npoles;
-
-    /* Filter type */
-    lrpt_dsp_filter_type_t type;
-
-    /* a and b coefficients of the filter */
-    double *a, *b;
-
-    /* Saved input and output values */
-    double *x, *y;
-
-    /* Ring buffer index */
-    uint8_t ring_idx;
-
-    /* I/Q samples data */
-    lrpt_iq_data_t *iq_data;
-} lrpt_dsp_filter_t;
+/* PLL object */
+typedef struct lrpt_demodulator_pll__ {
+    double nco_phase, nco_freq;
+    double alpha, beta;
+    double damping, bw;
+    double moving_average;
+    double err_scale;
+    bool locked;
+    double lut_tanh[256];
+} lrpt_demodulator_pll_t;
 
 /*************************************************************************************************/
 
-lrpt_dsp_filter_t *lrpt_dsp_filter_init(
-        lrpt_iq_data_t * const iq_data,
-        const uint32_t bandwidth,
-        const double sample_rate,
-        const double ripple,
-        const uint8_t num_poles,
-        const lrpt_dsp_filter_type_t type);
-void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle);
-bool lrpt_dsp_filter_apply(lrpt_dsp_filter_t *handle);
+lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
+        const double bandwidth,
+        const lrpt_demodulator_mode_t mode);
+void lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *handle);
 
 /*************************************************************************************************/
 

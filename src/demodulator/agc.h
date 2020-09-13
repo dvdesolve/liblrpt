@@ -17,30 +17,27 @@
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DEMODULATOR_DEMOD_H
-#define LRPT_DEMODULATOR_DEMOD_H
+#ifndef LRPT_DEMODULATOR_AGC_H
+#define LRPT_DEMODULATOR_AGC_H
 
 /*************************************************************************************************/
 
-#include "agc.h"
-#include "pll.h"
-#include "rrc.h"
-
-#include <stdint.h>
+#include <complex.h>
 
 /*************************************************************************************************/
 
-/* Demodulator object */
-struct lrpt_demodulator__ {
-    lrpt_demodulator_agc_t *agc; /* AGC object */
-    lrpt_demodulator_pll_t *pll; /* PLL object */
-    lrpt_demodulator_rrc_filter_t *rrc; /* RRC filter object */
-    uint32_t sym_rate; /* Symbol rate */
-    double sym_period; /* Symbol period */
-    uint8_t interp_factor; /* Interpolation factor */
-    uint8_t *lut_isqrt; /* Integer sqrt() lookup table */
-    bool (*demod_func)(complex double, int8_t *); /* Demodulator function */
-};
+/* AGC object */
+typedef struct lrpt_demodulator_agc__ {
+    double average; /* Sliding window average */
+    double gain; /* Gain value */
+    double target; /* Target gain value */
+    complex double bias; /* Bias to apply */
+} lrpt_demodulator_agc_t;
+
+/*************************************************************************************************/
+
+lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target);
+void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle);
 
 /*************************************************************************************************/
 

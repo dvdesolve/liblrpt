@@ -53,7 +53,7 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length) {
 
         /* Return <NULL> only if allocation attempt has failed */
         if (!handle->iq) {
-            free(handle);
+            lrpt_iq_data_free(handle);
 
             return NULL;
         }
@@ -222,7 +222,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length) {
 
         /* Return <NULL> only if allocation attempt has failed */
         if (!handle->s) {
-            free(handle);
+            lrpt_qpsk_data_free(handle);
 
             return NULL;
         }

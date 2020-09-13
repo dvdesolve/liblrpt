@@ -16,14 +16,22 @@
 
 # sources
 set(lrpt_SOURCES
+    demodulator/agc.c
     demodulator/demod.c
+    demodulator/pll.c
+    demodulator/rrc.c
+    demodulator/utils.c
     liblrpt/dsp.c
     liblrpt/lrpt.c
 )
 
 set(lrpt_HEADERS
     ../include/lrpt.h
+    demodulator/agc.h
     demodulator/demod.h
+    demodulator/pll.h
+    demodulator/rrc.h
+    demodulator/utils.h
     liblrpt/dsp.h
     liblrpt/lrpt.h
 )

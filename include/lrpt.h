@@ -82,18 +82,22 @@ typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 /** Basic data type for storing QPSK soft symbols */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
+/** Demodulator object type */
+typedef struct lrpt_demodulator__ lrpt_demodulator_t;
+
 /** Available PSK demodulator modes */
-typedef enum lrpt_demod_mode__ {
-    LRPT_DEMOD_MODE_QPSK,   /**< Plain QPSK */
-    LRPT_DEMOD_MODE_DOQPSK, /**< Differential offset QPSK */
-    LRPT_DEMOD_MODE_IDOQPSK /**< Interleaved differential offset QPSK */
-} lrpt_demod_mode_t;
+typedef enum lrpt_demodulator_mode__ {
+    LRPT_DEMODULATOR_MODE_QPSK,   /**< Plain QPSK */
+    LRPT_DEMODULATOR_MODE_DOQPSK, /**< Differential offset QPSK */
+    LRPT_DEMODULATOR_MODE_IDOQPSK /**< Interleaved differential offset QPSK */
+} lrpt_demodulator_mode_t;
 
 /*************************************************************************************************/
 
 /** Allocates raw I/Q data storage object.
  *
- * Tries to allocate storage for raw I/Q data of requested \p length.
+ * Tries to allocate storage for raw I/Q data of requested \p length. User should properly free
+ * obtained object with #lrpt_iq_data_free() after use.
  *
  * \param[in] length Desired length for new I/Q data storage. If zero length is requested,
  * empty storage will be allocated but user can resize it later with #lrpt_iq_data_resize().
@@ -102,7 +106,7 @@ typedef enum lrpt_demod_mode__ {
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length);
 
-/** Frees previously allocated I/Q data storage
+/** Frees previously allocated I/Q data storage.
  *
  * \param[in,out] handle Pointer to the I/Q data storage object.
  */
@@ -157,7 +161,8 @@ LRPT_API bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fnam
 
 /** Allocates QPSK soft symbol data storage object.
  *
- * Tries to allocate storage for QPSK soft symbol data of requested \p length.
+ * Tries to allocate storage for QPSK soft symbol data of requested \p length. User should properly
+ * free obtained object with #lrpt_qpsk_data_free() after use.
  *
  * \param[in] length Desired length for new QPSK soft symbol data storage. If zero length
  * is requested, empty storage will be allocated but user can resize it manually later with
@@ -185,17 +190,55 @@ LRPT_API void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle);
  */
 LRPT_API bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length);
 
-/* TODO check integer types */
+/** Allocates and initializes demodulator object.
+ *
+ * Creates demodulator object with specified parameters. User should properly free obtained object
+ * with #lrpt_demodulator_deinit() after use.
+ *
+ * \param[in] mode PSK modulation mode.
+ * \param[in] costas_bandwidth Initial Costas' PLL bandwidth in Hz.
+ * \param[in] interp_factor Interpolation factor. Usual value is 4.
+ * \param[in] demod_samplerate Demodulation sampling rate in samples/s.
+ * \param[in] symbol_rate PSK symbol rate in Sym/s.
+ * \param[in] rrc_order Costas' PLL root raised cosine filter order.
+ * \param[in] rrc_alpha Costas' PLL root raised cosine filter alpha factor.
+ *
+ * \return Demodulator object or NULL in case of error.
+ */
+LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
+        const lrpt_demodulator_mode_t mode,
+        const double costas_bandwidth,
+        const uint8_t interp_factor,
+        const double demod_samplerate,
+        const uint32_t symbol_rate,
+        const uint16_t rrc_order,
+        const double rrc_alpha);
+
+/** Frees previously allocated demodulator object.
+ *
+ * \param[in,out] handle Pointer to the demodulator object.
+ */
+LRPT_API void lrpt_demodulator_deinit(lrpt_demodulator_t *handle);
+
+/** Performs QPSK demodulation.
+ *
+ * Runs demodulation on given \p input I/Q samples. Input samples are filtered with Chebyshev
+ * recursive filter and then demodulated with \p handle demodulator object. Resulting QPSK soft
+ * symbols will be stored in \p output QPSK data storage.
+ *
+ * \param[in,out] handle Demodulator object.
+ * \param[in,out] input Raw I/Q samples to demodulate.
+ * \param[out] output Demodulated QPSK soft symbols.
+ *
+ * \return true on successfull demodulation and false in case of error.
+ *
+ * \warning Original I/Q samples given with \p input will be modified (filtered with Chebyshev
+ * recursive filter)!
+ */
 LRPT_API bool lrpt_demodulator_exec(
+        lrpt_demodulator_t *handle,
         lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output,
-        const uint32_t rrc_order,
-        const double rrc_alpha,
-        const uint32_t interp_factor,
-        const double pll_bw,
-        const double pll_thresh,
-        const lrpt_demod_mode_t mode,
-        const uint32_t symbol_rate);
+        lrpt_qpsk_data_t *output);
 
 /*************************************************************************************************/
 

@@ -17,30 +17,18 @@
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DEMODULATOR_DEMOD_H
-#define LRPT_DEMODULATOR_DEMOD_H
+#ifndef LRPT_DEMODULATOR_UTILS_H
+#define LRPT_DEMODULATOR_UTILS_H
 
 /*************************************************************************************************/
 
-#include "agc.h"
-#include "pll.h"
-#include "rrc.h"
-
+#include <stdbool.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
-/* Demodulator object */
-struct lrpt_demodulator__ {
-    lrpt_demodulator_agc_t *agc; /* AGC object */
-    lrpt_demodulator_pll_t *pll; /* PLL object */
-    lrpt_demodulator_rrc_filter_t *rrc; /* RRC filter object */
-    uint32_t sym_rate; /* Symbol rate */
-    double sym_period; /* Symbol period */
-    uint8_t interp_factor; /* Interpolation factor */
-    uint8_t *lut_isqrt; /* Integer sqrt() lookup table */
-    bool (*demod_func)(complex double, int8_t *); /* Demodulator function */
-};
+bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut);
+void lrpt_demodulator_lut_isqrt_deinit(uint8_t *lut);
 
 /*************************************************************************************************/
 
