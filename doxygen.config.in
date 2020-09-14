@@ -1,6 +1,4 @@
-# TODO use CMake configure_file() capabilities
 PROJECT_NAME            = "@PROJECT_NAME@"
-# TODO use CMake configure_file() capabilities
 PROJECT_NUMBER          = @PROJECT_VERSION@
 PROJECT_BRIEF           = "@PROJECT_DESCRIPTION@"
 NUM_PROC_THREADS        = 0
@@ -18,10 +16,12 @@ VERBATIM_HEADERS        = NO
 OPTIMIZE_OUTPUT_FOR_C   = YES
 
 HIDE_UNDOC_MEMBERS      = YES
+TYPEDEF_HIDES_STRUCT    = YES
 SHOW_INCLUDE_FILES      = YES
 GENERATE_TODOLIST       = YES
 MAX_INITIALIZER_LINES   = 0
 WARN_NO_PARAMDOC        = YES
+SORT_MEMBER_DOCS        = NO
 
 HTML_TIMESTAMP          = YES
 

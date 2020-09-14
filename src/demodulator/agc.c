@@ -36,6 +36,7 @@ lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target) {
     if (!handle)
         return NULL;
 
+    /* Set default parameters */
     handle->target = target;
     handle->average = target;
     handle->gain = 1.0;
@@ -48,7 +49,7 @@ lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target) {
 
 /* lrpt_demodulator_agc_deinit()
  *
- * Frees previously allocated AGC object
+ * Frees previously allocated AGC object.
  */
 void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle) {
     free(handle);

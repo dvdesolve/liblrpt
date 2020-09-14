@@ -71,7 +71,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         const uint32_t symbol_rate,
         const uint16_t rrc_order,
         const double rrc_alpha) {
-    /* Library defaults */
+    /* LIBRARY DEFAULTS */
     const double AGC_TARGET = 180.0;
 
     /* Allocate our working handle */
@@ -81,12 +81,18 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     if (!handle)
         return NULL;
 
+    /* NULL-init internal objects for safe deallocation */
+    handle->agc = NULL;
+    handle->pll = NULL;
+    handle->rrc = NULL;
+    handle->lut_isqrt = NULL;
+
     /* Initialize demodulator parameters */
     handle->sym_rate = symbol_rate;
     handle->sym_period = (double)interp_factor * demod_samplerate / (double)symbol_rate;
     handle->interp_factor = interp_factor;
 
-    /* Initialize AGC */
+    /* Initialize AGC object */
     handle->agc = lrpt_demodulator_agc_init(AGC_TARGET);
 
     if (!handle->agc) {
@@ -95,8 +101,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         return NULL;
     }
 
-    /* Initialize Costas PLL */
-    double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
+    /* Initialize Costas' PLL object */
+    const double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
     handle->pll = lrpt_demodulator_pll_init(pll_bw, mode);
 
     if (!handle->pll) {
@@ -105,8 +111,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         return NULL;
     }
 
-    /* Initialize RRC filter */
-    double osf = demod_samplerate / (double)symbol_rate;
+    /* Initialize RRC filter object */
+    const double osf = demod_samplerate / (double)symbol_rate;
     handle->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
 
     if (!handle->rrc) {
@@ -144,6 +150,14 @@ lrpt_demodulator_t *lrpt_demodulator_init(
             handle->demod_func = lrpt_demodulator_demod_idoqpsk;
 
             break;
+
+        /* All other modes are unsupported */
+        default:
+            lrpt_demodulator_deinit(handle);
+
+            return NULL;
+
+            break;
     }
 
     return handle;
@@ -178,7 +192,7 @@ bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
         lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output) {
-    /* Library defaults */
+    /* LIBRARY DEFAULTS */
     const double DSP_FILTER_RIPPLE = 5.0;
     const uint8_t DSP_FILTER_NUMPOLES = 6;
 

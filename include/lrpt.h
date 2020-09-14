@@ -15,13 +15,15 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
-/** \file
- *  \author Viktor Drobot
- *  \author Neoklis Kyriazis
+/** \addtogroup liblrpt liblrpt
  *
- * Public liblrpt API
+ * Public liblrpt API.
+ * This API provides an interface for demodulating, decoding and post-processing LRPT signals.
  *
- * This is basic header to access public API which liblrpt provides.
+ * \author Viktor Drobot
+ * \author Neoklis Kyriazis
+ *
+ * @{
  */
 
 /*************************************************************************************************/
@@ -108,7 +110,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length);
 
 /** Frees previously allocated I/Q data storage.
  *
- * \param[in,out] handle Pointer to the I/Q data storage object.
+ * \param[in] handle Pointer to the I/Q data storage object.
  */
 LRPT_API void lrpt_iq_data_free(lrpt_iq_data_t *handle);
 
@@ -116,7 +118,7 @@ LRPT_API void lrpt_iq_data_free(lrpt_iq_data_t *handle);
  *
  * If valid \p handle is provided it will be resized to accomodate \p new_length I/Q pairs.
  *
- * \param[in,out] handle Pointer to the I/Q data storage object.
+ * \param[in] handle Pointer to the I/Q data storage object.
  * \param[in] new_length New length \p handle will be resized to.
  *
  * \return true on successfull resize and false otherwise (original storage will not be
@@ -130,7 +132,7 @@ LRPT_API bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_lengt
  * Reads raw I/Q data from file with name \p fname and saves it into I/Q storage referenced by
  * \p handle. Storage will be auto-resized to proper length.
  *
- * \param[in,out] handle Pointer to the I/Q data storage object.
+ * \param[in] handle Pointer to the I/Q data storage object.
  * \param[in] fname Name of file with raw I/Q data.
  *
  * \return true on successfull reading and false otherwise.
@@ -174,7 +176,7 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length);
 
 /** Frees previously allocated QPSK soft symbol data storage.
  *
- * \param[in,out] handle Pointer to the QPSK soft symbol data storage object.
+ * \param[in] handle Pointer to the QPSK soft symbol data storage object.
  */
 LRPT_API void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle);
 
@@ -182,7 +184,7 @@ LRPT_API void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle);
  *
  * If valid \p handle is provided it will be resized to accomodate \p new_length QPSK soft symbols.
  *
- * \param[in,out] handle Pointer to the QPSK soft symbol data storage object.
+ * \param[in] handle Pointer to the QPSK soft symbol data storage object.
  * \param[in] new_length New length \p handle will be resized to.
  *
  * \return true on successfull resize and false otherwise (original storage will not be
@@ -216,7 +218,7 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
 
 /** Frees previously allocated demodulator object.
  *
- * \param[in,out] handle Pointer to the demodulator object.
+ * \param[in] handle Pointer to the demodulator object.
  */
 LRPT_API void lrpt_demodulator_deinit(lrpt_demodulator_t *handle);
 
@@ -226,7 +228,7 @@ LRPT_API void lrpt_demodulator_deinit(lrpt_demodulator_t *handle);
  * recursive filter and then demodulated with \p handle demodulator object. Resulting QPSK soft
  * symbols will be stored in \p output QPSK data storage.
  *
- * \param[in,out] handle Demodulator object.
+ * \param[in] handle Demodulator object.
  * \param[in,out] input Raw I/Q samples to demodulate.
  * \param[out] output Demodulated QPSK soft symbols.
  *
@@ -241,5 +243,9 @@ LRPT_API bool lrpt_demodulator_exec(
         lrpt_qpsk_data_t *output);
 
 /*************************************************************************************************/
+
+/**
+ * @}
+ */
 
 #endif

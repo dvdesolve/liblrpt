@@ -49,7 +49,7 @@ static double lrpt_demodulator_rrc_coeff(
 
     /* Handle the 0/0 case */
     if (order == index)
-        return 1.0 - alpha + 4.0 * alpha / M_PI;
+        return (1.0 - alpha + 4.0 * alpha / M_PI);
 
     const double t = (double)(abs(order - index)) / osf;
     const double mpt = M_PI * t;
@@ -57,7 +57,7 @@ static double lrpt_demodulator_rrc_coeff(
     const double coeff = sin(mpt * (1.0 - alpha)) + at4 * cos(mpt * (1.0 + alpha));
     const double interm = mpt * ( 1.0 - at4 * at4 );
 
-    return coeff / interm;
+    return (coeff / interm);
 }
 
 /*************************************************************************************************/
@@ -77,6 +77,10 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
 
     if (!handle)
         return NULL;
+
+    /* NULL-init internal storage for safe deallocation */
+    handle->coeffs = NULL;
+    handle->memory = NULL;
 
     /* Try to allocate storage for coefficients and memory */
     const uint16_t taps = order * 2 + 1;
@@ -104,7 +108,7 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
 
 /* lrpt_demodulator_rrc_filter_deinit()
  *
- * Frees allocated RRC filter object.
+ * Frees previously allocated RRC filter object.
  */
 void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle) {
     if (!handle)

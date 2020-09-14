@@ -57,6 +57,12 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     if (!handle)
         return NULL;
 
+    /* NULL-init internal storage for safe deallocation */
+    handle->a = NULL;
+    handle->b = NULL;
+    handle->x = NULL;
+    handle->y = NULL;
+
     /* Initialize filter parameters */
     handle->cutoff = (double)(bandwidth / 2) / sample_rate;
     handle->ripple = ripple;

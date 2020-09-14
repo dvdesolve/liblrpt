@@ -30,24 +30,24 @@
 
 static void lrpt_demodulator_pll_recompute_coeffs(
         lrpt_demodulator_pll_t *handle,
-        double damping,
-        double bw);
+        const double damping,
+        const double bandwidth);
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_pll_recompute_coeffs()
  *
- * Compute the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
- * and set them in the PLL object.
+ * (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
+ * parameters and updates/sets them in the PLL object.
  */
 static void lrpt_demodulator_pll_recompute_coeffs(
         lrpt_demodulator_pll_t *handle,
-        double damping,
-        double bw) {
-    const double bw2 = bw * bw;
-    const double denom = (1.0 + 2.0 * damping * bw + bw2);
+        const double damping,
+        const double bandwidth) {
+    const double bw2 = bandwidth * bandwidth;
+    const double denom = (1.0 + 2.0 * damping * bandwidth + bw2);
 
-    handle->alpha = (4.0 * damping * bw) / denom;
+    handle->alpha = (4.0 * damping * bandwidth) / denom;
     handle->beta = (4.0 * bw2) / denom;
 }
 
@@ -60,7 +60,7 @@ static void lrpt_demodulator_pll_recompute_coeffs(
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         const double bandwidth,
         const lrpt_demodulator_mode_t mode) {
-    /* Library defaults */
+    /* LIBRARY DEFAULTS */
     const double PLL_INIT_FREQ = 0.001; /* Initial Costas' PLL frequency */
     const double PLL_DAMPING = 1.0 / M_SQRT2; /* Damping factor */
     const double PLL_ERR_SCALE_QPSK = 43.0; /* Scaling factors to control error magnitude */
@@ -78,11 +78,11 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     for (size_t i = 0; i < 256; i++)
         handle->lut_tanh[i] = tanh((double)(i - 128));
 
+    /* Set default parameters */
     handle->nco_freq = PLL_INIT_FREQ;
     handle->nco_phase = 0.0;
 
     lrpt_demodulator_pll_recompute_coeffs(handle, PLL_DAMPING, bandwidth);
-
     handle->damping = PLL_DAMPING;
     handle->bw = bandwidth;
 
@@ -109,6 +109,14 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
             handle->err_scale = PLL_ERR_SCALE_IDOQPSK;
 
             break;
+
+        /* All other modes are unsupported */
+        default:
+            lrpt_demodulator_pll_deinit(handle);
+
+            return NULL;
+
+            break;
     }
 
     return handle;
@@ -118,7 +126,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
 /* lrpt_demodulator_pll_deinit()
  *
- * Frees previously allocated PLL object
+ * Frees previously allocated PLL object.
  */
 void lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *handle) {
     free(handle);
