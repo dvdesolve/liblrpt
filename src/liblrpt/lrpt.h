@@ -22,6 +22,8 @@
 
 /*************************************************************************************************/
 
+#include "../../include/lrpt.h"
+
 #include <stddef.h>
 #include <stdint.h>
 
@@ -29,13 +31,15 @@
 
 #define LRPT_M_2PI 6.28318530717958647692
 
+#define LRPT_SOFT_FRAME_LEN 16384
+
 /*************************************************************************************************/
 
 /* Storage for single raw I/Q pair */
-typedef struct lrpt_iq_raw__ {
+struct lrpt_iq_raw__ {
     double i; /* I sample value */
     double q; /* Q sample value */
-} lrpt_iq_raw_t;
+};
 
 /* Storage type for raw I/Q data */
 struct lrpt_iq_data__ {

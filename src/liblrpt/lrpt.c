@@ -90,6 +90,10 @@ bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
     if (!handle || ((handle->len > 0) && !handle->iq))
         return false;
 
+    /* Is sizes are the same just return true */
+    if (handle->len == new_length)
+        return true;
+
     /* In case of zero length create empty but valid handle */
     if (new_length == 0) {
         free(handle->iq);
@@ -98,7 +102,7 @@ bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
         handle->iq = NULL;
     }
     else {
-        lrpt_iq_raw_t * const new_iq =
+        lrpt_iq_raw_t *new_iq =
             (lrpt_iq_raw_t *)reallocarray(handle->iq, new_length, sizeof(lrpt_iq_raw_t));
 
         if (!new_iq)
@@ -203,6 +207,106 @@ bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
 
 /*************************************************************************************************/
 
+/* lrpt_iq_data_load_from_doubles()
+ *
+ * Transforms arrays of I and Q samples into I/Q data. Storage will be resized to fit requested
+ * data length.
+ */
+bool lrpt_iq_data_load_from_doubles(
+        lrpt_iq_data_t *handle,
+        const double *i,
+        const double *q,
+        const size_t length) {
+    if (!handle)
+        return false;
+
+    /* Resize storage */
+    if (!lrpt_iq_data_resize(handle, length))
+        return false;
+
+    /* Repack doubles into I/Q data */
+    for (size_t k = 0; k < length; k++) {
+        handle->iq[k].i = *(i + k);
+        handle->iq[k].q = *(q + k);
+    }
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_data_create_from_doubles()
+ *
+ * Creates I/Q data storage that will hold given I and Q samples.
+ */
+lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
+        const double *i,
+        const double *q,
+        const size_t length) {
+    lrpt_iq_data_t *handle = lrpt_iq_data_alloc(length);
+
+    if (!handle)
+        return NULL;
+
+    if (!lrpt_iq_data_load_from_doubles(handle, i, q, length)) {
+        lrpt_iq_data_free(handle);
+
+        return NULL;
+    }
+
+    return handle;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_data_load_from_samples()
+ *
+ * Transforms array of raw I/Q samples into I/Q data. Storage will be resized to fit requested
+ * data length.
+ */
+bool lrpt_iq_data_load_from_samples(
+        lrpt_iq_data_t *handle,
+        const lrpt_iq_raw_t *iq,
+        const size_t length) {
+    if (!handle)
+        return false;
+
+    /* Resize storage */
+    if (!lrpt_iq_data_resize(handle, length))
+        return false;
+
+    /* Merge samples into I/Q data */
+    for (size_t k = 0; k < length; k++)
+        handle->iq[k] = *(iq + k);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_data_create_from_samples()
+ *
+ * Creates I/Q data storage that will hold given I/Q samples.
+ */
+lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
+        const lrpt_iq_raw_t *iq,
+        const size_t length) {
+    lrpt_iq_data_t *handle = lrpt_iq_data_alloc(length);
+
+    if (!handle)
+        return NULL;
+
+    if (!lrpt_iq_data_load_from_samples(handle, iq, length)) {
+        lrpt_iq_data_free(handle);
+
+        return NULL;
+    }
+
+    return handle;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_qpsk_data_alloc()
  *
  * Allocates storage for QPSK soft symbols data of length <length>.
@@ -259,6 +363,11 @@ bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length) {
     if (!handle || ((handle->len > 0) && !handle->s))
         return false;
 
+    /* Is sizes are the same just return true */
+    if (handle->len == new_length)
+        return true;
+
+    /* In case of zero length create empty but valid handle */
     if (new_length == 0) {
         free(handle->s);
 

@@ -38,6 +38,7 @@ typedef struct lrpt_demodulator_agc__ {
 
 lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target);
 void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle);
+complex double lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *handle, complex double sample);
 
 /*************************************************************************************************/
 

@@ -122,7 +122,7 @@ void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle) {
 /*************************************************************************************************/
 
 complex double lrpt_demodulator_rrc_filter_apply(
-        lrpt_demodulator_rrc_filter_t * const handle,
+        lrpt_demodulator_rrc_filter_t *handle,
         const complex double value) {
     /* Update the memory nodes, save input value to first node */
     handle->memory[handle->idm] = value;

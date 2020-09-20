@@ -19,8 +19,20 @@
 
 #include "agc.h"
 
+#include <complex.h>
 #include <stddef.h>
 #include <stdlib.h>
+
+/*************************************************************************************************/
+
+/* Library defaults */
+const double AGC_WINSIZE = 65536.0; /* 1024 * 64 */
+const double AGC_WINSIZE_1 = AGC_WINSIZE - 1.0;
+
+const double AGC_MAX_GAIN = 20.0;
+
+const double AGC_BIAS_WINSIZE = 262144.0; /* 1024 * 256 */
+const double AGC_BIAS_WINSIZE_1 = AGC_BIAS_WINSIZE - 1.0;
 
 /*************************************************************************************************/
 
@@ -53,4 +65,31 @@ lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target) {
  */
 void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle) {
     free(handle);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_agc_apply()
+ *
+ * Applies gain to the sample.
+ */
+complex double lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *handle, complex double sample) {
+    /* Sliding window average */
+    handle->bias *= AGC_BIAS_WINSIZE_1;
+    handle->bias += sample;
+    handle->bias /= AGC_BIAS_WINSIZE;
+    sample -= handle->bias;
+
+    /* Update the sample magnitude average */
+    handle->average *= AGC_WINSIZE_1;
+    handle->average += cabs(sample);
+    handle->average /= AGC_WINSIZE;
+
+    /* Apply AGC to the sample */
+    handle->gain = handle->target / handle->average;
+
+    if (handle->gain > AGC_MAX_GAIN)
+        handle->gain = AGC_MAX_GAIN;
+
+    return (sample * handle->gain);
 }

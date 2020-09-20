@@ -40,7 +40,7 @@
  * If allocation was unsuccessfull <NULL> is returned.
  */
 lrpt_dsp_filter_t *lrpt_dsp_filter_init(
-        lrpt_iq_data_t * const iq_data,
+        lrpt_iq_data_t *iq_data,
         const uint32_t bandwidth,
         const double sample_rate,
         const double ripple,

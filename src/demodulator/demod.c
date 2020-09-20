@@ -35,25 +35,114 @@
 
 /*************************************************************************************************/
 
+/* Library defaults */
+const double DEMOD_RESYNC_SCALE_QPSK = 2000000.0;
+
+const double DEMOD_AGC_TARGET = 180.0;
+
+const double DEMOD_DSP_FILTER_RIPPLE = 5.0;
+const uint8_t DEMOD_DSP_FILTER_NUMPOLES = 6;
+
+/*************************************************************************************************/
+
+static inline int8_t lrpt_demodulator_clamp_int8(const double x);
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_clamp_int8()
+ *
+ * Clamps double value to the int8_t range.
+ */
+static inline int8_t lrpt_demodulator_clamp_int8(const double x) {
+    if (x < -128.0)
+        return -128;
+    else if (x > 127.0)
+        return 127;
+    else if ((x > 0.0) && (x < 1.0))
+        return 1;
+    else if ((x > -1.0) && (x < 0.0))
+        return -1;
+    else
+        return (int8_t)x;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_demodulator_demod_qpsk()
  *
  * Performs plain QPSK demodulation.
  */
-static bool lrpt_demodulator_demod_qpsk(complex double fdata, int8_t *buffer) {
+static bool lrpt_demodulator_demod_qpsk(
+        lrpt_demodulator_t *handle,
+        const complex double fdata,
+        int8_t *buffer) {
+    /* Helper variables */
+    const double sym_period = handle->sym_period;
+    const double sp2 = sym_period / 2.0;
+    const double sp2p1 = sp2 + 1.0;
+
+    /* Symbol timing recovery (Gardner) */
+    if ((handle->resync_offset >= sp2) && (handle->resync_offset < sp2p1))
+        handle->middle = lrpt_demodulator_agc_apply(handle->agc, fdata);
+    else if (handle->resync_offset >= sym_period) {
+        handle->current = lrpt_demodulator_agc_apply(handle->agc, fdata);
+
+        handle->resync_offset -= sym_period;
+
+        const double resync_error =
+            (cimag(handle->current) - cimag(handle->before)) * cimag(handle->middle);
+        handle->resync_offset += (resync_error * sym_period / DEMOD_RESYNC_SCALE_QPSK);
+
+        handle->before = handle->current;
+
+        /* Costas' loop frequency/phase tuning */
+        handle->current = lrpt_demodulator_pll_mix(handle->pll, handle->current);
+        const double delta =
+            lrpt_demodulator_pll_delta(handle->pll, handle->current, handle->current);
+        lrpt_demodulator_pll_correct_phase(handle->pll, delta, handle->interp_factor);
+
+        handle->resync_offset += 1.0;
+
+        /* Save result in buffer */
+        buffer[(handle->buf_idx)++] = lrpt_demodulator_clamp_int8(creal(handle->current) / 2.0);
+        buffer[(handle->buf_idx)++] = lrpt_demodulator_clamp_int8(cimag(handle->current) / 2.0);
+
+        /* If we've reached frame length reset buffer index and signal caller with true */
+        if (handle->buf_idx >= LRPT_SOFT_FRAME_LEN) {
+            handle->buf_idx = 0;
+
+            return true;
+        }
+        else
+            return false;
+    }
+
+    /* Initialize internal variables for routines */
+    handle->resync_offset += 1.0;
+
+    return false;
 }
 
 /* lrpt_demodulator_demod_doqpsk()
  *
  * Performs differential offset QPSK demodulation.
  */
-static bool lrpt_demodulator_demod_doqpsk(complex double fdata, int8_t *buffer) {
+static bool lrpt_demodulator_demod_doqpsk(
+        lrpt_demodulator_t *handle,
+        const complex double fdata,
+        int8_t *buffer) {
+    return false;
 }
 
 /* lrpt_demodulator_demod_idoqpsk()
  *
  * Performs interleaved differential offset QPSK demodulation.
  */
-static bool lrpt_demodulator_demod_idoqpsk(complex double fdata, int8_t *buffer) {
+static bool lrpt_demodulator_demod_idoqpsk(
+        lrpt_demodulator_t *handle,
+        const complex double fdata,
+        int8_t *buffer) {
+    return false;
 }
 
 /*************************************************************************************************/
@@ -70,10 +159,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         const double demod_samplerate,
         const uint32_t symbol_rate,
         const uint16_t rrc_order,
-        const double rrc_alpha) {
-    /* LIBRARY DEFAULTS */
-    const double AGC_TARGET = 180.0;
-
+        const double rrc_alpha,
+        const double pll_threshold) {
     /* Allocate our working handle */
     lrpt_demodulator_t *handle =
         (lrpt_demodulator_t *)malloc(sizeof(lrpt_demodulator_t));
@@ -93,7 +180,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     handle->interp_factor = interp_factor;
 
     /* Initialize AGC object */
-    handle->agc = lrpt_demodulator_agc_init(AGC_TARGET);
+    handle->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET);
 
     if (!handle->agc) {
         lrpt_demodulator_deinit(handle);
@@ -103,7 +190,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
     /* Initialize Costas' PLL object */
     const double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
-    handle->pll = lrpt_demodulator_pll_init(pll_bw, mode);
+    handle->pll = lrpt_demodulator_pll_init(pll_bw, pll_threshold, mode);
 
     if (!handle->pll) {
         lrpt_demodulator_deinit(handle);
@@ -160,6 +247,13 @@ lrpt_demodulator_t *lrpt_demodulator_init(
             break;
     }
 
+    /* Initialize internal working variables */
+    handle->resync_offset = 0.0;
+    handle->before = 0.0;
+    handle->middle = 0.0;
+    handle->current = 0.0;
+    handle->buf_idx = 0;
+
     return handle;
 }
 
@@ -192,10 +286,6 @@ bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
         lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output) {
-    /* LIBRARY DEFAULTS */
-    const double DSP_FILTER_RIPPLE = 5.0;
-    const uint8_t DSP_FILTER_NUMPOLES = 6;
-
     /* Return immediately if no valid input or output were given */
     if (!input || !output)
         return false;
@@ -212,8 +302,8 @@ bool lrpt_demodulator_exec(
             ((double)1024000 / (double)2), /* Sample rate (RTLSDR uses 1024000 samples/sec and
                                               decimation of 2
                                             */
-            DSP_FILTER_RIPPLE,
-            DSP_FILTER_NUMPOLES,
+            DEMOD_DSP_FILTER_RIPPLE,
+            DEMOD_DSP_FILTER_NUMPOLES,
             LRPT_DSP_FILTER_TYPE_LOWPASS
             );
 
@@ -227,6 +317,13 @@ bool lrpt_demodulator_exec(
     /* Free it ASAP */
     lrpt_dsp_filter_deinit(filter);
 
+    /* Allocate output buffer */
+    /* TODO may be move inside demodulator object */
+    int8_t *out_buffer = (int8_t *)calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
+
+    if (!out_buffer)
+        return false;
+
     /* Now we're ready to process filtered I/Q data and get soft-symbols */
     for (size_t i = 0; i < input->len; i++) {
         /* Make complex variable from filtered sample */
@@ -235,11 +332,9 @@ bool lrpt_demodulator_exec(
         for (uint8_t j = 0; j < handle->interp_factor; j++) {
             /* Pass samples through interpolator RRC filter */
             complex double fdata = lrpt_demodulator_rrc_filter_apply(handle->rrc, cdata);
-//
-//            /* Demodulate using appropriate function.
-//             * Try to decode one or more LRPT frames when PLL is locked.
-//             */
-//            if (handle->demod_func(fdata, out_buffer) && handle->pll->locked) {
+
+            /* Demodulate using appropriate function */
+            if (handle->demod_func(handle, fdata, out_buffer) && handle->pll->locked) {
 //                /* Try to decode one or more LRPT frames */
 //                Decode_Image( (uint8_t *)out_buffer, SOFT_FRAME_LEN );
 //
@@ -247,9 +342,11 @@ bool lrpt_demodulator_exec(
 //                 * decrimented to point back to the same data in the soft buffer */
 //                mtd_record.pos      -= SOFT_FRAME_LEN;
 //                mtd_record.prev_pos -= SOFT_FRAME_LEN;
-//            }
+            }
         }
     }
+
+    /* Free output buffer */
 
     return true;
 }

@@ -78,6 +78,9 @@
 
 /*************************************************************************************************/
 
+/** Basic data type for single I/Q sample */
+typedef struct lrpt_iq_raw__ lrpt_iq_raw_t;
+
 /** Basic data type for storing I/Q samples */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 
@@ -161,6 +164,87 @@ LRPT_API bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fn
  */
 LRPT_API bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname);
 
+/** Transforms separate arrays of double-typed I/Q samples into library format.
+ *
+ * Repacks arrays of I and Q samples (\p i and \p q) of size \p length into library
+ * format of I/Q data storage. Storage given with \p handle will be auto-resized to fit
+ * requested data length.
+ *
+ * \param[in] handle Pointer to the I/Q data storage object.
+ * \param[in] i Pointer to the array of I samples.
+ * \param[in] q Pointer to the array of Q samples.
+ * \param[in] length Number of samples in I and Q arrays to repack into I/Q data.
+ *
+ * \return true on successfull repacking and false otherwise.
+ *
+ * \warning It's the user's responsibility to be sure that \p i and \p q arrays are
+ * big enough and contain at least \p length samples! If user has provided \p length bigger
+ * than original samples storage behavior is unpredictable!
+ */
+LRPT_API bool lrpt_iq_data_load_from_doubles(
+        lrpt_iq_data_t *handle,
+        const double *i,
+        const double *q,
+        const size_t length);
+
+/** Creates I/Q storage object from double-typed I/Q samples.
+ *
+ * This function behaves much like #lrpt_iq_data_load_from_doubles(), however, it allocates
+ * I/Q storage automatically.
+ *
+ * \param[in] i Pointer to the array of I samples.
+ * \param[in] q Pointer to the array of Q samples.
+ * \param[in] length Number of samples in I and Q arrays to repack into I/Q data.
+ *
+ * \return Pointer to the newly allocated I/Q data storage object or NULL if allocation was
+ * unsuccessful.
+ *
+ * \warning Because code logic is the same as with #lrpt_iq_data_load_from_doubles(), the same
+ * caution about \p i and \p q array lengths is actual.
+ */
+LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
+        const double *i,
+        const double *q,
+        const size_t length);
+
+/** Transforms array of raw I/Q samples into library format.
+ *
+ * Merges array of raw I/Q samples \p iq of size \p length into library format of I/Q data storage.
+ * Storage given with \p handle will be auto-resized to fit requested data length.
+ *
+ * \param[in] handle Pointer to the I/Q data storage object.
+ * \param[in] iq Pointer to the array of I/Q samples.
+ * \param[in] length Number of samples to merge into I/Q data.
+ *
+ * \return true on successfull merging and false otherwise.
+ *
+ * \warning It's the user's responsibility to be sure that \p iq array is big enough and contain
+ * at least \p length samples! If user has provided \p length bigger than original samples storage
+ * behavior is unpredictable!
+ */
+LRPT_API bool lrpt_iq_data_load_from_samples(
+        lrpt_iq_data_t *handle,
+        const lrpt_iq_raw_t *iq,
+        const size_t length);
+
+/** Creates I/Q storage object from raw I/Q samples.
+ *
+ * This function behaves much like #lrpt_iq_data_load_from_samples(), however, it allocates
+ * I/Q storage automatically.
+ *
+ * \param[in] iq Pointer to the array of raw I/Q samples.
+ * \param[in] length Number of samples in I and Q arrays to repack into I/Q data.
+ *
+ * \return Pointer to the newly allocated I/Q data storage object or NULL if allocation was
+ * unsuccessful.
+ *
+ * \warning Because code logic is the same as with #lrpt_iq_data_load_from_samples(), the same
+ * caution about \p iq array length is actual.
+ */
+LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
+        const lrpt_iq_raw_t *iq,
+        const size_t length);
+
 /** Allocates QPSK soft symbol data storage object.
  *
  * Tries to allocate storage for QPSK soft symbol data of requested \p length. User should properly
@@ -204,6 +288,8 @@ LRPT_API bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_l
  * \param[in] symbol_rate PSK symbol rate in Sym/s.
  * \param[in] rrc_order Costas' PLL root raised cosine filter order.
  * \param[in] rrc_alpha Costas' PLL root raised cosine filter alpha factor.
+ * \param[in] pll_threshold Costas' PLL locked threshold. Unlocked threshold will be set 3% above
+ * it.
  *
  * \return Demodulator object or NULL in case of error.
  */
@@ -214,7 +300,8 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
         const double demod_samplerate,
         const uint32_t symbol_rate,
         const uint16_t rrc_order,
-        const double rrc_alpha);
+        const double rrc_alpha,
+        const double pll_threshold);
 
 /** Frees previously allocated demodulator object.
  *
