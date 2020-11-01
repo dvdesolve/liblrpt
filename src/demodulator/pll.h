@@ -15,6 +15,13 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Public internal API for Costas' phased-locked loop routines.
+ */
+
 /*************************************************************************************************/
 
 #ifndef LRPT_DEMODULATOR_PLL_H
@@ -26,41 +33,104 @@
 
 #include <complex.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /*************************************************************************************************/
 
-/* PLL object */
+/** PLL object */
 typedef struct lrpt_demodulator_pll__ {
+    /** @{ */
+    /** Numerically-controlled oscillator parameters */
     double nco_phase, nco_freq;
+    /** @} */
+
+    /** @{ */
+    /** Internal state parameters */
     double alpha, beta;
     double damping, bw;
+    /** @} */
+
+    /** @{ */
+    /** Used for error managing */
     double moving_average;
     double err_scale;
-    bool locked;
-    double lut_tanh[256];
-    double avg_winsize, avg_winsize_1, delta; /* Used in phase error correction */
-    double pll_locked, pll_unlocked; /* Used as thresholds for providing hysteresis */
+    /** @} */
+
+    bool locked; /**< Locked state indicator */
+
+    double lut_tanh[256]; /**< Lookup table for tanh() */
+
+    /** @{ */
+    /** Used in phase error correction */
+    double avg_winsize, avg_winsize_1, delta;
+    /** @} */
+
+    /** @{ */
+    /* Used as thresholds for providing lock hysteresis */
+    double pll_locked, pll_unlocked;
+    /** @} */
 } lrpt_demodulator_pll_t;
 
 /*************************************************************************************************/
 
+/** Allocates and initializes PLL object.
+ *
+ * \param bandwidth Costas' PLL bandwidth.
+ * \param threshold Locking threshold.
+ * \param mode QPSK demodulation mode.
+ *
+ * \return PLL object or NULL in case of error.
+ */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
-        const double bandwidth,
-        const double threshold,
-        const lrpt_demodulator_mode_t mode);
+        double bandwidth,
+        double threshold,
+        lrpt_demodulator_mode_t mode);
+
+/** Frees previously allocated PLL object.
+ *
+ * \param handle PLL object.
+ */
 void lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *handle);
+
+/** Performs mixing of a sample with PLL NCO frequency.
+ *
+ * \param handle PLL object.
+ * \param sample I/Q sample.
+ *
+ * \return I/Q sample mixed with NCO frequency.
+ */
 complex double lrpt_demodulator_pll_mix(
         lrpt_demodulator_pll_t *handle,
-        const complex double sample);
+        complex double sample);
+
+/** Computes the delta phase value to use when correcting the NCO frequency.
+ *
+ * \param handle PLL object.
+ * \param sample I/Q sample.
+ * \param cosample I/Q co-sample.
+ *
+ * \return Delta phase value.
+ */
 double lrpt_demodulator_pll_delta(
         const lrpt_demodulator_pll_t *handle,
-        const complex double sample,
-        const complex double cosample);
+        complex double sample,
+        complex double cosample);
+
+/** Corrects the phase angle of the Costas' PLL.
+ *
+ * \param handle PLL object.
+ * \param error Error value.
+ * \param interp_factor Interpolation factor.
+ */
 void lrpt_demodulator_pll_correct_phase(
         lrpt_demodulator_pll_t *handle,
         double error,
-        const uint8_t interp_factor);
+        uint8_t interp_factor);
 
 /*************************************************************************************************/
 
 #endif
+
+/*************************************************************************************************/
+
+/** \endcond */

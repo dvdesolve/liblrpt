@@ -15,6 +15,13 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Public internal API for demodulation routines.
+ */
+
 /*************************************************************************************************/
 
 #ifndef LRPT_DEMODULATOR_DEMOD_H
@@ -33,30 +40,36 @@
 
 /*************************************************************************************************/
 
-/* Demodulator object */
+/** Demodulator object */
 struct lrpt_demodulator__ {
-    lrpt_demodulator_agc_t *agc; /* AGC object */
-    lrpt_demodulator_pll_t *pll; /* PLL object */
-    lrpt_demodulator_rrc_filter_t *rrc; /* RRC filter object */
+    lrpt_demodulator_agc_t *agc; /**< AGC object */
+    lrpt_demodulator_pll_t *pll; /**< PLL object */
+    lrpt_demodulator_rrc_filter_t *rrc; /**< RRC filter object */
 
-    uint32_t sym_rate; /* Symbol rate */
-    double sym_period; /* Symbol period */
+    uint32_t sym_rate; /**< Symbol rate */
+    double sym_period; /**< Symbol period */
 
-    uint8_t interp_factor; /* Interpolation factor */
+    uint8_t interp_factor; /**< Interpolation factor */
 
-    uint8_t *lut_isqrt; /* Integer sqrt() lookup table */
+    uint8_t *lut_isqrt; /**< Integer sqrt() lookup table */
 
-    bool (*demod_func)( /* Demodulator function */
+    bool (*demod_func)( /**< Demodulator function */
             lrpt_demodulator_t *,
-            const complex double,
+            complex double,
             int8_t *);
 
-    /* Used by QPSK demodulator functions */
+    /** @{ */
+    /** Used by QPSK demodulator functions */
     double resync_offset;
     complex double before, middle, current;
     size_t buf_idx;
+    /** @} */
 };
 
 /*************************************************************************************************/
 
 #endif
+
+/*************************************************************************************************/
+
+/** \endcond */

@@ -15,6 +15,15 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Costas' phased-locked loop routines.
+ *
+ * This source file contains routines for Costas' PLL functionality.
+ */
+
 /*************************************************************************************************/
 
 #include "pll.h"
@@ -52,20 +61,43 @@ const double FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
 
 /*************************************************************************************************/
 
-static inline double lrpt_demodulator_pll_clamp_double(const double x, const double max);
-static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], const double value);
+/** Clamps a double value to the range [-\p max; \p max].
+ *
+ * \param x Input value.
+ * \param max Range limit for clamping.
+ *
+ * \return Value clamped to the range [-\p max; \p max].
+ */
+static inline double lrpt_demodulator_pll_clamp_double(double x, double max);
+
+/** Returns tanh() for given value.
+ *
+ * \param lut Initialized lookup table for tanh().
+ * \param value Input value.
+ *
+ * \return tanh() value.
+ */
+static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], double value);
+
+/** (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
+ * parameters and updates/sets them in the PLL object.
+ *
+ * \param handle PLL object.
+ * \param damping Damping factor.
+ * \param bandwidth Costas' PLL bandwidth.
+ */
 static void lrpt_demodulator_pll_recompute_coeffs(
         lrpt_demodulator_pll_t *handle,
-        const double damping,
-        const double bandwidth);
+        double damping,
+        double bandwidth);
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_pll_clamp_double()
  *
- * Clamps a double value to the range [-max, max]
+ * Clamps a double value to the range [-max; max].
  */
-static inline double lrpt_demodulator_pll_clamp_double(const double x, const double max) {
+static inline double lrpt_demodulator_pll_clamp_double(double x, double max) {
     if (x > max)
         return max;
     else if (x < -max)
@@ -80,7 +112,7 @@ static inline double lrpt_demodulator_pll_clamp_double(const double x, const dou
  *
  * Returns tanh() for given value.
  */
-static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], const double value) {
+static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], double value) {
     int16_t ival = (int16_t)value;
 
     if (ival > 127)
@@ -100,8 +132,8 @@ static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], const dou
  */
 static void lrpt_demodulator_pll_recompute_coeffs(
         lrpt_demodulator_pll_t *handle,
-        const double damping,
-        const double bandwidth) {
+        double damping,
+        double bandwidth) {
     const double bw2 = bandwidth * bandwidth;
     const double denom = (1.0 + 2.0 * damping * bandwidth + bw2);
 
@@ -113,15 +145,14 @@ static void lrpt_demodulator_pll_recompute_coeffs(
 
 /* lrpt_demodulator_pll_init()
  *
- * Allocates and initializes PLL object with specified <bandwidth> and demodulation mode <mode>.
+ * Allocates and initializes PLL object.
  */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
-        const double bandwidth,
-        const double threshold,
-        const lrpt_demodulator_mode_t mode) {
+        double bandwidth,
+        double threshold,
+        lrpt_demodulator_mode_t mode) {
     /* Try to allocate our handle */
-    lrpt_demodulator_pll_t *handle =
-        (lrpt_demodulator_pll_t *)malloc(sizeof(lrpt_demodulator_pll_t));
+    lrpt_demodulator_pll_t *handle = malloc(sizeof(lrpt_demodulator_pll_t));
 
     if (!handle)
         return NULL;
@@ -202,7 +233,7 @@ void lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *handle) {
  */
 complex double lrpt_demodulator_pll_mix(
         lrpt_demodulator_pll_t *handle,
-        const complex double sample) {
+        complex double sample) {
     const complex double nco_out = cexp(-(complex double)I * handle->nco_phase);
     const complex double retval = sample * nco_out;
 
@@ -220,8 +251,8 @@ complex double lrpt_demodulator_pll_mix(
  */
 double lrpt_demodulator_pll_delta(
         const lrpt_demodulator_pll_t *handle,
-        const complex double sample,
-        const complex double cosample) {
+        complex double sample,
+        complex double cosample) {
     double error;
 
     error =
@@ -241,7 +272,7 @@ double lrpt_demodulator_pll_delta(
 void lrpt_demodulator_pll_correct_phase(
         lrpt_demodulator_pll_t *handle,
         double error,
-        const uint8_t interp_factor) {
+        uint8_t interp_factor) {
     error = lrpt_demodulator_pll_clamp_double(error, 1.0);
 
     handle->moving_average *= handle->avg_winsize_1;
@@ -290,3 +321,7 @@ void lrpt_demodulator_pll_correct_phase(
     if ((handle->nco_freq <= -FREQ_MAX) || (handle->nco_freq >= FREQ_MAX))
         handle->nco_freq = 0.0;
 }
+
+/*************************************************************************************************/
+
+/** \endcond */

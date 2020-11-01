@@ -15,6 +15,15 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Auto gain control routines.
+ *
+ * This source file contains routines for dealing with AGC operations.
+ */
+
 /*************************************************************************************************/
 
 #include "agc.h"
@@ -38,12 +47,11 @@ const double AGC_BIAS_WINSIZE_1 = AGC_BIAS_WINSIZE - 1.0;
 
 /* lrpt_demodulator_agc_init()
  *
- * Allocates and initializes AGC object with target gain value of <target>.
+ * Allocates and initializes AGC object.
  */
-lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target) {
+lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(double target) {
     /* Try to allocate our handle */
-    lrpt_demodulator_agc_t *handle =
-        (lrpt_demodulator_agc_t *)malloc(sizeof(lrpt_demodulator_agc_t));
+    lrpt_demodulator_agc_t *handle = malloc(sizeof(lrpt_demodulator_agc_t));
 
     if (!handle)
         return NULL;
@@ -61,7 +69,7 @@ lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target) {
 
 /* lrpt_demodulator_agc_deinit()
  *
- * Frees previously allocated AGC object.
+ * Frees allocated AGC object.
  */
 void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle) {
     free(handle);
@@ -93,3 +101,7 @@ complex double lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *handle, comple
 
     return (sample * handle->gain);
 }
+
+/*************************************************************************************************/
+
+/** \endcond */

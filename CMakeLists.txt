@@ -32,18 +32,45 @@ set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 
 
+# check for necessary types
+include(CheckTypeSize)
+
+check_type_size("int8_t" T__INT8_T LANGUAGE C)
+check_type_size("uint8_t" T__UINT8_T LANGUAGE C)
+check_type_size("int16_t" T__INT16_T LANGUAGE C)
+check_type_size("uint16_t" T__UINT16_T LANGUAGE C)
+check_type_size("int32_t" T__INT32_T LANGUAGE C)
+check_type_size("uint32_t" T__UINT32_T LANGUAGE C)
+check_type_size("int64_t" T__INT64_T LANGUAGE C)
+check_type_size("uint64_t" T__UINT64_T LANGUAGE C)
+
+if (
+        (NOT ${T__INT8_T} EQUAL 1) OR (NOT ${T__UINT8_T} EQUAL 1) OR
+        (NOT ${T__INT16_T} EQUAL 2) OR (NOT ${T__UINT16_T} EQUAL 2) OR
+        (NOT ${T__INT32_T} EQUAL 4) OR (NOT ${T__UINT32_T} EQUAL 4) OR
+        (NOT ${T__INT64_T} EQUAL 8) OR (NOT ${T__UINT64_T} EQUAL 8)
+        )
+    message(FATAL_ERROR "One of the standard integer types doesn't have proper size.")
+endif ()
+
+
 # build project
 add_subdirectory(src)
 
 
 # optionally build documentation
 option(BUILD_DOC "Build API documentation" ON)
+option(BUILD_DEVDOC "Build developer's documentation" OFF)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
     find_package(Doxygen)
 
     if (DOXYGEN_FOUND)
         file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc)
+
+        if (BUILD_DEVDOC)
+            set(EXTRA_SECTIONS "INTERNAL_API_DOCS")
+        endif ()
 
         configure_file(doxygen.config.in doxygen.config @ONLY)
 

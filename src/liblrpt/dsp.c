@@ -18,6 +18,15 @@
  * internal use!
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * DSP routines.
+ *
+ * This source file contains routines for performing different DSP tasks.
+ */
+
 /*************************************************************************************************/
 
 #include "dsp.h"
@@ -37,22 +46,20 @@
 /* lrpt_dsp_filter_init()
  *
  * Initializes recursive Chebyshev filter.
- * If allocation was unsuccessfull <NULL> is returned.
  */
 lrpt_dsp_filter_t *lrpt_dsp_filter_init(
-        lrpt_iq_data_t *iq_data,
-        const uint32_t bandwidth,
-        const double sample_rate,
-        const double ripple,
-        const uint8_t num_poles,
-        const lrpt_dsp_filter_type_t type) {
+        lrpt_iq_data_t *iq_data, /* TODO isn't necessary here, should be in apply() instead */
+        uint32_t bandwidth,
+        double sample_rate,
+        double ripple,
+        uint8_t num_poles,
+        lrpt_dsp_filter_type_t type) {
     /* Return immediately if no I/Q data given */
     if (!iq_data)
         return NULL;
 
     /* Try to allocate our handle */
-    lrpt_dsp_filter_t *handle =
-        (lrpt_dsp_filter_t *)malloc(sizeof(lrpt_dsp_filter_t));
+    lrpt_dsp_filter_t *handle = malloc(sizeof(lrpt_dsp_filter_t));
 
     if (!handle)
         return NULL;
@@ -82,16 +89,16 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* Allocate data and coefficients arrays */
     size_t n = (size_t)(num_poles + 3);
 
-    double * const ta = (double *)calloc(n, sizeof(double));
-    double * const tb = (double *)calloc(n, sizeof(double));
-    handle->a = (double *)calloc(n, sizeof(double));
-    handle->b = (double *)calloc(n, sizeof(double));
+    double * const ta = calloc(n, sizeof(double));
+    double * const tb = calloc(n, sizeof(double));
+    handle->a = calloc(n, sizeof(double));
+    handle->b = calloc(n, sizeof(double));
 
     /* Allocate saved input and output arrays */
     n = (size_t)(num_poles + 1);
 
-    handle->x = (double *)calloc(n, sizeof(double));
-    handle->y = (double *)calloc(n, sizeof(double));
+    handle->x = calloc(n, sizeof(double));
+    handle->y = calloc(n, sizeof(double));
 
     /* Check for allocation problems */
     if (!ta || !tb || !handle->a || !handle->b || !handle->x || !handle->y) {
@@ -130,7 +137,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         double rp = -cos(tmp);
         double ip =  sin(tmp);
 
-        /* Wrap from a circle to an ellipse */
+        /* Warp from a circle to an ellipse */
         if (ripple > 0.0) {
             tmp = 100.0 / (100.0 - ripple);
 
@@ -220,7 +227,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
 /* lrpt_dsp_filter_deinit()
  *
- * Frees allocated Chebyshev filter object.
+ * Frees allocated Chebyshev filter.
  */
 void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle) {
     if (!handle)
@@ -237,8 +244,7 @@ void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle) {
 
 /* lrpt_dsp_filter_apply()
  *
- * Applies recursive Chebyshev filter to raw IQ data (currently used as low pass).
- * If empty <handle> is given <false> will be returned.
+ * Applies recursive Chebyshev filter to the raw I/Q data.
  */
 bool lrpt_dsp_filter_apply(lrpt_dsp_filter_t *handle) {
     /* Return immediately if handle is empty */
@@ -250,7 +256,7 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_t *handle) {
     const size_t len = handle->iq_data->len;
     lrpt_iq_raw_t * const samples = handle->iq_data->iq;
 
-    /* Explicitly zero x and y arrays every filter run */
+    /* Explicitly zero x and y arrays on every filter run */
     memset(handle->x, 0, sizeof(double) * npp1);
     memset(handle->y, 0, sizeof(double) * npp1);
 
@@ -300,3 +306,7 @@ bool lrpt_dsp_filter_apply(lrpt_dsp_filter_t *handle) {
 
     return true;
 }
+
+/*************************************************************************************************/
+
+/** \endcond */

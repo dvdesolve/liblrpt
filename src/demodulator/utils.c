@@ -15,6 +15,15 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Different utils and routines for QPSK demodulator.
+ *
+ * This source file contains different routines used by QPSK demodulator.
+ */
+
 /*************************************************************************************************/
 
 #include "utils.h"
@@ -32,7 +41,7 @@
  * Allocates and initializes lookup table for integer square roots.
  */
 bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut) {
-    lut = (uint8_t *)calloc(16385, sizeof(uint8_t));
+    lut = calloc(16385, sizeof(uint8_t));
 
     if (!lut)
         return false;
@@ -52,3 +61,7 @@ bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut) {
 void lrpt_demodulator_lut_isqrt_deinit(uint8_t *lut) {
     free(lut);
 }
+
+/*************************************************************************************************/
+
+/** \endcond */

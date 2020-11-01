@@ -15,6 +15,13 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Public internal API for different utils and routines for QPSK demodulator.
+ */
+
 /*************************************************************************************************/
 
 #ifndef LRPT_DEMODULATOR_UTILS_H
@@ -27,9 +34,24 @@
 
 /*************************************************************************************************/
 
+/** Allocates and initializes lookup table for integer square roots.
+ *
+ * \param[out] lut Lookup table for integer square roots.
+ *
+ * \return true on successfull allocation or false otherwise.
+ */
 bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut);
+
+/** Frees previously allocated lookup table for integer square roots.
+ *
+ * \param lut Lookup table for integer square roots.
+ */
 void lrpt_demodulator_lut_isqrt_deinit(uint8_t *lut);
 
 /*************************************************************************************************/
 
 #endif
+
+/*************************************************************************************************/
+
+/** \endcond */

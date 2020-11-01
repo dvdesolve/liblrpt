@@ -15,6 +15,13 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Public internal API for basic data types, memory management and I/O routines.
+ */
+
 /*************************************************************************************************/
 
 #ifndef LRPT_LIBLRPT_LRPT_H
@@ -29,30 +36,36 @@
 
 /*************************************************************************************************/
 
+/** Local define for 2 * π */
 #define LRPT_M_2PI 6.28318530717958647692
 
+/** Length of soft frame */
 #define LRPT_SOFT_FRAME_LEN 16384
 
 /*************************************************************************************************/
 
-/* Storage for single raw I/Q pair */
+/** Storage for single raw I/Q pair */
 struct lrpt_iq_raw__ {
-    double i; /* I sample value */
-    double q; /* Q sample value */
+    double i; /**< I sample value */
+    double q; /**< Q sample value */
 };
 
-/* Storage type for raw I/Q data */
+/** Storage type for raw I/Q data */
 struct lrpt_iq_data__ {
-    lrpt_iq_raw_t *iq; /* Array of I/Q pairs */
-    size_t len; /* Total number of I/Q pairs */
+    lrpt_iq_raw_t *iq; /**< Array of I/Q pairs */
+    size_t len; /**< Total number of I/Q pairs */
 };
 
-/* Storage type for QPSK soft symbols data */
+/** Storage type for QPSK soft symbols data */
 struct lrpt_qpsk_data__ {
-    int8_t *s; /* Array of QPSK soft symbols */
-    size_t len; /* Total number of QPSK soft symbols */
+    int8_t *s; /**< Array of QPSK soft symbols */
+    size_t len; /**< Total number of QPSK soft symbols */
 };
 
 /*************************************************************************************************/
 
 #endif
+
+/*************************************************************************************************/
+
+/** \endcond */

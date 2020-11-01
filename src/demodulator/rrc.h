@@ -15,6 +15,13 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Public internal API for root raised cosine filtering routines.
+ */
+
 /*************************************************************************************************/
 
 #ifndef LRPT_DEMODULATOR_RRC_H
@@ -27,22 +34,44 @@
 
 /*************************************************************************************************/
 
-/* RRC filter object */
+/** RRC filter object */
 typedef struct lrpt_demodulator_rrc_filter__ {
-    complex double *memory; /* Filter memory */
-    int16_t idm; /* Index for memory ring buffer */
-    double *coeffs; /* Filter coefficients */
-    uint16_t count; /* Number of filter coefficients */
+    complex double *memory; /**< Filter memory */
+    int16_t idm; /**< Index for memory ring buffer */
+    double *coeffs; /**< Filter coefficients */
+    uint16_t count; /**< Number of filter coefficients */
 } lrpt_demodulator_rrc_filter_t;
 
 /*************************************************************************************************/
 
+/** Allocates and initializes RRC filter.
+ *
+ * \param order Filter order.
+ * \param factor Interpolation factor.
+ * \param osf Ratio of sampling rate and symbol rate.
+ * \param alpha Filter alpha factor.
+ *
+ * \return RRC filter object.
+ */
 lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
-        const uint16_t order,
-        const uint8_t factor,
-        const double osf,
-        const double alpha);
+        uint16_t order,
+        uint8_t factor,
+        double osf,
+        double alpha);
+
+/** Frees previously allocated RRC filter object.
+ *
+ * \param handle RRC filter object.
+ */
 void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle);
+
+/** Applies RRC filter to the I/Q sample.
+ *
+ * \param handle RRC filter object.
+ * \param value Input I/Q sample.
+ *
+ * \return Filtered I/Q sample.
+ */
 complex double lrpt_demodulator_rrc_filter_apply(
         lrpt_demodulator_rrc_filter_t *handle,
         const complex double value);
@@ -50,3 +79,7 @@ complex double lrpt_demodulator_rrc_filter_apply(
 /*************************************************************************************************/
 
 #endif
+
+/*************************************************************************************************/
+
+/** \endcond */

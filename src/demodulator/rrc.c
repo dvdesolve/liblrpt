@@ -15,6 +15,15 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Root raised cosine filtering routines.
+ *
+ * This source file contains routines for performing root raised cosine filtering.
+ */
+
 /*************************************************************************************************/
 
 #include "rrc.h"
@@ -27,24 +36,34 @@
 
 /*************************************************************************************************/
 
+/** Calculates RRC filter coefficients for variable alpha.
+ *
+ * \param index Filter index.
+ * \param taps Number of filter taps.
+ * \param osf Ratio of sampling rate and symbol rate.
+ * \param alpha Filter alpha factor.
+ *
+ * \return Filter coefficient.
+ */
 static double lrpt_demodulator_rrc_coeff(
-        const uint16_t index,
-        const uint16_t taps,
-        const double osf,
-        const double alpha);
+        uint16_t index,
+        uint16_t taps,
+        double osf,
+        double alpha);
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_rrc_coeff()
  *
  * Calculates RRC filter coefficients for variable alpha.
+ *
  * Adapted from https://www.michael-joost.de/rrcfilter.pdf
  */
 static double lrpt_demodulator_rrc_coeff(
-        const uint16_t index,
-        const uint16_t taps,
-        const double osf,
-        const double alpha) {
+        uint16_t index,
+        uint16_t taps,
+        double osf,
+        double alpha) {
     const uint16_t order = (taps - 1) / 2;
 
     /* Handle the 0/0 case */
@@ -67,13 +86,12 @@ static double lrpt_demodulator_rrc_coeff(
  * Allocates and initializes RRC filter.
  */
 lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
-        const uint16_t order,
-        const uint8_t factor,
-        const double osf,
-        const double alpha) {
+        uint16_t order,
+        uint8_t factor,
+        double osf,
+        double alpha) {
     /* Try to allocate our handle */
-    lrpt_demodulator_rrc_filter_t *handle =
-        (lrpt_demodulator_rrc_filter_t *)malloc(sizeof(lrpt_demodulator_rrc_filter_t));
+    lrpt_demodulator_rrc_filter_t *handle = malloc(sizeof(lrpt_demodulator_rrc_filter_t));
 
     if (!handle)
         return NULL;
@@ -86,9 +104,9 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
     const uint16_t taps = order * 2 + 1;
 
     handle->count = taps;
-    handle->coeffs = (double *)calloc((size_t)taps, sizeof(double));
+    handle->coeffs = calloc((size_t)taps, sizeof(double));
     handle->idm = 0;
-    handle->memory = (complex double *)calloc((size_t)taps, sizeof(complex double));
+    handle->memory = calloc((size_t)taps, sizeof(complex double));
 
     if (!handle->coeffs || !handle->memory) {
         lrpt_demodulator_rrc_filter_deinit(handle);
@@ -121,9 +139,13 @@ void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle) {
 
 /*************************************************************************************************/
 
+/* lrpt_demodulator_rrc_filter_apply()
+ *
+ * Applies RRC filter to the I/Q sample.
+ */
 complex double lrpt_demodulator_rrc_filter_apply(
         lrpt_demodulator_rrc_filter_t *handle,
-        const complex double value) {
+        complex double value) {
     /* Update the memory nodes, save input value to first node */
     handle->memory[handle->idm] = value;
 
@@ -149,3 +171,7 @@ complex double lrpt_demodulator_rrc_filter_apply(
 
     return result;
 }
+
+/*************************************************************************************************/
+
+/** \endcond */

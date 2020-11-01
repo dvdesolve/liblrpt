@@ -15,6 +15,13 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Public internal API for auto gain control routines.
+ */
+
 /*************************************************************************************************/
 
 #ifndef LRPT_DEMODULATOR_AGC_H
@@ -26,20 +33,43 @@
 
 /*************************************************************************************************/
 
-/* AGC object */
+/** AGC object */
 typedef struct lrpt_demodulator_agc__ {
-    double average; /* Sliding window average */
-    double gain; /* Gain value */
-    double target; /* Target gain value */
-    complex double bias; /* Bias to apply */
+    double average; /**< Sliding window average */
+    double gain; /**< Gain value */
+    double target; /**< Target gain value */
+    complex double bias; /**< Bias to apply */
 } lrpt_demodulator_agc_t;
 
 /*************************************************************************************************/
 
-lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(const double target);
+/** Allocates and initializes AGC object.
+ *
+ * \param target Target gain value.
+ *
+ * \return AGC object or NULL in case of error.
+ */
+lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(double target);
+
+/** Frees allocated AGC object.
+ *
+ * \param handle AGC object.
+ */
 void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle);
+
+/** Applies gain to the sample.
+ *
+ * \param handle AGC object.
+ * \param sample Input I/Q sample.
+ *
+ * \return Sample with gain applied.
+ */
 complex double lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *handle, complex double sample);
 
 /*************************************************************************************************/
 
 #endif
+
+/*************************************************************************************************/
+
+/** \endcond */

@@ -15,6 +15,16 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Basic data types, memory management and I/O routines.
+ *
+ * This source file contains common routines for internal data types and objects management,
+ * I/O tasks etc.
+ */
+
 /*************************************************************************************************/
 
 #include "lrpt.h"
@@ -29,18 +39,27 @@
 
 /*************************************************************************************************/
 
-/* Number of I/Q samples pairs written to file per once */
+/* liblrpt requires that IEEE 754 floating point standard is used. However some compilers doesn't
+ * provide special macro for testing that. We're quite lenient in this requirement so just plain
+ * warning will be given during compilation
+ */
+#ifndef __STDC_IEC_559__
+#pragma message ("Your compiler doesn't define __STDC_IEC_559__ macro. Support for IEEE 754 floats and doubles may be unavailable or limited!")
+#endif
+
+/*************************************************************************************************/
+
+/** Number of I/Q samples pairs written to file per once */
 static const size_t LRPT_IQ_DATA_WRITE_N = 1024;
 
 /*************************************************************************************************/
 
 /* lrpt_iq_data_alloc()
  *
- * Allocates storage for raw I/Q data of length <length>.
- * If allocation was unsuccessful, <NULL> is returned.
+ * Allocates raw I/Q data storage object.
  */
-lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length) {
-    lrpt_iq_data_t *handle = (lrpt_iq_data_t *)malloc(sizeof(lrpt_iq_data_t));
+lrpt_iq_data_t *lrpt_iq_data_alloc(size_t length) {
+    lrpt_iq_data_t *handle = malloc(sizeof(lrpt_iq_data_t));
 
     if (!handle)
         return NULL;
@@ -49,7 +68,7 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length) {
     handle->len = length;
 
     if (length > 0) {
-        handle->iq = (lrpt_iq_raw_t *)calloc(length, sizeof(lrpt_iq_raw_t));
+        handle->iq = calloc(length, sizeof(lrpt_iq_raw_t));
 
         /* Return <NULL> only if allocation attempt has failed */
         if (!handle->iq) {
@@ -68,7 +87,7 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(const size_t length) {
 
 /* lrpt_iq_data_free()
  *
- * Frees previously allocated storage of I/Q data.
+ * Frees previously allocated I/Q data storage.
  */
 void lrpt_iq_data_free(lrpt_iq_data_t *handle) {
     if (!handle)
@@ -82,10 +101,9 @@ void lrpt_iq_data_free(lrpt_iq_data_t *handle) {
 
 /* lrpt_iq_data_resize()
  *
- * Resizes storage of I/Q data. Requires properly initialized storage passed with <handle>.
- * If <new_length> is zero then storage will be empty but valid.
+ * Resizes existing I/Q data storage.
  */
-bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
+bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, size_t new_length) {
     /* We accept only valid handles or simple empty handles */
     if (!handle || ((handle->len > 0) && !handle->iq))
         return false;
@@ -102,8 +120,7 @@ bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
         handle->iq = NULL;
     }
     else {
-        lrpt_iq_raw_t *new_iq =
-            (lrpt_iq_raw_t *)reallocarray(handle->iq, new_length, sizeof(lrpt_iq_raw_t));
+        lrpt_iq_raw_t *new_iq = reallocarray(handle->iq, new_length, sizeof(lrpt_iq_raw_t));
 
         if (!new_iq)
             return false;
@@ -115,12 +132,12 @@ bool lrpt_iq_data_resize(lrpt_iq_data_t *handle, const size_t new_length) {
 
     return true;
 }
+
 /*************************************************************************************************/
 
 /* lrpt_iq_data_load_from_file()
  *
- * Loads I/Q data from file of internal library format. Storage will be resized to fit
- * acquired data.
+ * Loads I/Q data from file.
  *
  * TODO should stabilize internal library format
  */
@@ -161,7 +178,7 @@ bool lrpt_iq_data_load_from_file(lrpt_iq_data_t *handle, const char *fname) {
 
 /* lrpt_iq_data_save_to_file()
  *
- * Saves raw I/Q data to file using internal library format.
+ * Saves I/Q data to file.
  *
  * TODO should stabilize internal library format
  */
@@ -209,14 +226,13 @@ bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
 
 /* lrpt_iq_data_load_from_doubles()
  *
- * Transforms arrays of I and Q samples into I/Q data. Storage will be resized to fit requested
- * data length.
+ * Transforms separate arrays of double-typed I/Q samples into library format.
  */
 bool lrpt_iq_data_load_from_doubles(
         lrpt_iq_data_t *handle,
         const double *i,
         const double *q,
-        const size_t length) {
+        size_t length) {
     if (!handle)
         return false;
 
@@ -237,12 +253,12 @@ bool lrpt_iq_data_load_from_doubles(
 
 /* lrpt_iq_data_create_from_doubles()
  *
- * Creates I/Q data storage that will hold given I and Q samples.
+ * Creates I/Q storage object from double-typed I/Q samples.
  */
 lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *i,
         const double *q,
-        const size_t length) {
+        size_t length) {
     lrpt_iq_data_t *handle = lrpt_iq_data_alloc(length);
 
     if (!handle)
@@ -261,13 +277,12 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
 
 /* lrpt_iq_data_load_from_samples()
  *
- * Transforms array of raw I/Q samples into I/Q data. Storage will be resized to fit requested
- * data length.
+ * Transforms array of raw I/Q samples into library format.
  */
 bool lrpt_iq_data_load_from_samples(
         lrpt_iq_data_t *handle,
         const lrpt_iq_raw_t *iq,
-        const size_t length) {
+        size_t length) {
     if (!handle)
         return false;
 
@@ -286,11 +301,11 @@ bool lrpt_iq_data_load_from_samples(
 
 /* lrpt_iq_data_create_from_samples()
  *
- * Creates I/Q data storage that will hold given I/Q samples.
+ * Creates I/Q storage object from raw I/Q samples.
  */
 lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const lrpt_iq_raw_t *iq,
-        const size_t length) {
+        size_t length) {
     lrpt_iq_data_t *handle = lrpt_iq_data_alloc(length);
 
     if (!handle)
@@ -309,11 +324,10 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
 
 /* lrpt_qpsk_data_alloc()
  *
- * Allocates storage for QPSK soft symbols data of length <length>.
- * If allocation was unsuccessfull, <NULL> is returned.
+ * Allocates QPSK soft symbol data storage object.
  */
-lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length) {
-    lrpt_qpsk_data_t *handle = (lrpt_qpsk_data_t *)malloc(sizeof(lrpt_qpsk_data_t));
+lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(size_t length) {
+    lrpt_qpsk_data_t *handle = malloc(sizeof(lrpt_qpsk_data_t));
 
     if (!handle)
         return NULL;
@@ -322,7 +336,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length) {
     handle->len = length;
 
     if (length > 0) {
-        handle->s = (int8_t *)calloc(length, sizeof(int8_t));
+        handle->s = calloc(length, sizeof(int8_t));
 
         /* Return <NULL> only if allocation attempt has failed */
         if (!handle->s) {
@@ -341,7 +355,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(const size_t length) {
 
 /* lrpt_qpsk_data_free()
  *
- * Frees previously allocated storage of QPSK soft symbols data.
+ * Frees previously allocated QPSK soft symbol data storage.
  */
 void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle) {
     if (!handle)
@@ -355,10 +369,9 @@ void lrpt_qpsk_data_free(lrpt_qpsk_data_t *handle) {
 
 /* lrpt_qpsk_data_resize()
  *
- * Resizes storage of QPSK soft symbols data. Requires properly initialized storage passed with
- * <handle>. If <new_length> is zero then storage will be empty but valid.
+ * Resizes existing QPSK soft symbol data storage.
  */
-bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length) {
+bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, size_t new_length) {
     /* We accept only valid handles or simple empty handles */
     if (!handle || ((handle->len > 0) && !handle->s))
         return false;
@@ -375,7 +388,7 @@ bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length) {
         handle->s = NULL;
     }
     else {
-        int8_t *new_s = (int8_t *)reallocarray(handle->s, new_length, sizeof(int8_t));
+        int8_t *new_s = reallocarray(handle->s, new_length, sizeof(int8_t));
 
         if (!new_s)
             return false;
@@ -387,3 +400,7 @@ bool lrpt_qpsk_data_resize(lrpt_qpsk_data_t *handle, const size_t new_length) {
 
     return true;
 }
+
+/*************************************************************************************************/
+
+/** \endcond */
