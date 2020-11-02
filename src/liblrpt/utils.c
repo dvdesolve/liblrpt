@@ -1,0 +1,407 @@
+/*
+ * This file is part of liblrpt.
+ *
+ * liblrpt is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * liblrpt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with liblrpt. If not, see https://www.gnu.org/licenses/
+ *
+ * NOTE: source code of this module is based on xdemorse application and adapted for liblrpt
+ * internal use!
+ */
+
+/** \cond INTERNAL_API_DOCS */
+
+/** \file
+ *
+ * Different library utils.
+ *
+ * This source file contains routines for performing different library utils.
+ */
+
+/*************************************************************************************************/
+
+#include "utils.h"
+
+#include <errno.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+/*************************************************************************************************/
+
+/** Tells where we're running on Big Endian system.
+ *
+ * \return true if environment is Big Endian and false in case of Little Endian.
+ */
+static inline bool is_be(void);
+
+/*************************************************************************************************/
+
+static inline bool is_be(void) {
+    const int i = 1;
+
+    return ((*(char *)&i) == 0);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_uint16_t()
+ *
+ * Serializes uint16_t value to Big Endian representation.
+ */
+void lrpt_utils_s_uint16_t(uint16_t x, unsigned char *v) {
+    union {
+        uint16_t ui;
+        unsigned char uc[2];
+    } t;
+
+    t.ui = x;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 2; i++)
+            v[i] = t.uc[i];
+    }
+    else {
+        for (size_t i = 0; i < 2; i++)
+            v[i] = t.uc[1 - i];
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_uint16_t()
+ *
+ * Deserializes Big Endian representation to the uint16_t value.
+ */
+uint16_t lrpt_utils_ds_uint16_t(const unsigned char *x) {
+    union {
+        uint16_t ui;
+        unsigned char uc[2];
+    } t;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 2; i++)
+            t.uc[i] = x[i];
+    }
+    else {
+        for (size_t i = 0; i < 2; i++)
+            t.uc[i] = x[1 - i];
+    }
+
+    return t.ui;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_int16_t()
+ *
+ * Serializes int16_t value to Big Endian representation.
+ */
+void lrpt_utils_s_int16_t(int16_t x, unsigned char *v) {
+    union {
+        int16_t si;
+        unsigned char uc[2];
+    } t;
+
+    t.si = x;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 2; i++)
+            v[i] = t.uc[i];
+    }
+    else {
+        for (size_t i = 0; i < 2; i++)
+            v[i] = t.uc[1 - i];
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_int16_t()
+ *
+ * Deserializes Big Endian representation to the int16_t value.
+ */
+int16_t lrpt_utils_ds_int16_t(const unsigned char *x) {
+    union {
+        int16_t si;
+        unsigned char uc[2];
+    } t;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 2; i++)
+            t.uc[i] = x[i];
+    }
+    else {
+        for (size_t i = 0; i < 2; i++)
+            t.uc[i] = x[1 - i];
+    }
+
+    return t.si;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_uint32_t()
+ *
+ * Serializes uint32_t value to Big Endian representation.
+ */
+void lrpt_utils_s_uint32_t(uint32_t x, unsigned char *v) {
+    union {
+        uint32_t ui;
+        unsigned char uc[4];
+    } t;
+
+    t.ui = x;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 4; i++)
+            v[i] = t.uc[i];
+    }
+    else {
+        for (size_t i = 0; i < 4; i++)
+            v[i] = t.uc[3 - i];
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_uint32_t()
+ *
+ * Deserializes Big Endian representation to the uint32_t value.
+ */
+uint32_t lrpt_utils_ds_uint32_t(const unsigned char *x) {
+    union {
+        uint32_t ui;
+        unsigned char uc[4];
+    } t;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 4; i++)
+            t.uc[i] = x[i];
+    }
+    else {
+        for (size_t i = 0; i < 4; i++)
+            t.uc[i] = x[3 - i];
+    }
+
+    return t.ui;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_int32_t()
+ *
+ * Serializes int32_t value to Big Endian representation.
+ */
+void lrpt_utils_s_int32_t(int32_t x, unsigned char *v) {
+    union {
+        int32_t si;
+        unsigned char uc[4];
+    } t;
+
+    t.si = x;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 4; i++)
+            v[i] = t.uc[i];
+    }
+    else {
+        for (size_t i = 0; i < 4; i++)
+            v[i] = t.uc[3 - i];
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_int32_t()
+ *
+ * Deserializes Big Endian representation to the int32_t value.
+ */
+int32_t lrpt_utils_ds_int32_t(const unsigned char *x) {
+    union {
+        int32_t si;
+        unsigned char uc[4];
+    } t;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 4; i++)
+            t.uc[i] = x[i];
+    }
+    else {
+        for (size_t i = 0; i < 4; i++)
+            t.uc[i] = x[3 - i];
+    }
+
+    return t.si;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_uint64_t()
+ *
+ * Serializes uint64_t value to Big Endian representation.
+ */
+void lrpt_utils_s_uint64_t(uint64_t x, unsigned char *v) {
+    union {
+        uint64_t ui;
+        unsigned char uc[8];
+    } t;
+
+    t.ui = x;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 8; i++)
+            v[i] = t.uc[i];
+    }
+    else {
+        for (size_t i = 0; i < 8; i++)
+            v[i] = t.uc[7 - i];
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_uint64_t()
+ *
+ * Deserializes Big Endian representation to the uint64_t value.
+ */
+uint64_t lrpt_utils_ds_uint64_t(const unsigned char *x) {
+    union {
+        uint64_t ui;
+        unsigned char uc[8];
+    } t;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 8; i++)
+            t.uc[i] = x[i];
+    }
+    else {
+        for (size_t i = 0; i < 8; i++)
+            t.uc[i] = x[7 - i];
+    }
+
+    return t.ui;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_int64_t()
+ *
+ * Serializes int64_t value to Big Endian representation.
+ */
+void lrpt_utils_s_int64_t(int64_t x, unsigned char *v) {
+    union {
+        int64_t si;
+        unsigned char uc[8];
+    } t;
+
+    t.si = x;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 8; i++)
+            v[i] = t.uc[i];
+    }
+    else {
+        for (size_t i = 0; i < 8; i++)
+            v[i] = t.uc[7 - i];
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_int64_t()
+ *
+ * Deserializes Big Endian representation to the int64_t value.
+ */
+int64_t lrpt_utils_ds_int64_t(const unsigned char *x) {
+    union {
+        int64_t si;
+        unsigned char uc[8];
+    } t;
+
+    if (is_be()) {
+        for (size_t i = 0; i < 8; i++)
+            t.uc[i] = x[i];
+    }
+    else {
+        for (size_t i = 0; i < 8; i++)
+            t.uc[i] = x[7 - i];
+    }
+
+    return t.si;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_double()
+ *
+ * Serializes double value to Big Endian portable representation.
+ */
+bool lrpt_utils_s_double(double x, unsigned char *v) {
+    /* 2^53 - we must make use of every bit */
+    const int64_t c_2to53 = 9007199254740992;
+
+    if (isnan(x) || isinf(x))
+        return false;
+
+    int e;
+    double m = frexp(x, &e);
+
+    unsigned char ex[2];
+    unsigned char mant[8];
+
+    lrpt_utils_s_int16_t((int16_t)e, ex);
+    lrpt_utils_s_int64_t((int64_t)(c_2to53 * m), mant);
+
+    memcpy(v, ex, 2);
+    memcpy(v + 2, mant, 8);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_double()
+ *
+ * Deserializes Big Endian portable representation to the double value.
+ */
+bool lrpt_utils_ds_double(const unsigned char *x, double *v) {
+    /* 2^53 - we must make use of every bit */
+    const int64_t c_2to53 = 9007199254740992;
+
+    unsigned char ex[2];
+    unsigned char mant[8];
+
+    memcpy(ex, x, 2);
+    memcpy(mant, x + 2, 8);
+
+    int16_t e = lrpt_utils_ds_int16_t(ex);
+    double m = (double)lrpt_utils_ds_int64_t(mant) / c_2to53;
+
+    if (isnan(m) || isinf(m))
+        return false;
+
+    double t = ldexp(m, (int)e);
+
+    if (errno == ERANGE)
+        return false;
+    else {
+        *v = t;
+        return true;
+    }
+}
+
+/*************************************************************************************************/
+
+/** \endcond */

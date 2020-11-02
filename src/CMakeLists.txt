@@ -23,6 +23,7 @@ set(lrpt_SOURCES
     demodulator/utils.c
     liblrpt/dsp.c
     liblrpt/lrpt.c
+    liblrpt/utils.c
 )
 
 set(lrpt_HEADERS
@@ -34,6 +35,7 @@ set(lrpt_HEADERS
     demodulator/utils.h
     liblrpt/dsp.h
     liblrpt/lrpt.h
+    liblrpt/utils.h
 )
 
 

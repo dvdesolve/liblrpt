@@ -33,5 +33,4 @@ SORT_MEMBER_DOCS        = NO
 HTML_TIMESTAMP          = YES
 
 GENERATE_LATEX          = NO
-
-GENERATE_MAN            = YES
+GENERATE_MAN            = NO

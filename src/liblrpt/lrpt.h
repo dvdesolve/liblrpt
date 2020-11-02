@@ -44,7 +44,7 @@
 
 /*************************************************************************************************/
 
-/** Storage for single raw I/Q pair */
+/** Storage type for single I/Q pair */
 struct lrpt_iq_raw__ {
     double i; /**< I sample value */
     double q; /**< Q sample value */

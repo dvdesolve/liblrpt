@@ -82,7 +82,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
 
         # actually install documentation
         install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR})
-        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/man/ DESTINATION ${CMAKE_INSTALL_MANDIR})
     else (DOXYGEN_FOUND)
         message(WARNING "Doxygen need to be installed to generate documentation")
     endif (DOXYGEN_FOUND)

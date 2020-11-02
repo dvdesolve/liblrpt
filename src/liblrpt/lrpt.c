@@ -44,12 +44,13 @@
  * warning will be given during compilation
  */
 #ifndef __STDC_IEC_559__
-#pragma message ("Your compiler doesn't define __STDC_IEC_559__ macro. Support for IEEE 754 floats and doubles may be unavailable or limited!")
+#pragma message ("Your compiler doesn't define __STDC_IEC_559__ macro!")
+#pragma message ("Support for IEEE 754 floats and doubles may be unavailable or limited!")
 #endif
 
 /*************************************************************************************************/
 
-/** Number of I/Q samples pairs written to file per once */
+/** Number of I/Q samples pairs to be written to file per once */
 static const size_t LRPT_IQ_DATA_WRITE_N = 1024;
 
 /*************************************************************************************************/
@@ -226,7 +227,7 @@ bool lrpt_iq_data_save_to_file(lrpt_iq_data_t *handle, const char *fname) {
 
 /* lrpt_iq_data_load_from_doubles()
  *
- * Transforms separate arrays of double-typed I/Q samples into library format.
+ * Merges separate arrays of double-typed I/Q samples into library format.
  */
 bool lrpt_iq_data_load_from_doubles(
         lrpt_iq_data_t *handle,
@@ -277,7 +278,7 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
 
 /* lrpt_iq_data_load_from_samples()
  *
- * Transforms array of raw I/Q samples into library format.
+ * Converts array of raw I/Q samples into library format.
  */
 bool lrpt_iq_data_load_from_samples(
         lrpt_iq_data_t *handle,

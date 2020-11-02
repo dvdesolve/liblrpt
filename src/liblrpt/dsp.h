@@ -38,9 +38,9 @@
 
 /** Available DSP filter types */
 typedef enum lrpt_dsp_filter_type__ {
-    LRPT_DSP_FILTER_TYPE_LOWPASS,   /**< Lowpass filter */
-    LRPT_DSP_FILTER_TYPE_HIGHPASS,  /**< Highpass filter */
-    LRPT_DSP_FILTER_TYPE_BANDPASS   /**< Bandpass filter */
+    LRPT_DSP_FILTER_TYPE_LOWPASS,  /**< Lowpass filter */
+    LRPT_DSP_FILTER_TYPE_HIGHPASS, /**< Highpass filter */
+    LRPT_DSP_FILTER_TYPE_BANDPASS  /**< Bandpass filter */
 } lrpt_dsp_filter_type_t;
 
 /** DSP filter object */
@@ -81,7 +81,7 @@ typedef struct lrpt_dsp_filter__ {
  * \param num_poles Number of filter poles.
  * \param type Filter type.
  *
- * \return Chebyshev filter object or NULL in case of error.
+ * \return Pointer to the Chebyshev filter object or NULL in case of error.
  */
 lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         lrpt_iq_data_t *iq_data,
@@ -93,13 +93,13 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
 /** Frees allocated Chebyshev filter.
  *
- * \param handle Filter object.
+ * \param handle Pointer to the Chebyshev filter object.
  */
 void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle);
 
 /** Applies recursive Chebyshev filter to the raw I/Q data.
  *
- * \param handle Filter object.
+ * \param handle Pointer to the Chebyshev filter object.
  *
  * \return false if \p handle is empty and true otherwise.
  */
