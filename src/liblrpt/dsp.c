@@ -43,10 +43,7 @@
 
 /*************************************************************************************************/
 
-/* lrpt_dsp_filter_init()
- *
- * Initializes recursive Chebyshev filter.
- */
+/* lrpt_dsp_filter_init() */
 lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         lrpt_iq_data_t *iq_data, /* TODO isn't necessary here, should be in apply() instead */
         uint32_t bandwidth,
@@ -225,11 +222,9 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
 /*************************************************************************************************/
 
-/* lrpt_dsp_filter_deinit()
- *
- * Frees allocated Chebyshev filter.
- */
-void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle) {
+/* lrpt_dsp_filter_deinit() */
+void lrpt_dsp_filter_deinit(
+        lrpt_dsp_filter_t *handle) {
     if (!handle)
         return;
 
@@ -242,11 +237,9 @@ void lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *handle) {
 
 /*************************************************************************************************/
 
-/* lrpt_dsp_filter_apply()
- *
- * Applies recursive Chebyshev filter to the raw I/Q data.
- */
-bool lrpt_dsp_filter_apply(lrpt_dsp_filter_t *handle) {
+/* lrpt_dsp_filter_apply() */
+bool lrpt_dsp_filter_apply(
+        lrpt_dsp_filter_t *handle) {
     /* Return immediately if handle is empty */
     if (!handle)
         return false;

@@ -45,11 +45,9 @@ const double AGC_BIAS_WINSIZE_1 = AGC_BIAS_WINSIZE - 1.0;
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_agc_init()
- *
- * Allocates and initializes AGC object.
- */
-lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(double target) {
+/* lrpt_demodulator_agc_init() */
+lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(
+        double target) {
     /* Try to allocate our handle */
     lrpt_demodulator_agc_t *handle = malloc(sizeof(lrpt_demodulator_agc_t));
 
@@ -67,21 +65,18 @@ lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(double target) {
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_agc_deinit()
- *
- * Frees allocated AGC object.
- */
-void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle) {
+/* lrpt_demodulator_agc_deinit() */
+void lrpt_demodulator_agc_deinit(
+        lrpt_demodulator_agc_t *handle) {
     free(handle);
 }
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_agc_apply()
- *
- * Applies gain to the sample.
- */
-complex double lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *handle, complex double sample) {
+/* lrpt_demodulator_agc_apply() */
+complex double lrpt_demodulator_agc_apply(
+        lrpt_demodulator_agc_t *handle,
+        complex double sample) {
     /* Sliding window average */
     handle->bias *= AGC_BIAS_WINSIZE_1;
     handle->bias += sample;

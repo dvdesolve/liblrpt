@@ -30,7 +30,6 @@
 #include "demod.h"
 
 #include "../../include/lrpt.h"
-#include "../liblrpt/dsp.h"
 #include "../liblrpt/lrpt.h"
 #include "agc.h"
 #include "pll.h"
@@ -61,15 +60,53 @@ const uint8_t DEMOD_DSP_FILTER_NUMPOLES = 6;
  *
  * \return Value clamped to the int8_t range (typically [-128; 127]).
  */
-static inline int8_t lrpt_demodulator_clamp_int8(double x);
+static inline int8_t clamp_int8(
+        double x);
+
+/** Performs plain QPSK demodulation.
+ *
+ * \param handle Demodulator object.
+ * \param fdata I/Q sample.
+ * \param[out] buffer Output buffer.
+ *
+ * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
+ */
+static bool demod_qpsk(
+        lrpt_demodulator_t *handle,
+        complex double fdata,
+        int8_t *buffer);
+
+/** Performs differential offset QPSK demodulation.
+ *
+ * \param handle Demodulator object.
+ * \param fdata I/Q sample.
+ * \param[out] buffer Output buffer.
+ *
+ * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
+ */
+static bool demod_doqpsk(
+        lrpt_demodulator_t *handle,
+        complex double fdata,
+        int8_t *buffer);
+
+/** Performs interleaved differential offset QPSK demodulation.
+ *
+ * \param handle Demodulator object.
+ * \param fdata I/Q sample.
+ * \param[out] buffer Output buffer.
+ *
+ * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
+ */
+static bool demod_idoqpsk(
+        lrpt_demodulator_t *handle,
+        complex double fdata,
+        int8_t *buffer);
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_clamp_int8()
- *
- * Clamps double value to the int8_t range.
- */
-static inline int8_t lrpt_demodulator_clamp_int8(double x) {
+/* clamp_int8() */
+static inline int8_t clamp_int8(
+        double x) {
     if (x < -128.0)
         return -128;
     else if (x > 127.0)
@@ -84,16 +121,8 @@ static inline int8_t lrpt_demodulator_clamp_int8(double x) {
 
 /*************************************************************************************************/
 
-/* TODO add declaration at the top */
-/** Performs plain QPSK demodulation.
- *
- * \param handle Demodulator object.
- * \param fdata I/Q sample.
- * \param[out] buffer Output buffer.
- *
- * \return true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and false otherwise.
- */
-static bool lrpt_demodulator_demod_qpsk(
+/* demod_qpsk() */
+static bool demod_qpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer) {
@@ -127,8 +156,8 @@ static bool lrpt_demodulator_demod_qpsk(
         /* Save result in buffer */
         /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
         /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
-        buffer[(handle->buf_idx)++] = lrpt_demodulator_clamp_int8(creal(handle->current) / 2.0);
-        buffer[(handle->buf_idx)++] = lrpt_demodulator_clamp_int8(cimag(handle->current) / 2.0);
+        buffer[(handle->buf_idx)++] = clamp_int8(creal(handle->current) / 2.0);
+        buffer[(handle->buf_idx)++] = clamp_int8(cimag(handle->current) / 2.0);
 
         /* If we've reached frame length reset buffer index and signal caller with true */
         if (handle->buf_idx >= LRPT_SOFT_FRAME_LEN) {
@@ -147,16 +176,8 @@ static bool lrpt_demodulator_demod_qpsk(
 
 /*************************************************************************************************/
 
-/* TODO add declaration at the top */
-/** Performs differential offset QPSK demodulation.
- *
- * \param handle Demodulator object.
- * \param fdata I/Q sample.
- * \param[out] buffer Output buffer.
- *
- * \return true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and false otherwise.
- */
-static bool lrpt_demodulator_demod_doqpsk(
+/* demod_doqpsk() */
+static bool demod_doqpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer) {
@@ -165,16 +186,8 @@ static bool lrpt_demodulator_demod_doqpsk(
 
 /*************************************************************************************************/
 
-/* TODO add declaration at the top */
-/** Performs interleaved differential offset QPSK demodulation.
- *
- * \param handle Demodulator object.
- * \param fdata I/Q sample.
- * \param[out] buffer Output buffer.
- *
- * \return true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and false otherwise.
- */
-static bool lrpt_demodulator_demod_idoqpsk(
+/* demod_idoqpsk() */
+static bool demod_idoqpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer) {
@@ -183,10 +196,7 @@ static bool lrpt_demodulator_demod_idoqpsk(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_init()
- *
- * Allocates and initializes demodulator object.
- */
+/* lrpt_demodulator_init() */
 lrpt_demodulator_t *lrpt_demodulator_init(
         lrpt_demodulator_mode_t mode,
         double costas_bandwidth,
@@ -246,7 +256,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     switch (mode) {
         case LRPT_DEMODULATOR_MODE_QPSK:
             handle->lut_isqrt = NULL;
-            handle->demod_func = lrpt_demodulator_demod_qpsk;
+            handle->demod_func = demod_qpsk;
 
             break;
 
@@ -257,7 +267,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
                 return NULL;
             }
 
-            handle->demod_func = lrpt_demodulator_demod_doqpsk;
+            handle->demod_func = demod_doqpsk;
 
             break;
 
@@ -268,7 +278,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
                 return NULL;
             }
 
-            handle->demod_func = lrpt_demodulator_demod_idoqpsk;
+            handle->demod_func = demod_idoqpsk;
 
             break;
 
@@ -293,11 +303,9 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_deinit()
- *
- * Frees previously allocated demodulator object.
- */
-void lrpt_demodulator_deinit(lrpt_demodulator_t *handle) {
+/* lrpt_demodulator_deinit() */
+void lrpt_demodulator_deinit(
+        lrpt_demodulator_t *handle) {
     if (!handle)
         return;
 
@@ -310,10 +318,7 @@ void lrpt_demodulator_deinit(lrpt_demodulator_t *handle) {
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_exec()
- *
- * Performs QPSK demodulation.
- */
+/* lrpt_demodulator_exec() */
 bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
         lrpt_iq_data_t *input,

@@ -68,7 +68,9 @@ const double FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
  *
  * \return Value clamped to the range [-\p max; \p max].
  */
-static inline double lrpt_demodulator_pll_clamp_double(double x, double max);
+static inline double clamp_double(
+        double x,
+        double max);
 
 /** Returns tanh() for given value.
  *
@@ -77,7 +79,9 @@ static inline double lrpt_demodulator_pll_clamp_double(double x, double max);
  *
  * \return tanh() value.
  */
-static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], double value);
+static inline double lut_tanh(
+        const double lut[],
+        double value);
 
 /** (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
  * parameters and updates/sets them in the PLL object.
@@ -86,18 +90,17 @@ static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], double va
  * \param damping Damping factor.
  * \param bandwidth Costas' PLL bandwidth.
  */
-static void lrpt_demodulator_pll_recompute_coeffs(
+static void recompute_coeffs(
         lrpt_demodulator_pll_t *handle,
         double damping,
         double bandwidth);
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_clamp_double()
- *
- * Clamps a double value to the range [-max; max].
- */
-static inline double lrpt_demodulator_pll_clamp_double(double x, double max) {
+/* clamp_double() */
+static inline double clamp_double(
+        double x,
+        double max) {
     if (x > max)
         return max;
     else if (x < -max)
@@ -108,11 +111,10 @@ static inline double lrpt_demodulator_pll_clamp_double(double x, double max) {
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_lut_tanh()
- *
- * Returns tanh() for given value.
- */
-static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], double value) {
+/* lut_tanh() */
+static inline double lut_tanh(
+        const double lut[],
+        double value) {
     int16_t ival = (int16_t)value;
 
     if (ival > 127)
@@ -125,12 +127,8 @@ static inline double lrpt_demodulator_pll_lut_tanh(const double lut[], double va
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_recompute_coeffs()
- *
- * (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
- * parameters and updates/sets them in the PLL object.
- */
-static void lrpt_demodulator_pll_recompute_coeffs(
+/* recompute_coeffs() */
+static void recompute_coeffs(
         lrpt_demodulator_pll_t *handle,
         double damping,
         double bandwidth) {
@@ -143,10 +141,7 @@ static void lrpt_demodulator_pll_recompute_coeffs(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_init()
- *
- * Allocates and initializes PLL object.
- */
+/* lrpt_demodulator_pll_init() */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
         double threshold,
@@ -165,7 +160,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     handle->nco_freq = PLL_INIT_FREQ;
     handle->nco_phase = 0.0;
 
-    lrpt_demodulator_pll_recompute_coeffs(handle, PLL_DAMPING, bandwidth);
+    recompute_coeffs(handle, PLL_DAMPING, bandwidth);
     handle->damping = PLL_DAMPING;
     handle->bw = bandwidth;
 
@@ -217,20 +212,15 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_deinit()
- *
- * Frees previously allocated PLL object.
- */
-void lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *handle) {
+/* lrpt_demodulator_pll_deinit() */
+void lrpt_demodulator_pll_deinit(
+        lrpt_demodulator_pll_t *handle) {
     free(handle);
 }
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_mix()
- *
- * Performs mixing of a sample with PLL NCO frequency.
- */
+/* lrpt_demodulator_pll_mix() */
 complex double lrpt_demodulator_pll_mix(
         lrpt_demodulator_pll_t *handle,
         complex double sample) {
@@ -245,10 +235,7 @@ complex double lrpt_demodulator_pll_mix(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_delta()
- *
- * Computes the delta phase value to use when correcting the NCO frequency.
- */
+/* lrpt_demodulator_pll_delta() */
 double lrpt_demodulator_pll_delta(
         const lrpt_demodulator_pll_t *handle,
         complex double sample,
@@ -256,8 +243,8 @@ double lrpt_demodulator_pll_delta(
     double error;
 
     error =
-        (lrpt_demodulator_pll_lut_tanh(handle->lut_tanh, creal(sample)) * cimag(sample)) -
-        (lrpt_demodulator_pll_lut_tanh(handle->lut_tanh, cimag(cosample)) * creal(cosample));
+        (lut_tanh(handle->lut_tanh, creal(sample)) * cimag(sample)) -
+        (lut_tanh(handle->lut_tanh, cimag(cosample)) * creal(cosample));
     error /= handle->err_scale;
 
     return error;
@@ -265,15 +252,12 @@ double lrpt_demodulator_pll_delta(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_pll_correct_phase()
- *
- * Corrects the phase angle of the Costas' PLL.
- */
+/* lrpt_demodulator_pll_correct_phase() */
 void lrpt_demodulator_pll_correct_phase(
         lrpt_demodulator_pll_t *handle,
         double error,
         uint8_t interp_factor) {
-    error = lrpt_demodulator_pll_clamp_double(error, 1.0);
+    error = clamp_double(error, 1.0);
 
     handle->moving_average *= handle->avg_winsize_1;
     handle->moving_average += fabs(error);
@@ -293,7 +277,7 @@ void lrpt_demodulator_pll_correct_phase(
 
     /* Detect whether the PLL is locked, and decrease the bandwidth if it is */
     if (!handle->locked && (handle->moving_average < handle->pll_locked)) {
-        lrpt_demodulator_pll_recompute_coeffs(
+        recompute_coeffs(
                 handle,
                 handle->damping,
                 handle->bw / PLL_LOCKED_BW_REDUCE);
@@ -305,7 +289,7 @@ void lrpt_demodulator_pll_correct_phase(
         /* TODO we can report PLL lock here */
     }
     else if (handle->locked && (handle->moving_average > handle->pll_unlocked)) {
-        lrpt_demodulator_pll_recompute_coeffs(
+        recompute_coeffs(
                 handle,
                 handle->damping,
                 handle->bw);

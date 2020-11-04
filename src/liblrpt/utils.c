@@ -42,7 +42,7 @@
 
 /** Tells where we're running on Big Endian system.
  *
- * \return true if environment is Big Endian and false in case of Little Endian.
+ * \return \c true if environment is Big Endian and \c false in case of Little Endian.
  */
 static inline bool is_be(void);
 
@@ -56,11 +56,10 @@ static inline bool is_be(void) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_uint16_t()
- *
- * Serializes uint16_t value to Big Endian representation.
- */
-void lrpt_utils_s_uint16_t(uint16_t x, unsigned char *v) {
+/* lrpt_utils_s_uint16_t() */
+void lrpt_utils_s_uint16_t(
+        uint16_t x,
+        unsigned char *v) {
     union {
         uint16_t ui;
         unsigned char uc[2];
@@ -80,11 +79,9 @@ void lrpt_utils_s_uint16_t(uint16_t x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_uint16_t()
- *
- * Deserializes Big Endian representation to the uint16_t value.
- */
-uint16_t lrpt_utils_ds_uint16_t(const unsigned char *x) {
+/* lrpt_utils_ds_uint16_t() */
+uint16_t lrpt_utils_ds_uint16_t(
+        const unsigned char *x) {
     union {
         uint16_t ui;
         unsigned char uc[2];
@@ -104,11 +101,10 @@ uint16_t lrpt_utils_ds_uint16_t(const unsigned char *x) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_int16_t()
- *
- * Serializes int16_t value to Big Endian representation.
- */
-void lrpt_utils_s_int16_t(int16_t x, unsigned char *v) {
+/* lrpt_utils_s_int16_t() */
+void lrpt_utils_s_int16_t(
+        int16_t x,
+        unsigned char *v) {
     union {
         int16_t si;
         unsigned char uc[2];
@@ -128,11 +124,9 @@ void lrpt_utils_s_int16_t(int16_t x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_int16_t()
- *
- * Deserializes Big Endian representation to the int16_t value.
- */
-int16_t lrpt_utils_ds_int16_t(const unsigned char *x) {
+/* lrpt_utils_ds_int16_t() */
+int16_t lrpt_utils_ds_int16_t(
+        const unsigned char *x) {
     union {
         int16_t si;
         unsigned char uc[2];
@@ -152,11 +146,10 @@ int16_t lrpt_utils_ds_int16_t(const unsigned char *x) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_uint32_t()
- *
- * Serializes uint32_t value to Big Endian representation.
- */
-void lrpt_utils_s_uint32_t(uint32_t x, unsigned char *v) {
+/* lrpt_utils_s_uint32_t() */
+void lrpt_utils_s_uint32_t(
+        uint32_t x,
+        unsigned char *v) {
     union {
         uint32_t ui;
         unsigned char uc[4];
@@ -176,11 +169,9 @@ void lrpt_utils_s_uint32_t(uint32_t x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_uint32_t()
- *
- * Deserializes Big Endian representation to the uint32_t value.
- */
-uint32_t lrpt_utils_ds_uint32_t(const unsigned char *x) {
+/* lrpt_utils_ds_uint32_t() */
+uint32_t lrpt_utils_ds_uint32_t(
+        const unsigned char *x) {
     union {
         uint32_t ui;
         unsigned char uc[4];
@@ -200,11 +191,10 @@ uint32_t lrpt_utils_ds_uint32_t(const unsigned char *x) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_int32_t()
- *
- * Serializes int32_t value to Big Endian representation.
- */
-void lrpt_utils_s_int32_t(int32_t x, unsigned char *v) {
+/* lrpt_utils_s_int32_t() */
+void lrpt_utils_s_int32_t(
+        int32_t x,
+        unsigned char *v) {
     union {
         int32_t si;
         unsigned char uc[4];
@@ -224,11 +214,9 @@ void lrpt_utils_s_int32_t(int32_t x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_int32_t()
- *
- * Deserializes Big Endian representation to the int32_t value.
- */
-int32_t lrpt_utils_ds_int32_t(const unsigned char *x) {
+/* lrpt_utils_ds_int32_t() */
+int32_t lrpt_utils_ds_int32_t(
+        const unsigned char *x) {
     union {
         int32_t si;
         unsigned char uc[4];
@@ -248,11 +236,10 @@ int32_t lrpt_utils_ds_int32_t(const unsigned char *x) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_uint64_t()
- *
- * Serializes uint64_t value to Big Endian representation.
- */
-void lrpt_utils_s_uint64_t(uint64_t x, unsigned char *v) {
+/* lrpt_utils_s_uint64_t() */
+void lrpt_utils_s_uint64_t(
+        uint64_t x,
+        unsigned char *v) {
     union {
         uint64_t ui;
         unsigned char uc[8];
@@ -272,11 +259,9 @@ void lrpt_utils_s_uint64_t(uint64_t x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_uint64_t()
- *
- * Deserializes Big Endian representation to the uint64_t value.
- */
-uint64_t lrpt_utils_ds_uint64_t(const unsigned char *x) {
+/* lrpt_utils_ds_uint64_t() */
+uint64_t lrpt_utils_ds_uint64_t(
+        const unsigned char *x) {
     union {
         uint64_t ui;
         unsigned char uc[8];
@@ -296,11 +281,10 @@ uint64_t lrpt_utils_ds_uint64_t(const unsigned char *x) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_int64_t()
- *
- * Serializes int64_t value to Big Endian representation.
- */
-void lrpt_utils_s_int64_t(int64_t x, unsigned char *v) {
+/* lrpt_utils_s_int64_t() */
+void lrpt_utils_s_int64_t(
+        int64_t x,
+        unsigned char *v) {
     union {
         int64_t si;
         unsigned char uc[8];
@@ -320,11 +304,9 @@ void lrpt_utils_s_int64_t(int64_t x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_int64_t()
- *
- * Deserializes Big Endian representation to the int64_t value.
- */
-int64_t lrpt_utils_ds_int64_t(const unsigned char *x) {
+/* lrpt_utils_ds_int64_t() */
+int64_t lrpt_utils_ds_int64_t(
+        const unsigned char *x) {
     union {
         int64_t si;
         unsigned char uc[8];
@@ -344,11 +326,10 @@ int64_t lrpt_utils_ds_int64_t(const unsigned char *x) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_s_double()
- *
- * Serializes double value to Big Endian portable representation.
- */
-bool lrpt_utils_s_double(double x, unsigned char *v) {
+/* lrpt_utils_s_double() */
+bool lrpt_utils_s_double(
+        double x,
+        unsigned char *v) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
@@ -372,11 +353,10 @@ bool lrpt_utils_s_double(double x, unsigned char *v) {
 
 /*************************************************************************************************/
 
-/* lrpt_utils_ds_double()
- *
- * Deserializes Big Endian portable representation to the double value.
- */
-bool lrpt_utils_ds_double(const unsigned char *x, double *v) {
+/* lrpt_utils_ds_double() */
+bool lrpt_utils_ds_double(
+        const unsigned char *x,
+        double *v) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 

@@ -47,15 +47,17 @@ typedef struct lrpt_demodulator_agc__ {
  *
  * \param target Target gain value.
  *
- * \return AGC object or NULL in case of error.
+ * \return AGC object or \c NULL in case of error.
  */
-lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(double target);
+lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(
+        double target);
 
 /** Frees allocated AGC object.
  *
  * \param handle AGC object.
  */
-void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle);
+void lrpt_demodulator_agc_deinit(
+        lrpt_demodulator_agc_t *handle);
 
 /** Applies gain to the sample.
  *
@@ -64,7 +66,9 @@ void lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *handle);
  *
  * \return Sample with gain applied.
  */
-complex double lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *handle, complex double sample);
+complex double lrpt_demodulator_agc_apply(
+        lrpt_demodulator_agc_t *handle,
+        complex double sample);
 
 /*************************************************************************************************/
 

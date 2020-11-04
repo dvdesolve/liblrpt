@@ -44,8 +44,10 @@
  * \param alpha Filter alpha factor.
  *
  * \return Filter coefficient.
+ *
+ * \note Adapted from https://www.michael-joost.de/rrcfilter.pdf
  */
-static double lrpt_demodulator_rrc_coeff(
+static double rrc_coeff(
         uint16_t index,
         uint16_t taps,
         double osf,
@@ -53,13 +55,8 @@ static double lrpt_demodulator_rrc_coeff(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_rrc_coeff()
- *
- * Calculates RRC filter coefficients for variable alpha.
- *
- * Adapted from https://www.michael-joost.de/rrcfilter.pdf
- */
-static double lrpt_demodulator_rrc_coeff(
+/* lrpt_demodulator_rrc_coeff() */
+static double rrc_coeff(
         uint16_t index,
         uint16_t taps,
         double osf,
@@ -81,10 +78,7 @@ static double lrpt_demodulator_rrc_coeff(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_rrc_filter_init()
- *
- * Allocates and initializes RRC filter.
- */
+/* lrpt_demodulator_rrc_filter_init() */
 lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
         uint16_t order,
         uint8_t factor,
@@ -116,19 +110,16 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
 
     /* Compute filter coefficients */
     for (size_t i = 0; i < taps; i++)
-        handle->coeffs[i] =
-            lrpt_demodulator_rrc_coeff((uint16_t)i, taps, osf * (double)factor, alpha);
+        handle->coeffs[i] = rrc_coeff((uint16_t)i, taps, osf * (double)factor, alpha);
 
     return handle;
 }
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_rrc_filter_deinit()
- *
- * Frees previously allocated RRC filter object.
- */
-void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle) {
+/* lrpt_demodulator_rrc_filter_deinit() */
+void lrpt_demodulator_rrc_filter_deinit(
+        lrpt_demodulator_rrc_filter_t *handle) {
     if (!handle)
         return;
 
@@ -139,10 +130,7 @@ void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle) {
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_rrc_filter_apply()
- *
- * Applies RRC filter to the I/Q sample.
- */
+/* lrpt_demodulator_rrc_filter_apply() */
 complex double lrpt_demodulator_rrc_filter_apply(
         lrpt_demodulator_rrc_filter_t *handle,
         complex double value) {

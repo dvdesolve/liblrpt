@@ -36,11 +36,9 @@
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_lut_isqrt_init()
- *
- * Allocates and initializes lookup table for integer square roots.
- */
-bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut) {
+/* lrpt_demodulator_lut_isqrt_init() */
+bool lrpt_demodulator_lut_isqrt_init(
+        uint8_t *lut) {
     lut = calloc(16385, sizeof(uint8_t));
 
     if (!lut)
@@ -54,11 +52,9 @@ bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut) {
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_lut_isqrt_deinit()
- *
- * Frees previously allocated lookup table for integer square roots.
- */
-void lrpt_demodulator_lut_isqrt_deinit(uint8_t *lut) {
+/* lrpt_demodulator_lut_isqrt_deinit() */
+void lrpt_demodulator_lut_isqrt_deinit(
+        uint8_t *lut) {
     free(lut);
 }
 

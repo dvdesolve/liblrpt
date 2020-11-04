@@ -38,6 +38,7 @@
 typedef struct lrpt_demodulator_rrc_filter__ {
     complex double *memory; /**< Filter memory */
     int16_t idm; /**< Index for memory ring buffer */
+
     double *coeffs; /**< Filter coefficients */
     uint16_t count; /**< Number of filter coefficients */
 } lrpt_demodulator_rrc_filter_t;
@@ -63,7 +64,8 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
  *
  * \param handle RRC filter object.
  */
-void lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *handle);
+void lrpt_demodulator_rrc_filter_deinit(
+        lrpt_demodulator_rrc_filter_t *handle);
 
 /** Applies RRC filter to the I/Q sample.
  *

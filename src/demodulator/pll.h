@@ -79,7 +79,7 @@ typedef struct lrpt_demodulator_pll__ {
  * \param threshold Locking threshold.
  * \param mode QPSK demodulation mode.
  *
- * \return PLL object or NULL in case of error.
+ * \return PLL object or \c NULL in case of error.
  */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
@@ -90,7 +90,8 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
  *
  * \param handle PLL object.
  */
-void lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *handle);
+void lrpt_demodulator_pll_deinit(
+        lrpt_demodulator_pll_t *handle);
 
 /** Performs mixing of a sample with PLL NCO frequency.
  *

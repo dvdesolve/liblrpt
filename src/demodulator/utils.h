@@ -38,15 +38,17 @@
  *
  * \param[out] lut Lookup table for integer square roots.
  *
- * \return true on successfull allocation or false otherwise.
+ * \return \c true on successfull allocation or \c false otherwise.
  */
-bool lrpt_demodulator_lut_isqrt_init(uint8_t *lut);
+bool lrpt_demodulator_lut_isqrt_init(
+        uint8_t *lut);
 
 /** Frees previously allocated lookup table for integer square roots.
  *
  * \param lut Lookup table for integer square roots.
  */
-void lrpt_demodulator_lut_isqrt_deinit(uint8_t *lut);
+void lrpt_demodulator_lut_isqrt_deinit(
+        uint8_t *lut);
 
 /*************************************************************************************************/
 
