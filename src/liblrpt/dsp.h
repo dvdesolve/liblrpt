@@ -37,11 +37,7 @@
 
 /** DSP filter object */
 struct lrpt_dsp_filter__ {
-    double cutoff; /**< Cutoff frequency as a fraction of sample rate */
-    double ripple; /**< Passband ripple as a percentage */
-
     uint8_t npoles; /**< Number of poles, must be even. Max value is limited to the 252. */
-    lrpt_dsp_filter_type_t type; /**< Filter type */
 
     /** @{ */
     /** a and b coefficients of the filter */

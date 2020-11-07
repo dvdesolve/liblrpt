@@ -64,19 +64,14 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     handle->x_q = NULL;
     handle->y_q = NULL;
 
-    /* Initialize filter parameters */
-    handle->cutoff = (double)(bandwidth / 2) / sample_rate;
-    handle->ripple = ripple;
-
     /* Number of poles should be even and not greater than 252 to fit in uint8_t type */
-    if ((num_poles > 252) || ((num_poles % 2) == 1)) {
+    if ((num_poles > 252) || ((num_poles % 2) != 0)) {
         free(handle);
 
         return NULL;
     }
 
     handle->npoles = num_poles;
-    handle->type = type;
     handle->ri_i = 0;
     handle->ri_q = 0;
 
@@ -113,8 +108,9 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* S-domain to Z-domain conversion */
     const double t = 2.0 * tan(0.5);
 
-    /* Cutoff frequency */
-    const double w = LRPT_M_2PI * handle->cutoff;
+    /* Cutoff frequency (as a fraction of sample rate) */
+    /** \todo cast may be unnecessary here */
+    const double w = LRPT_M_2PI * ((double)(bandwidth / 2) / sample_rate);
 
     /* Low Pass to Low Pass or Low Pass to High Pass transform */
     double k;
