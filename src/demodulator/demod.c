@@ -49,9 +49,6 @@ const double DEMOD_RESYNC_SCALE_QPSK = 2000000.0;
 
 const double DEMOD_AGC_TARGET = 180.0;
 
-const double DEMOD_DSP_FILTER_RIPPLE = 5.0;
-const uint8_t DEMOD_DSP_FILTER_NUMPOLES = 6;
-
 /*************************************************************************************************/
 
 /** Clamps double value to the int8_t range.
@@ -331,29 +328,6 @@ bool lrpt_demodulator_exec(
     if (output->len < (2 * input->len))
         if (!lrpt_qpsk_data_resize(output, 2 * input->len))
             return false;
-
-    /* Prepare DSP filter */
-    /* TODO user should filter input samples by hand */
-    lrpt_dsp_filter_t *filter = lrpt_dsp_filter_init(
-            input, /* I/Q storage */
-            115000, /* Bandwidth of LRPT signal according to the config file */
-            ((double)1024000 / (double)2), /* Sample rate (RTLSDR uses 1024000 samples/sec and
-                                              decimation of 2
-                                            */
-            DEMOD_DSP_FILTER_RIPPLE,
-            DEMOD_DSP_FILTER_NUMPOLES,
-            LRPT_DSP_FILTER_TYPE_LOWPASS
-            );
-
-    if (!filter)
-        return false;
-
-    /* Try to apply our filter */
-    if (!lrpt_dsp_filter_apply(filter))
-        return false;
-
-    /* Free it ASAP */
-    lrpt_dsp_filter_deinit(filter);
 
     /* Allocate output buffer */
     /* TODO may be move inside demodulator object */

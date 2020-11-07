@@ -45,16 +45,11 @@
 
 /* lrpt_dsp_filter_init() */
 lrpt_dsp_filter_t *lrpt_dsp_filter_init(
-        lrpt_iq_data_t *iq_data, /* TODO isn't necessary here, should be in apply() instead */
         uint32_t bandwidth,
         double sample_rate,
         double ripple,
         uint8_t num_poles,
         lrpt_dsp_filter_type_t type) {
-    /* Return immediately if no I/Q data given */
-    if (!iq_data)
-        return NULL;
-
     /* Try to allocate our handle */
     lrpt_dsp_filter_t *handle = malloc(sizeof(lrpt_dsp_filter_t));
 
@@ -64,8 +59,10 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* NULL-init internal storage for safe deallocation */
     handle->a = NULL;
     handle->b = NULL;
-    handle->x = NULL;
-    handle->y = NULL;
+    handle->x_i = NULL;
+    handle->y_i = NULL;
+    handle->x_q = NULL;
+    handle->y_q = NULL;
 
     /* Initialize filter parameters */
     handle->cutoff = (double)(bandwidth / 2) / sample_rate;
@@ -80,8 +77,8 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
     handle->npoles = num_poles;
     handle->type = type;
-    handle->ring_idx = 0;
-    handle->iq_data = iq_data;
+    handle->ri_i = 0;
+    handle->ri_q = 0;
 
     /* Allocate data and coefficients arrays */
     size_t n = (size_t)(num_poles + 3);
@@ -94,11 +91,14 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* Allocate saved input and output arrays */
     n = (size_t)(num_poles + 1);
 
-    handle->x = calloc(n, sizeof(double));
-    handle->y = calloc(n, sizeof(double));
+    handle->x_i = calloc(n, sizeof(double));
+    handle->y_i = calloc(n, sizeof(double));
+    handle->x_q = calloc(n, sizeof(double));
+    handle->y_q = calloc(n, sizeof(double));
 
     /* Check for allocation problems */
-    if (!ta || !tb || !handle->a || !handle->b || !handle->x || !handle->y) {
+    if (!ta || !tb || !handle->a || !handle->b ||
+            !handle->x_i || !handle->y_i || !handle->x_q || !handle->y_q) {
         lrpt_dsp_filter_deinit(handle);
         free(ta);
         free(tb);
@@ -230,8 +230,10 @@ void lrpt_dsp_filter_deinit(
 
     free(handle->a);
     free(handle->b);
-    free(handle->x);
-    free(handle->y);
+    free(handle->x_i);
+    free(handle->y_i);
+    free(handle->x_q);
+    free(handle->y_q);
     free(handle);
 }
 
@@ -239,61 +241,70 @@ void lrpt_dsp_filter_deinit(
 
 /* lrpt_dsp_filter_apply() */
 bool lrpt_dsp_filter_apply(
-        lrpt_dsp_filter_t *handle) {
+        lrpt_dsp_filter_t *handle,
+        lrpt_iq_data_t *iq_data) {
     /* Return immediately if handle is empty */
     if (!handle)
         return false;
 
     /* For convenient access purposes */
     const uint8_t npp1 = handle->npoles + 1;
-    const size_t len = handle->iq_data->len;
-    lrpt_iq_raw_t * const samples = handle->iq_data->iq;
-
-    /* Explicitly zero x and y arrays on every filter run */
-    memset(handle->x, 0, sizeof(double) * npp1);
-    memset(handle->y, 0, sizeof(double) * npp1);
+    const size_t len = iq_data->len;
+    lrpt_iq_raw_t * const samples = iq_data->iq;
 
     /* I samples first, then Q */
     for (size_t k = 0; k < 2; k++) {
         /* Filter samples in the buffer */
         for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
-            double *sample;
+            double *cur_s;
+            double *cur_x;
+            double *cur_y;
+            uint8_t *cur_ri;
 
-            if (k == 0)
-                sample = &(samples[buf_idx].i);
-            else
-                sample = &(samples[buf_idx].q);
+            if (k == 0) {
+                cur_s = &(samples[buf_idx].i);
+                cur_x = handle->x_i;
+                cur_y = handle->y_i;
+                cur_ri = &(handle->ri_i);
+            }
+            else {
+                cur_s = &(samples[buf_idx].q);
+                cur_x = handle->x_q;
+                cur_y = handle->y_q;
+                cur_ri = &(handle->ri_q);
+            }
 
             /* Calculate and save filtered samples */
-            double yn0 = *sample * handle->a[0];
+            double yn0 = *cur_s * handle->a[0];
 
             for (uint8_t idx = 1; idx < npp1; idx++) {
-                /* Summate contribution of past input samples */
-                double y = handle->a[idx];
+                double y;
 
-                y   *= handle->x[handle->ring_idx];
+                /* Summate contribution of past input samples */
+                y = handle->a[idx];
+                y   *= cur_x[*cur_ri];
                 yn0 += y;
 
                 /* Summate contribution of past output samples */
                 y    = handle->b[idx];
-                y   *= handle->y[handle->ring_idx];
+                y   *= cur_y[*cur_ri];
                 yn0 += y;
 
                 /* Advance ring buffers index */
-                handle->ring_idx++;
+                (*cur_ri)++;
 
-                if (handle->ring_idx >= npp1)
-                    handle->ring_idx = 0;
+                if (*cur_ri >= npp1)
+                    *cur_ri = 0;
             }
 
             /* Save new yn0 output to y ring buffer */
-            handle->y[handle->ring_idx] = yn0;
+            cur_y[*cur_ri] = yn0;
 
             /* Save current input sample to x ring buffer */
-            handle->x[handle->ring_idx] = *sample;
+            cur_x[*cur_ri] = *cur_s;
 
             /* Return filtered samples */
-            *sample = yn0;
+            *cur_s = yn0;
         }
     }
 

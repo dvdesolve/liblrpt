@@ -33,6 +33,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /*************************************************************************************************/
 
@@ -54,6 +55,16 @@ struct lrpt_iq_raw__ {
 struct lrpt_iq_data__ {
     lrpt_iq_raw_t *iq; /**< Array of I/Q pairs */
     size_t len; /**< Total number of I/Q pairs */
+};
+
+/** Storage type for I/Q data file */
+struct lrpt_iq_file__ {
+    FILE *fhandle; /**< File object handle */
+    uint8_t version; /**< File format version */
+    uint32_t samplerate; /**< Sampling rate */
+    char *device_name; /**< Device name info */
+    uint64_t header_length; /**< Length of header data */
+    uint64_t data_length; /**< Number of I/Q samples in file */
 };
 
 /** Storage type for QPSK soft symbols data */

@@ -49,13 +49,14 @@ struct lrpt_dsp_filter__ {
     /** @} */
 
     /** @{ */
-    /** Saved input and output values */
-    double *x, *y;
+    /** Saved input and output values for both I and Q samples */
+    double *x_i, *y_i, *x_q, *y_q;
     /** @} */
 
-    uint8_t ring_idx; /**< Ring buffer index */
-
-    lrpt_iq_data_t *iq_data; /**< I/Q samples data */
+    /** @{ */
+    /** Ring buffer indices for both I and Q samples */
+    uint8_t ri_i, ri_q;
+    /** @} */
 };
 
 /*************************************************************************************************/
