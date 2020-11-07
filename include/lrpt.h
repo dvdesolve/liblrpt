@@ -158,61 +158,6 @@ LRPT_API bool lrpt_iq_data_resize(
         lrpt_iq_data_t *handle,
         size_t new_length);
 
-/** Open raw I/Q data file for reading.
- *
- * Opens and checks file with raw I/Q data. File format is described at \ref lrptiq section.
- * User should close file properly with #lrpt_iq_file_close() after use.
- *
- * \param fname Name of file with raw I/Q data.
- *
- * \return Pointer to the allocated I/Q data file object or \c NULL in case of error.
- */
-LRPT_API lrpt_iq_file_t *lrpt_iq_file_open(
-        const char *fname);
-
-/** Close previously opened file with raw I/Q data.
- *
- * \param handle Pointer to the I/Q data file object.
- */
-LRPT_API void lrpt_iq_file_close(
-        lrpt_iq_file_t *handle);
-
-/** File format version info.
- *
- * \param handle Pointer to the I/Q data file object.
- *
- * \return File version number info.
- */
-LRPT_API uint8_t lrpt_iq_file_version(
-        const lrpt_iq_file_t *handle);
-
-/** File sampling rate.
- *
- * \param handle Pointer to the I/Q data file object.
- *
- * \return Sampling rate at which file was created.
- */
-LRPT_API uint32_t lrpt_iq_file_samplerate(
-        const lrpt_iq_file_t *handle);
-
-/** Name of device used to write file.
- *
- * \param handle Pointer to the I/Q data file object.
- *
- * \return Pointer to the device name string.
- */
-LRPT_API const char *lrpt_iq_file_devicename(
-        const lrpt_iq_file_t *handle);
-
-/** Number of I/Q samples stored in file.
- *
- * \param handle Pointer to the I/Q data file object.
- *
- * \return Number of I/Q samples stored in file.
- */
-LRPT_API uint64_t lrpt_iq_file_length(
-        const lrpt_iq_file_t *handle);
-
 /** Read I/Q data from file.
  *
  * Reads \p length consecutive I/Q samples into I/Q storage \p data from data file \p file
@@ -336,6 +281,61 @@ LRPT_API bool lrpt_iq_data_from_samples(
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const lrpt_iq_raw_t *iq,
         size_t length);
+
+/** Open raw I/Q data file for reading.
+ *
+ * Opens and checks file with raw I/Q data. File format is described at \ref lrptiq section.
+ * User should close file properly with #lrpt_iq_file_close() after use.
+ *
+ * \param fname Name of file with raw I/Q data.
+ *
+ * \return Pointer to the allocated I/Q data file object or \c NULL in case of error.
+ */
+LRPT_API lrpt_iq_file_t *lrpt_iq_file_open(
+        const char *fname);
+
+/** Close previously opened file with raw I/Q data.
+ *
+ * \param handle Pointer to the I/Q data file object.
+ */
+LRPT_API void lrpt_iq_file_close(
+        lrpt_iq_file_t *handle);
+
+/** File format version info.
+ *
+ * \param handle Pointer to the I/Q data file object.
+ *
+ * \return File version number info.
+ */
+LRPT_API uint8_t lrpt_iq_file_version(
+        const lrpt_iq_file_t *handle);
+
+/** File sampling rate.
+ *
+ * \param handle Pointer to the I/Q data file object.
+ *
+ * \return Sampling rate at which file was created.
+ */
+LRPT_API uint32_t lrpt_iq_file_samplerate(
+        const lrpt_iq_file_t *handle);
+
+/** Name of device used to write file.
+ *
+ * \param handle Pointer to the I/Q data file object.
+ *
+ * \return Pointer to the device name string.
+ */
+LRPT_API const char *lrpt_iq_file_devicename(
+        const lrpt_iq_file_t *handle);
+
+/** Number of I/Q samples stored in file.
+ *
+ * \param handle Pointer to the I/Q data file object.
+ *
+ * \return Number of I/Q samples stored in file.
+ */
+LRPT_API uint64_t lrpt_iq_file_length(
+        const lrpt_iq_file_t *handle);
 
 /** Allocate QPSK soft symbol data storage object.
  *

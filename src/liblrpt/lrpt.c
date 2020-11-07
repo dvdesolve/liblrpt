@@ -140,160 +140,6 @@ bool lrpt_iq_data_resize(
 
 /*************************************************************************************************/
 
-/* lrpt_iq_file_open() */
-lrpt_iq_file_t *lrpt_iq_file_open(
-        const char *fname) {
-    FILE *fh = fopen(fname, "rb");
-
-    if (!fh)
-        return NULL;
-
-    /* Check file header information. Header should be 6-character string "lrptiq" */
-    char header[6];
-
-    if ((fread(header, sizeof(char), 6, fh) != 6) || strncmp(header, "lrptiq", 6) != 0) {
-        fclose(fh);
-
-        return NULL;
-    }
-
-    /* Read file format version info */
-    uint8_t ver;
-
-    if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
-        fclose(fh);
-
-        return NULL;
-    }
-
-    /* Read sample rate */
-    unsigned char sr_s[4];
-
-    if (fread(sr_s, sizeof(unsigned char), 4, fh) != 4) {
-        fclose(fh);
-
-        return NULL;
-    }
-
-    uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
-
-    /* Read in device name length */
-    uint8_t name_l;
-
-    if (fread(&name_l, sizeof(uint8_t), 1, fh) != 1) {
-        fclose(fh);
-
-        return NULL;
-    }
-
-    /* Read device name info */
-    char *name = NULL;
-
-    /* Allocate storage for device name only if it's presented in I/Q file */
-    if (name_l > 0) {
-        name = calloc(name_l + 1, sizeof(char));
-
-        if (!name || (fread(name, sizeof(char), name_l, fh) != name_l)) {
-            free(name);
-            fclose(fh);
-
-            return NULL;
-        }
-    }
-
-    /* Read data length */
-    unsigned char data_l_s[8];
-
-    if (fread(data_l_s, sizeof(unsigned char), 8, fh) != 8) {
-        free(name);
-        fclose(fh);
-
-        return NULL;
-    }
-
-    uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
-
-    /* Perform sanity checking - currently one complex I/Q sample is encoded as two doubles
-     * and each double is serialized to the 10 unsigned chars
-     */
-    uint64_t cur_pos = ftell(fh);
-    fseek(fh, 0, SEEK_END);
-    uint64_t n_iq = (ftell(fh) - cur_pos) / (sizeof(unsigned char) * 10 * 2);
-    fseek(fh, cur_pos, SEEK_SET);
-
-    if (n_iq != data_l) {
-        free(name);
-        fclose(fh);
-
-        return NULL;
-    }
-
-    /* Create I/Q data file object and return it */
-    lrpt_iq_file_t *handle = malloc(sizeof(lrpt_iq_file_t));
-
-    if (!handle) {
-        free(name);
-        fclose(fh);
-
-        return NULL;
-    }
-
-    handle->fhandle = fh;
-    handle->version = ver;
-    handle->samplerate = sr;
-    handle->device_name = name;
-    handle->header_length = 20 + name_l; /* Just a sum of all elements previously read */
-    handle->data_length = data_l;
-
-    return handle;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_file_close() */
-void lrpt_iq_file_close(
-        lrpt_iq_file_t *handle) {
-    if (!handle)
-        return;
-
-    free(handle->device_name);
-    fclose(handle->fhandle);
-    free(handle);
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_file_version() */
-uint8_t lrpt_iq_file_version(
-        const lrpt_iq_file_t *handle) {
-    return handle->version;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_file_samplerate() */
-uint32_t lrpt_iq_file_samplerate(
-        const lrpt_iq_file_t *handle) {
-    return handle->samplerate;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_file_devicename() */
-const char *lrpt_iq_file_devicename(
-        const lrpt_iq_file_t *handle) {
-    return handle->device_name;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_file_length() */
-uint64_t lrpt_iq_file_length(
-        const lrpt_iq_file_t *handle) {
-    return handle->data_length;
-}
-/*************************************************************************************************/
-
 /* lrpt_iq_data_read_from_file() */
 bool lrpt_iq_data_read_from_file(
         lrpt_iq_data_t *data,
@@ -488,6 +334,161 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
     }
 
     return handle;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_open() */
+lrpt_iq_file_t *lrpt_iq_file_open(
+        const char *fname) {
+    FILE *fh = fopen(fname, "rb");
+
+    if (!fh)
+        return NULL;
+
+    /* Check file header information. Header should be 6-character string "lrptiq" */
+    char header[6];
+
+    if ((fread(header, sizeof(char), 6, fh) != 6) || strncmp(header, "lrptiq", 6) != 0) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Read file format version info */
+    uint8_t ver;
+
+    if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Read sample rate */
+    unsigned char sr_s[4];
+
+    if (fread(sr_s, sizeof(unsigned char), 4, fh) != 4) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
+
+    /* Read in device name length */
+    uint8_t name_l;
+
+    if (fread(&name_l, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Read device name info */
+    char *name = NULL;
+
+    /* Allocate storage for device name only if it's presented in I/Q file */
+    if (name_l > 0) {
+        name = calloc(name_l + 1, sizeof(char));
+
+        if (!name || (fread(name, sizeof(char), name_l, fh) != name_l)) {
+            free(name);
+            fclose(fh);
+
+            return NULL;
+        }
+    }
+
+    /* Read data length */
+    unsigned char data_l_s[8];
+
+    if (fread(data_l_s, sizeof(unsigned char), 8, fh) != 8) {
+        free(name);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
+
+    /* Perform sanity checking - currently one complex I/Q sample is encoded as two doubles
+     * and each double is serialized to the 10 unsigned chars
+     */
+    uint64_t cur_pos = ftell(fh);
+    fseek(fh, 0, SEEK_END);
+    uint64_t n_iq = (ftell(fh) - cur_pos) / (sizeof(unsigned char) * 10 * 2);
+    fseek(fh, cur_pos, SEEK_SET);
+
+    if (n_iq != data_l) {
+        free(name);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Create I/Q data file object and return it */
+    lrpt_iq_file_t *handle = malloc(sizeof(lrpt_iq_file_t));
+
+    if (!handle) {
+        free(name);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    handle->fhandle = fh;
+    handle->version = ver;
+    handle->samplerate = sr;
+    handle->device_name = name;
+    handle->header_length = 20 + name_l; /* Just a sum of all elements previously read */
+    handle->data_length = data_l;
+
+    return handle;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_close() */
+void lrpt_iq_file_close(
+        lrpt_iq_file_t *handle) {
+    if (!handle)
+        return;
+
+    free(handle->device_name);
+    fclose(handle->fhandle);
+    free(handle);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_version() */
+uint8_t lrpt_iq_file_version(
+        const lrpt_iq_file_t *handle) {
+    return handle->version;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_samplerate() */
+uint32_t lrpt_iq_file_samplerate(
+        const lrpt_iq_file_t *handle) {
+    return handle->samplerate;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_devicename() */
+const char *lrpt_iq_file_devicename(
+        const lrpt_iq_file_t *handle) {
+    return handle->device_name;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_length() */
+uint64_t lrpt_iq_file_length(
+        const lrpt_iq_file_t *handle) {
+    return handle->data_length;
 }
 
 /*************************************************************************************************/
