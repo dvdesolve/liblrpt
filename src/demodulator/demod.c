@@ -144,6 +144,7 @@ static bool demod_qpsk(
 
         /* Costas' loop frequency/phase tuning */
         handle->current = lrpt_demodulator_pll_mix(handle->pll, handle->current);
+
         const double delta =
             lrpt_demodulator_pll_delta(handle->pll, handle->current, handle->current);
         lrpt_demodulator_pll_correct_phase(handle->pll, delta, handle->interp_factor);
@@ -214,6 +215,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     handle->pll = NULL;
     handle->rrc = NULL;
     handle->lut_isqrt = NULL;
+    handle->out_buffer = NULL; /* TODO debug only */
 
     /* Initialize demodulator parameters */
     handle->sym_rate = symbol_rate;
@@ -244,6 +246,14 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     handle->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
 
     if (!handle->rrc) {
+        lrpt_demodulator_deinit(handle);
+
+        return NULL;
+    }
+
+    /* TODO debug only */
+    handle->out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
+    if (!handle->out_buffer) {
         lrpt_demodulator_deinit(handle);
 
         return NULL;
@@ -306,6 +316,7 @@ void lrpt_demodulator_deinit(
     if (!handle)
         return;
 
+    free(handle->out_buffer); /* TODO debug only */
     lrpt_demodulator_lut_isqrt_deinit(handle->lut_isqrt);
     lrpt_demodulator_rrc_filter_deinit(handle->rrc);
     lrpt_demodulator_pll_deinit(handle->pll);
@@ -319,22 +330,26 @@ void lrpt_demodulator_deinit(
 bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
         lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output) {
+        lrpt_qpsk_data_t *output,
+        FILE *fh /* TODO debug only */) {
     /* Return immediately if no valid input or output were given */
-    if (!input || !output)
+    /* TODO debug only */
+    if (!input)
         return false;
+//    if (!input || !output)
+//        return false;
 
-    /* Resize output data structure if it is more than twice shorter than input I/Q data */
-    if (output->len < (2 * input->len))
-        if (!lrpt_qpsk_data_resize(output, 2 * input->len))
-            return false;
+//    /* Resize output data structure if it is more than twice shorter than input I/Q data */
+//    if (output->len < (2 * input->len))
+//        if (!lrpt_qpsk_data_resize(output, 2 * input->len))
+//            return false;
 
-    /* Allocate output buffer */
-    /* TODO may be move inside demodulator object */
-    int8_t *out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
-
-    if (!out_buffer)
-        return false;
+//    /* Allocate output buffer */
+//    /* TODO may be move inside demodulator object */
+//    int8_t *out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
+//
+//    if (!out_buffer)
+//        return false;
 
     /* Now we're ready to process filtered I/Q data and get soft-symbols */
     for (size_t i = 0; i < input->len; i++) {
@@ -346,7 +361,8 @@ bool lrpt_demodulator_exec(
             complex double fdata = lrpt_demodulator_rrc_filter_apply(handle->rrc, cdata);
 
             /* Demodulate using appropriate function */
-            if (handle->demod_func(handle, fdata, out_buffer) && handle->pll->locked) {
+            if (handle->demod_func(handle, fdata, handle->out_buffer)) {
+                fwrite(handle->out_buffer, sizeof(int8_t), LRPT_SOFT_FRAME_LEN, fh); /* TODO debug only */
                 /* TODO just store resulting symbol in output buffer */
 //                /* Try to decode one or more LRPT frames */
 //                Decode_Image( (uint8_t *)out_buffer, SOFT_FRAME_LEN );

@@ -76,6 +76,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h> /* TODO debug only */
 
 /*************************************************************************************************/
 
@@ -460,7 +461,8 @@ LRPT_API void lrpt_demodulator_deinit(
 LRPT_API bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
         lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output);
+        lrpt_qpsk_data_t *output,
+        FILE *fh /* TODO debug only */);
 
 /*************************************************************************************************/
 

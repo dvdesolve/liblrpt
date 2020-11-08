@@ -64,6 +64,9 @@ struct lrpt_demodulator__ {
     complex double before, middle, current;
     size_t buf_idx;
     /** @} */
+
+    /* TODO debug only */
+    int8_t *out_buffer;
 };
 
 /*************************************************************************************************/
