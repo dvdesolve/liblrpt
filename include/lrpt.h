@@ -454,13 +454,10 @@ LRPT_API void lrpt_demodulator_deinit(
  * \param[out] output Demodulated QPSK soft symbols.
  *
  * \return \c true on successfull demodulation and \c false in case of error.
- *
- * \warning Original I/Q samples given with \p input will be modified (filtered with Chebyshev
- * recursive filter)!
  */
 LRPT_API bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
-        lrpt_iq_data_t *input,
+        const lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output,
         FILE *fh /* TODO debug only */);
 

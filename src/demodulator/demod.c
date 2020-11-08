@@ -329,7 +329,7 @@ void lrpt_demodulator_deinit(
 /* lrpt_demodulator_exec() */
 bool lrpt_demodulator_exec(
         lrpt_demodulator_t *handle,
-        lrpt_iq_data_t *input,
+        const lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output,
         FILE *fh /* TODO debug only */) {
     /* Return immediately if no valid input or output were given */
