@@ -46,6 +46,7 @@
 
 /* Library defaults */
 const double DEMOD_RESYNC_SCALE_QPSK = 2000000.0;
+const double DEMOD_RESYNC_SCALE_OQPSK = 2000000.0;
 
 const double DEMOD_AGC_TARGET = 180.0;
 
@@ -73,7 +74,7 @@ static bool demod_qpsk(
         complex double fdata,
         int8_t *buffer);
 
-/** Performs differential offset QPSK demodulation.
+/** Performs offset QPSK demodulation.
  *
  * \param handle Demodulator object.
  * \param fdata I/Q sample.
@@ -81,20 +82,7 @@ static bool demod_qpsk(
  *
  * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
  */
-static bool demod_doqpsk(
-        lrpt_demodulator_t *handle,
-        complex double fdata,
-        int8_t *buffer);
-
-/** Performs interleaved differential offset QPSK demodulation.
- *
- * \param handle Demodulator object.
- * \param fdata I/Q sample.
- * \param[out] buffer Output buffer.
- *
- * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
- */
-static bool demod_idoqpsk(
+static bool demod_oqpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer);
@@ -132,30 +120,29 @@ static bool demod_qpsk(
     if ((handle->resync_offset >= sp2) && (handle->resync_offset < sp2p1))
         handle->middle = lrpt_demodulator_agc_apply(handle->agc, fdata);
     else if (handle->resync_offset >= sym_period) {
-        handle->current = lrpt_demodulator_agc_apply(handle->agc, fdata);
+        complex double current = lrpt_demodulator_agc_apply(handle->agc, fdata);
 
         handle->resync_offset -= sym_period;
 
         const double resync_error =
-            (cimag(handle->current) - cimag(handle->before)) * cimag(handle->middle);
-        handle->resync_offset += (resync_error * sym_period / DEMOD_RESYNC_SCALE_QPSK);
+            (cimag(current) - cimag(handle->before)) * cimag(handle->middle);
 
-        handle->before = handle->current;
+        handle->resync_offset += (resync_error * sym_period / DEMOD_RESYNC_SCALE_QPSK);
+        handle->before = current;
 
         /* Costas' loop frequency/phase tuning */
-        handle->current = lrpt_demodulator_pll_mix(handle->pll, handle->current);
+        current = lrpt_demodulator_pll_mix(handle->pll, current);
 
-        const double delta =
-            lrpt_demodulator_pll_delta(handle->pll, handle->current, handle->current);
+        const double delta = lrpt_demodulator_pll_delta(handle->pll, current, current);
+
         lrpt_demodulator_pll_correct_phase(handle->pll, delta, handle->interp_factor);
-
         handle->resync_offset += 1.0;
 
         /* Save result in buffer */
         /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
         /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
-        buffer[(handle->buf_idx)++] = clamp_int8(creal(handle->current) / 2.0);
-        buffer[(handle->buf_idx)++] = clamp_int8(cimag(handle->current) / 2.0);
+        buffer[(handle->buf_idx)++] = clamp_int8(creal(current) / 2.0);
+        buffer[(handle->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
 
         /* If we've reached frame length reset buffer index and signal caller with true */
         if (handle->buf_idx >= LRPT_SOFT_FRAME_LEN) {
@@ -174,21 +161,63 @@ static bool demod_qpsk(
 
 /*************************************************************************************************/
 
-/* demod_doqpsk() */
-static bool demod_doqpsk(
+/* demod_oqpsk() */
+static bool demod_oqpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer) {
-    return false;
-}
+    /* Helper variables */
+    const double sym_period = handle->sym_period;
+    const double sp2 = sym_period / 2.0;
+    const double sp2p1 = sp2 + 1.0;
 
-/*************************************************************************************************/
+    /* Symbol timing recovery (Gardner) */
+    if ((handle->resync_offset >= sp2) && (handle->resync_offset < sp2p1)) {
+        complex double agc = lrpt_demodulator_agc_apply(handle->agc, fdata);
 
-/* demod_idoqpsk() */
-static bool demod_idoqpsk(
-        lrpt_demodulator_t *handle,
-        complex double fdata,
-        int8_t *buffer) {
+        handle->inphase = lrpt_demodulator_pll_mix(handle->pll, agc);
+        handle->middle = handle->prev_I + (complex double)I * cimag(handle->inphase);
+        handle->prev_I = creal(handle->inphase);
+    }
+    else if (handle->resync_offset >= sym_period) {
+        /* Symbol timing recovery (Gardner) */
+        complex double agc = lrpt_demodulator_agc_apply(handle->agc, fdata);
+        complex double quadrature = lrpt_demodulator_pll_mix(handle->pll, agc);
+        complex double current = handle->prev_I + (complex double)I * cimag(quadrature);
+
+        handle->prev_I = creal(quadrature);
+        handle->resync_offset -= sym_period;
+
+        const double resync_error =
+            (cimag(quadrature) - cimag(handle->before)) * cimag(handle->middle);
+
+        handle->resync_offset += resync_error * sym_period / DEMOD_RESYNC_SCALE_OQPSK;
+        handle->before = current;
+
+        /* Carrier tracking */
+        const double delta = lrpt_demodulator_pll_delta(handle->pll, handle->inphase, quadrature);
+
+        lrpt_demodulator_pll_correct_phase(handle->pll, delta, handle->interp_factor);
+        handle->resync_offset += 1.0;
+
+        /* Save result in buffer */
+        /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
+        /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
+        buffer[(handle->buf_idx)++] = clamp_int8(creal(current) / 2.0);
+        buffer[(handle->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
+
+        /* If we've reached frame length reset buffer index and signal caller with true */
+        if (handle->buf_idx >= LRPT_SOFT_FRAME_LEN) {
+            handle->buf_idx = 0;
+
+            return true;
+        }
+        else
+            return false;
+    }
+
+    handle->resync_offset += 1.0;
+
     return false;
 }
 
@@ -267,25 +296,14 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
             break;
 
-        case LRPT_DEMODULATOR_MODE_DOQPSK:
+        case LRPT_DEMODULATOR_MODE_OQPSK:
             if (!lrpt_demodulator_lut_isqrt_init(handle->lut_isqrt)) {
                 lrpt_demodulator_deinit(handle);
 
                 return NULL;
             }
 
-            handle->demod_func = demod_doqpsk;
-
-            break;
-
-        case LRPT_DEMODULATOR_MODE_IDOQPSK:
-            if (!lrpt_demodulator_lut_isqrt_init(handle->lut_isqrt)) {
-                lrpt_demodulator_deinit(handle);
-
-                return NULL;
-            }
-
-            handle->demod_func = demod_idoqpsk;
+            handle->demod_func = demod_oqpsk;
 
             break;
 
@@ -302,7 +320,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     handle->resync_offset = 0.0;
     handle->before = 0.0;
     handle->middle = 0.0;
-    handle->current = 0.0;
+    handle->inphase = 0.0;
+    handle->prev_I = 0.0;
     handle->buf_idx = 0;
 
     return handle;
@@ -322,6 +341,45 @@ void lrpt_demodulator_deinit(
     lrpt_demodulator_pll_deinit(handle->pll);
     lrpt_demodulator_agc_deinit(handle->agc);
     free(handle);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_gain() */
+bool lrpt_demodulator_gain(
+        const lrpt_demodulator_t *handle,
+        double *gain) {
+    if (!handle || !handle->agc)
+        return false;
+
+    *gain = handle->agc->gain;
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_siglvl() */
+bool lrpt_demodulator_siglvl(
+        const lrpt_demodulator_t *handle,
+        double *level) {
+    if (!handle || !handle->agc)
+        return false;
+
+    *level = handle->agc->average;
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_phaseerr() */
+bool lrpt_demodulator_phaseerr(
+        const lrpt_demodulator_t *handle,
+        double *error) {
+    if (!handle || !handle->pll)
+        return false;
+
+    *error = handle->pll->moving_average;
+    return true;
 }
 
 /*************************************************************************************************/

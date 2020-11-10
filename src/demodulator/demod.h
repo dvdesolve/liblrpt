@@ -61,7 +61,9 @@ struct lrpt_demodulator__ {
     /** @{ */
     /** Used by QPSK demodulator functions */
     double resync_offset;
-    complex double before, middle, current;
+    complex double before, middle;
+    complex double inphase;
+    double prev_I;
     size_t buf_idx;
     /** @} */
 

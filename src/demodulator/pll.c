@@ -45,8 +45,7 @@ const double PLL_INIT_FREQ = 0.001; /* Initial Costas' PLL frequency */
 const double PLL_DAMPING = 0.7071; /* TODO change after debug */
 
 const double PLL_ERR_SCALE_QPSK = 43.0; /* Scaling factors to control error magnitude */
-const double PLL_ERR_SCALE_DOQPSK = 80.0;
-const double PLL_ERR_SCALE_IDOQPSK = 80.0;
+const double PLL_ERR_SCALE_OQPSK = 80.0;
 
 const double PLL_LOCKED_ERR_SCALE = 10.0; /* Phase error scale on lock */
 
@@ -184,13 +183,8 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
             break;
 
-        case LRPT_DEMODULATOR_MODE_DOQPSK:
-            handle->err_scale = PLL_ERR_SCALE_DOQPSK;
-
-            break;
-
-        case LRPT_DEMODULATOR_MODE_IDOQPSK:
-            handle->err_scale = PLL_ERR_SCALE_IDOQPSK;
+        case LRPT_DEMODULATOR_MODE_OQPSK:
+            handle->err_scale = PLL_ERR_SCALE_OQPSK;
 
             break;
 

@@ -110,8 +110,7 @@ typedef enum lrpt_dsp_filter_type__ {
 /** Available PSK demodulator modes */
 typedef enum lrpt_demodulator_mode__ {
     LRPT_DEMODULATOR_MODE_QPSK,   /**< Plain QPSK */
-    LRPT_DEMODULATOR_MODE_DOQPSK, /**< Differential offset QPSK */
-    LRPT_DEMODULATOR_MODE_IDOQPSK /**< Interleaved differential offset QPSK */
+    LRPT_DEMODULATOR_MODE_OQPSK /**< Offset QPSK */
 } lrpt_demodulator_mode_t;
 
 /*************************************************************************************************/
@@ -442,6 +441,41 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
  */
 LRPT_API void lrpt_demodulator_deinit(
         lrpt_demodulator_t *handle);
+
+/** Current gain applied by demodulator.
+ *
+ * Returns current gain applied by demodulator's AGC.
+ *
+ * \param handle Pointer to the demodulator object.
+ * \param gain Pointer to the resulting value.
+ *
+ * \return \c true if valid demodulator object was given and \c false otherwise.
+ */
+LRPT_API bool lrpt_demodulator_gain(
+        const lrpt_demodulator_t *handle,
+        double *gain);
+
+/** Current signal level.
+ *
+ * \param handle Pointer to the demodulator object.
+ * \param level Pointer to the resulting value.
+ *
+ * \return \c true if valid demodulator object was given and \c false otherwise.
+ */
+LRPT_API bool lrpt_demodulator_siglvl(
+        const lrpt_demodulator_t *handle,
+        double *level);
+
+/** Current Costas PLL average phase error.
+ *
+ * \param handle Pointer to the demodulator object.
+ * \param error Pointer to the resulting value.
+ *
+ * \return \c true if valid demodulator object was given and \c false otherwise.
+ */
+LRPT_API bool lrpt_demodulator_pllavg(
+        const lrpt_demodulator_t *handle,
+        double *error);
 
 /** Perform QPSK demodulation.
  *

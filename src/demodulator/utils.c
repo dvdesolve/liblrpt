@@ -37,6 +37,7 @@
 /*************************************************************************************************/
 
 /* lrpt_demodulator_lut_isqrt_init() */
+/* TODO review */
 bool lrpt_demodulator_lut_isqrt_init(
         uint8_t *lut) {
     lut = calloc(16385, sizeof(uint8_t));
