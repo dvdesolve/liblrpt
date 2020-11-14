@@ -15,18 +15,6 @@
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  */
 
-/** \addtogroup liblrpt liblrpt
- *
- * Public liblrpt API.
- *
- * This API provides an interface for demodulating, decoding and post-processing LRPT signals.
- *
- * \author Viktor Drobot
- * \author Neoklis Kyriazis
- *
- * @{
- */
-
 /*************************************************************************************************/
 
 #ifndef LRPT_LRPT_H
@@ -80,25 +68,57 @@
 
 /*************************************************************************************************/
 
+/** \addtogroup common Common
+ *
+ * Common utility routines.
+ *
+ * This API provides an interface for basic utility routines such as data allocation, freeing and
+ * conversion.
+ *
+ * @{
+ */
+
 /** Data type for single I/Q sample */
 typedef struct lrpt_iq_raw__ lrpt_iq_raw_t;
 
 /** Data type for storing I/Q samples */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 
-/** Data type for I/Q samples file */
-typedef struct lrpt_iq_file__ lrpt_iq_file_t;
-
 /** Data type for storing QPSK soft symbols
  * \todo add raw QPSK soft-symbol type
  */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
+/** @} */
+
+/** \addtogroup io I/O
+ *
+ * Input/output routines.
+ *
+ * This API provides an interface for basic utility routines for I/O operations.
+ *
+ * @{
+ */
+
+/** Data type for I/Q samples file */
+typedef struct lrpt_iq_file__ lrpt_iq_file_t;
+
+/** Data type for QPSK soft symbols file */
+typedef struct lrpt_qpsk_file__ lrpt_qpsk_file_t;
+
+/** @} */
+
+/** \addtogroup dsp DSP
+ *
+ * Digital signal processing routines.
+ *
+ * This API provides an interface for DSP operations such as filtering and FFT.
+ *
+ * @{
+ */
+
 /** DSP filter object type */
 typedef struct lrpt_dsp_filter__ lrpt_dsp_filter_t;
-
-/** Demodulator object type */
-typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 
 /** Available DSP filter types */
 typedef enum lrpt_dsp_filter_type__ {
@@ -107,13 +127,33 @@ typedef enum lrpt_dsp_filter_type__ {
     LRPT_DSP_FILTER_TYPE_BANDPASS  /**< Bandpass filter */
 } lrpt_dsp_filter_type_t;
 
+/** @} */
+
+/** \addtogroup demod Demodulator
+ *
+ * QPSK demodulation routines.
+ *
+ * This API provides an interface for performing QPSK demodulation routines.
+ *
+ * @{
+ */
+
+/** Demodulator object type */
+typedef struct lrpt_demodulator__ lrpt_demodulator_t;
+
 /** Available PSK demodulator modes */
 typedef enum lrpt_demodulator_mode__ {
     LRPT_DEMODULATOR_MODE_QPSK,   /**< Plain QPSK */
     LRPT_DEMODULATOR_MODE_OQPSK /**< Offset QPSK */
 } lrpt_demodulator_mode_t;
 
+/** @} */
+
 /*************************************************************************************************/
+
+/** \addtogroup common
+ * @{
+ */
 
 /** Allocate raw I/Q data storage object.
  *
@@ -157,51 +197,6 @@ LRPT_API size_t lrpt_iq_data_length(
 LRPT_API bool lrpt_iq_data_resize(
         lrpt_iq_data_t *handle,
         size_t new_length);
-
-/** Read I/Q data from file.
- *
- * Reads \p length consecutive I/Q samples into I/Q storage \p data from data file \p file
- * starting at sample with index \p start. Storage will be auto-resized to proper length.
- *
- * \param[out] data Pointer to the I/Q data storage object.
- * \param file Pointer to the I/Q data file object.
- * \param start Index of I/Q sample to start from.
- * \param length Number of I/Q samples to read.
- *
- * \return \c true on successfull reading and \c false otherwise.
- *
- * \note File with I/Q data is expected to be compatible with internal library format, e. g.
- * created with #lrpt_iq_data_save_to_file(). For more details see \ref lrptiq section.
-  */
-LRPT_API bool lrpt_iq_data_read_from_file(
-        lrpt_iq_data_t *data,
-        lrpt_iq_file_t *file,
-        uint64_t start,
-        uint64_t length);
-
-/** Save I/Q data to file.
- *
- * Saves raw I/Q data pointed by \p handle to file with name \p fname. If file already exists it
- * will be overwritten.
- *
- * \param handle Pointer to the I/Q data storage object.
- * \param fname Name of file to save raw I/Q data to.
- * \param version File format version.
- * \param samplerate Sampling rate.
- * \param device_name Pointer to the device name string. If \p device_name is \c NULL no
- * device name will be saved. Maximum length of \p device_name is limited to the 255 symbols.
- * All extra symbols will be truncated if presented.
- *
- * \return \c true on successfull writing and \c false otherwise.
- *
- * \note Resulting file maintains internal library format. For more details see \ref lrptiq section.
- */
-LRPT_API bool lrpt_iq_data_save_to_file(
-        lrpt_iq_data_t *handle,
-        const char *fname,
-        uint8_t version,
-        uint32_t samplerate,
-        const char *device_name);
 
 /** Merge separate arrays of double-typed I/Q samples into library format.
  *
@@ -282,6 +277,48 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const lrpt_iq_raw_t *iq,
         size_t length);
 
+/** Allocate QPSK soft symbol data storage object.
+ *
+ * Tries to allocate storage for QPSK soft symbol data of requested \p length. User should properly
+ * free the object with #lrpt_qpsk_data_free() after use.
+ *
+ * \param length Length of new QPSK soft symbol data storage. If zero length is requested,
+ * empty storage will be allocated but it's still possible to resize it later with
+ * #lrpt_qpsk_data_resize().
+ *
+ * \return Pointer to the allocated QPSK soft symbol data storage object or \c NULL if allocation
+ * has failed.
+ */
+LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
+        size_t length);
+
+/** Free previously allocated QPSK soft symbol data storage.
+ *
+ * \param handle Pointer to the QPSK soft symbol data storage object.
+ */
+LRPT_API void lrpt_qpsk_data_free(
+        lrpt_qpsk_data_t *handle);
+
+/** Resize existing QPSK soft symbol data storage.
+ *
+ * If valid \p handle is provided it will be resized to accomodate \p new_length QPSK soft symbols.
+ *
+ * \param handle Pointer to the QPSK soft symbol data storage object.
+ * \param new_length New length \p handle will be resized to.
+ *
+ * \return \c true on successfull resize and \c false otherwise (original storage will not be
+ * modified in that case).
+ */
+LRPT_API bool lrpt_qpsk_data_resize(
+        lrpt_qpsk_data_t *handle,
+        size_t new_length);
+
+/** @} */
+
+/** \addtogroup io
+ * @{
+ */
+
 /** Open raw I/Q data file for reading.
  *
  * Opens and checks file with raw I/Q data. File format is described at \ref lrptiq section.
@@ -337,41 +374,56 @@ LRPT_API const char *lrpt_iq_file_devicename(
 LRPT_API uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *handle);
 
-/** Allocate QPSK soft symbol data storage object.
+/** Read I/Q data from file.
  *
- * Tries to allocate storage for QPSK soft symbol data of requested \p length. User should properly
- * free the object with #lrpt_qpsk_data_free() after use.
+ * Reads \p length consecutive I/Q samples into I/Q storage \p data from data file \p file
+ * starting at sample with index \p start. Storage will be auto-resized to proper length.
  *
- * \param length Length of new QPSK soft symbol data storage. If zero length is requested,
- * empty storage will be allocated but it's still possible to resize it later with
- * #lrpt_qpsk_data_resize().
+ * \param[out] data Pointer to the I/Q data storage object.
+ * \param file Pointer to the I/Q data file object.
+ * \param start Index of I/Q sample to start from.
+ * \param length Number of I/Q samples to read.
  *
- * \return Pointer to the allocated QPSK soft symbol data storage object or \c NULL if allocation
- * has failed.
- */
-LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
-        size_t length);
+ * \return \c true on successfull reading and \c false otherwise.
+ *
+ * \note File with I/Q data is expected to be compatible with internal library format, e. g.
+ * created with #lrpt_iq_data_save_to_file(). For more details see \ref lrptiq section.
+  */
+LRPT_API bool lrpt_iq_data_read_from_file(
+        lrpt_iq_data_t *data,
+        lrpt_iq_file_t *file,
+        uint64_t start,
+        uint64_t length);
 
-/** Free previously allocated QPSK soft symbol data storage.
+/** Save I/Q data to file.
  *
- * \param handle Pointer to the QPSK soft symbol data storage object.
+ * Saves raw I/Q data pointed by \p handle to file with name \p fname. If file already exists it
+ * will be overwritten.
+ *
+ * \param handle Pointer to the I/Q data storage object.
+ * \param fname Name of file to save raw I/Q data to.
+ * \param version File format version.
+ * \param samplerate Sampling rate.
+ * \param device_name Pointer to the device name string. If \p device_name is \c NULL no
+ * device name will be saved. Maximum length of \p device_name is limited to the 255 symbols.
+ * All extra symbols will be truncated if presented.
+ *
+ * \return \c true on successfull writing and \c false otherwise.
+ *
+ * \note Resulting file maintains internal library format. For more details see \ref lrptiq section.
  */
-LRPT_API void lrpt_qpsk_data_free(
-        lrpt_qpsk_data_t *handle);
+LRPT_API bool lrpt_iq_data_save_to_file(
+        lrpt_iq_data_t *handle,
+        const char *fname,
+        uint8_t version,
+        uint32_t samplerate,
+        const char *device_name);
 
-/** Resize existing QPSK soft symbol data storage.
- *
- * If valid \p handle is provided it will be resized to accomodate \p new_length QPSK soft symbols.
- *
- * \param handle Pointer to the QPSK soft symbol data storage object.
- * \param new_length New length \p handle will be resized to.
- *
- * \return \c true on successfull resize and \c false otherwise (original storage will not be
- * modified in that case).
+/** @} */
+
+/** \addtogroup dsp
+ * @{
  */
-LRPT_API bool lrpt_qpsk_data_resize(
-        lrpt_qpsk_data_t *handle,
-        size_t new_length);
 
 /** Initialize recursive Chebyshev filter.
  *
@@ -407,6 +459,12 @@ LRPT_API void lrpt_dsp_filter_deinit(
 LRPT_API bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *handle,
         lrpt_iq_data_t *data);
+
+/** @} */
+
+/** \addtogroup demod
+ * @{
+ */
 
 /** Allocate and initialize demodulator object.
  *
@@ -495,10 +553,40 @@ LRPT_API bool lrpt_demodulator_exec(
         lrpt_qpsk_data_t *output,
         FILE *fh /* TODO debug only */);
 
-/*************************************************************************************************/
-
-/**
- * @}
+/** Perform dediffcoding of QPSK data.
+ *
+ * Performs dediffcoding of given QPSK data. Data length should be at least 2 QPSK symbols and be a
+ * multiple of 2.
+ *
+ * \param demod Pointer to the demodulator object.
+ * \param[in,out] data Pointer to the diffcoded QPSK data.
+ *
+ * \return \c true on successfull dediffcoding and \c false otherwise.
  */
+LRPT_API bool lrpt_demodulator_dediffcode(
+        lrpt_demodulator_t *demod,
+        lrpt_qpsk_data_t *data);
+
+/** Resynchronizes a stream of soft symbols and deinterleaves it.
+ *
+ * Performs resynchronization and deinterleaving of QPSK symbols stream.
+ *
+ * \param[in,out] raw Pointer to the input buffer.
+ * \param raw_siz The length of input data.
+ * \param[out] resync Pointer to the pointer of the resulting resynced and deinterleaved data. User
+ * should free it by hand after the use.
+ * \param[out] resync_siz Pointer to the resulting length of processed QPSK data.
+ *
+ * \return \c true on successfull deinterleaving and \c false otherwise.
+ */
+LRPT_API bool lrpt_demodulator_deinterleave(
+        uint8_t *raw,
+        size_t raw_siz,
+        uint8_t **resync,
+        size_t *resync_siz);
+
+/** @} */
+
+/*************************************************************************************************/
 
 #endif

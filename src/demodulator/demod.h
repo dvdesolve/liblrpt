@@ -53,6 +53,7 @@ struct lrpt_demodulator__ {
 
     uint8_t *lut_isqrt; /**< Integer sqrt() lookup table */
 
+    /** \todo add demodulator type and use it instead of pointer to the function */
     bool (*demod_func)( /**< Demodulator function */
             lrpt_demodulator_t *,
             complex double,
@@ -65,6 +66,11 @@ struct lrpt_demodulator__ {
     complex double inphase;
     double prev_I;
     size_t buf_idx;
+    /** @} */
+
+    /** @{ */
+    /** Used by dediffcoder */
+    int8_t pr_I, pr_Q;
     /** @} */
 
     /* TODO debug only */

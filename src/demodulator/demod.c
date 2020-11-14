@@ -111,6 +111,8 @@ static bool demod_qpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer) {
+    /** \todo check for qpsk mode explicitly */
+    /** \todo deal with int8_t vs uint8_t data types */
     /* Helper variables */
     const double sym_period = handle->sym_period;
     const double sp2 = sym_period / 2.0;
@@ -166,6 +168,8 @@ static bool demod_oqpsk(
         lrpt_demodulator_t *handle,
         complex double fdata,
         int8_t *buffer) {
+    /** \todo check for oqpsk mode explicitly */
+    /** \todo deal with int8_t vs uint8_t data types */
     /* Helper variables */
     const double sym_period = handle->sym_period;
     const double sp2 = sym_period / 2.0;
@@ -323,6 +327,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     handle->inphase = 0.0;
     handle->prev_I = 0.0;
     handle->buf_idx = 0;
+    handle->pr_I = 0;
+    handle->pr_Q = 0;
 
     return handle;
 }
@@ -420,6 +426,7 @@ bool lrpt_demodulator_exec(
 
             /* Demodulate using appropriate function */
             if (handle->demod_func(handle, fdata, handle->out_buffer)) {
+                //lrpt_demodulator_dediffcode(handle, data);
                 fwrite(handle->out_buffer, sizeof(int8_t), LRPT_SOFT_FRAME_LEN, fh); /* TODO debug only */
                 /* TODO just store resulting symbol in output buffer */
 //                /* Try to decode one or more LRPT frames */
