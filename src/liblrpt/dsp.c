@@ -46,55 +46,55 @@
 /* lrpt_dsp_filter_init() */
 lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         uint32_t bandwidth,
-        double sample_rate,
+        double samplerate,
         double ripple,
         uint8_t num_poles,
         lrpt_dsp_filter_type_t type) {
-    /* Try to allocate our handle */
-    lrpt_dsp_filter_t *handle = malloc(sizeof(lrpt_dsp_filter_t));
+    /* Try to allocate our filter object */
+    lrpt_dsp_filter_t *filter = malloc(sizeof(lrpt_dsp_filter_t));
 
-    if (!handle)
+    if (!filter)
         return NULL;
 
     /* NULL-init internal storage for safe deallocation */
-    handle->a = NULL;
-    handle->b = NULL;
-    handle->x_i = NULL;
-    handle->y_i = NULL;
-    handle->x_q = NULL;
-    handle->y_q = NULL;
+    filter->a = NULL;
+    filter->b = NULL;
+    filter->x_i = NULL;
+    filter->y_i = NULL;
+    filter->x_q = NULL;
+    filter->y_q = NULL;
 
     /* Number of poles should be even and not greater than 252 to fit in uint8_t type */
     if ((num_poles > 252) || ((num_poles % 2) != 0)) {
-        free(handle);
+        free(filter);
 
         return NULL;
     }
 
-    handle->npoles = num_poles;
-    handle->ri_i = 0;
-    handle->ri_q = 0;
+    filter->npoles = num_poles;
+    filter->ri_i = 0;
+    filter->ri_q = 0;
 
     /* Allocate data and coefficients arrays */
     size_t n = (size_t)(num_poles + 3);
 
     double * const ta = calloc(n, sizeof(double));
     double * const tb = calloc(n, sizeof(double));
-    handle->a = calloc(n, sizeof(double));
-    handle->b = calloc(n, sizeof(double));
+    filter->a = calloc(n, sizeof(double));
+    filter->b = calloc(n, sizeof(double));
 
     /* Allocate saved input and output arrays */
     n = (size_t)(num_poles + 1);
 
-    handle->x_i = calloc(n, sizeof(double));
-    handle->y_i = calloc(n, sizeof(double));
-    handle->x_q = calloc(n, sizeof(double));
-    handle->y_q = calloc(n, sizeof(double));
+    filter->x_i = calloc(n, sizeof(double));
+    filter->y_i = calloc(n, sizeof(double));
+    filter->x_q = calloc(n, sizeof(double));
+    filter->y_q = calloc(n, sizeof(double));
 
     /* Check for allocation problems */
-    if (!ta || !tb || !handle->a || !handle->b ||
-            !handle->x_i || !handle->y_i || !handle->x_q || !handle->y_q) {
-        lrpt_dsp_filter_deinit(handle);
+    if (!ta || !tb || !filter->a || !filter->b ||
+            !filter->x_i || !filter->y_i || !filter->x_q || !filter->y_q) {
+        lrpt_dsp_filter_deinit(filter);
         free(ta);
         free(tb);
 
@@ -102,15 +102,14 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     }
 
     /* Initialize specific coefficient arrays explicitly */
-    handle->a[2] = 1.0;
-    handle->b[2] = 1.0;
+    filter->a[2] = 1.0;
+    filter->b[2] = 1.0;
 
     /* S-domain to Z-domain conversion */
     const double t = 2.0 * tan(0.5);
 
     /* Cutoff frequency (as a fraction of sample rate) */
-    /** \todo cast may be unnecessary here */
-    const double w = LRPT_M_2PI * ((double)(bandwidth / 2) / sample_rate);
+    const double w = LRPT_M_2PI * (bandwidth / 2.0 / samplerate);
 
     /* Low Pass to Low Pass or Low Pass to High Pass transform */
     double k;
@@ -171,13 +170,13 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
         /* Add coefficients to the cascade */
         for (uint8_t i = 0; i < (num_poles + 3); i++) {
-            ta[i] = handle->a[i];
-            tb[i] = handle->b[i];
+            ta[i] = filter->a[i];
+            tb[i] = filter->b[i];
         }
 
         for (uint8_t i = 2; i < (num_poles + 3); i++) {
-            handle->a[i] = a0 * ta[i] + a1 * ta[i - 1] + a2 * ta[i - 2];
-            handle->b[i] =      tb[i] - b1 * tb[i - 1] - b2 * tb[i - 2];
+            filter->a[i] = a0 * ta[i] + a1 * ta[i - 1] + a2 * ta[i - 2];
+            filter->b[i] =      tb[i] - b1 * tb[i - 1] - b2 * tb[i - 2];
         }
     }
 
@@ -186,11 +185,11 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     free(tb);
 
     /* Finish combining coefficients */
-    handle->b[2] = 0.0;
+    filter->b[2] = 0.0;
 
     for (uint8_t i = 0; i < (num_poles + 1); i++) {
-        handle->a[i] =  handle->a[i + 2];
-        handle->b[i] = -handle->b[i + 2];
+        filter->a[i] =  filter->a[i + 2];
+        filter->b[i] = -filter->b[i + 2];
     }
 
     /* Normalize the gain */
@@ -199,54 +198,54 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
     for (uint8_t i = 0; i < (num_poles + 1); i++) {
         if (type == LRPT_DSP_FILTER_TYPE_LOWPASS) {
-            sa += handle->a[i];
-            sb += handle->b[i];
+            sa += filter->a[i];
+            sb += filter->b[i];
         }
         else if (type == LRPT_DSP_FILTER_TYPE_HIGHPASS) {
-            sa += handle->a[i] * (double)((-1) ^ i);
-            sb += handle->b[i] * (double)((-1) ^ i);
+            sa += filter->a[i] * (double)((-1) ^ i);
+            sb += filter->b[i] * (double)((-1) ^ i);
         }
     }
 
     const double gain = sa / (1.0 - sb);
 
     for (uint8_t i = 0; i < (num_poles + 1); i++)
-        handle->a[i] /= gain;
+        filter->a[i] /= gain;
 
-    return handle;
+    return filter;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_dsp_filter_deinit() */
 void lrpt_dsp_filter_deinit(
-        lrpt_dsp_filter_t *handle) {
-    if (!handle)
+        lrpt_dsp_filter_t *filter) {
+    if (!filter)
         return;
 
-    free(handle->a);
-    free(handle->b);
-    free(handle->x_i);
-    free(handle->y_i);
-    free(handle->x_q);
-    free(handle->y_q);
-    free(handle);
+    free(filter->a);
+    free(filter->b);
+    free(filter->x_i);
+    free(filter->y_i);
+    free(filter->x_q);
+    free(filter->y_q);
+    free(filter);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_dsp_filter_apply() */
 bool lrpt_dsp_filter_apply(
-        lrpt_dsp_filter_t *handle,
-        lrpt_iq_data_t *iq_data) {
-    /* Return immediately if handle is empty */
-    if (!handle)
+        lrpt_dsp_filter_t *filter,
+        lrpt_iq_data_t *data) {
+    /* Return immediately if filter is empty */
+    if (!filter)
         return false;
 
     /* For convenient access purposes */
-    const uint8_t npp1 = handle->npoles + 1;
-    const size_t len = iq_data->len;
-    lrpt_iq_raw_t * const samples = iq_data->iq;
+    const uint8_t npp1 = filter->npoles + 1;
+    const size_t len = data->len;
+    lrpt_iq_raw_t * const samples = data->iq;
 
     /* I samples first, then Q */
     for (size_t k = 0; k < 2; k++) {
@@ -259,30 +258,30 @@ bool lrpt_dsp_filter_apply(
 
             if (k == 0) {
                 cur_s = &(samples[buf_idx].i);
-                cur_x = handle->x_i;
-                cur_y = handle->y_i;
-                cur_ri = &(handle->ri_i);
+                cur_x = filter->x_i;
+                cur_y = filter->y_i;
+                cur_ri = &(filter->ri_i);
             }
             else {
                 cur_s = &(samples[buf_idx].q);
-                cur_x = handle->x_q;
-                cur_y = handle->y_q;
-                cur_ri = &(handle->ri_q);
+                cur_x = filter->x_q;
+                cur_y = filter->y_q;
+                cur_ri = &(filter->ri_q);
             }
 
             /* Calculate and save filtered samples */
-            double yn0 = *cur_s * handle->a[0];
+            double yn0 = *cur_s * filter->a[0];
 
             for (uint8_t idx = 1; idx < npp1; idx++) {
                 double y;
 
                 /* Summate contribution of past input samples */
-                y = handle->a[idx];
+                y = filter->a[idx];
                 y   *= cur_x[*cur_ri];
                 yn0 += y;
 
                 /* Summate contribution of past output samples */
-                y    = handle->b[idx];
+                y    = filter->b[idx];
                 y   *= cur_y[*cur_ri];
                 yn0 += y;
 

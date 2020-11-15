@@ -39,32 +39,20 @@
 
 /*************************************************************************************************/
 
-/* lrpt_iq_file_open() */
-lrpt_iq_file_t *lrpt_iq_file_open(
-        const char *fname) {
-    FILE *fh = fopen(fname, "rb");
+/** Open I/Q samples file of Version 1 for reading.
+ *
+ * \param fh Pointer to the \c FILE object.
+ *
+ * \return Pointer to the I/Q file object or \c NULL in case of error.
+ */
+static lrpt_iq_file_t *file_open_r_v1(
+        FILE *fh);
 
-    if (!fh)
-        return NULL;
+/*************************************************************************************************/
 
-    /* Check file header information. Header should be 6-character string "lrptiq" */
-    char header[6];
-
-    if ((fread(header, sizeof(char), 6, fh) != 6) || strncmp(header, "lrptiq", 6) != 0) {
-        fclose(fh);
-
-        return NULL;
-    }
-
-    /* Read file format version info */
-    uint8_t ver;
-
-    if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
-        fclose(fh);
-
-        return NULL;
-    }
-
+/* file_open_r_v1() */
+static lrpt_iq_file_t *file_open_r_v1(
+        FILE *fh) {
     /* Read sample rate */
     unsigned char sr_s[4];
 
@@ -128,68 +116,211 @@ lrpt_iq_file_t *lrpt_iq_file_open(
     }
 
     /* Create I/Q data file object and return it */
-    lrpt_iq_file_t *handle = malloc(sizeof(lrpt_iq_file_t));
+    lrpt_iq_file_t *file = malloc(sizeof(lrpt_iq_file_t));
 
-    if (!handle) {
+    if (!file) {
         free(name);
         fclose(fh);
 
         return NULL;
     }
 
-    handle->fhandle = fh;
-    handle->version = ver;
-    handle->samplerate = sr;
-    handle->device_name = name;
-    handle->header_length = 20 + name_l; /* Just a sum of all elements previously read */
-    handle->data_length = data_l;
+    file->fhandle = fh;
+    file->write_mode = false;
+    file->version = LRPT_IQ_FILE_VER_1;
+    file->samplerate = sr;
+    file->device_name = name;
+    file->header_length = 20 + name_l; /* Just a sum of all elements previously read */
+    file->data_length = data_l;
 
-    return handle;
+    return file;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_open_r() */
+lrpt_iq_file_t *lrpt_iq_file_open_r(
+        const char *fname) {
+    FILE *fh = fopen(fname, "rb");
+
+    if (!fh)
+        return NULL;
+
+    /* Check file header information. Header should be 6-character string "lrptiq" */
+    char header[6];
+
+    if ((fread(header, sizeof(char), 6, fh) != 6) || strncmp(header, "lrptiq", 6) != 0) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Read file format version info */
+    uint8_t ver;
+
+    if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    switch (ver) {
+        case LRPT_IQ_FILE_VER_1:
+            return file_open_r_v1(fh);
+
+            break;
+
+        default:
+            fclose(fh);
+
+            return NULL;
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_file_open_w_v1() */
+lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
+        const char *fname,
+        uint32_t samplerate,
+        const char *device_name) {
+    FILE *fh = fopen(fname, "wb");
+
+    if (!fh)
+        return NULL;
+
+    const uint8_t version = LRPT_IQ_FILE_VER_1;
+
+    /* Write file header and version */
+    if (fwrite("lrptiq", sizeof(char), 6, fh) != 6) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    if (fwrite(&version, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Write sampling rate info */
+    unsigned char sr_s[4];
+    lrpt_utils_s_uint32_t(samplerate, sr_s);
+
+    if (fwrite(sr_s, sizeof(unsigned char), 4, fh) != 4) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Write device name */
+    uint8_t name_l = 0;
+
+    /* We'll write it only if user has requested it */
+    if (device_name != NULL) {
+        if (strlen(device_name) > 255)
+            name_l = 255;
+        else
+            name_l = strlen(device_name);
+    }
+
+    if (fwrite(&name_l, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    char *name = NULL;
+
+    if (name_l > 0) {
+        name = calloc(name_l + 1, sizeof(char));
+
+        if (!name || (fwrite(device_name, sizeof(char), name_l, fh) != name_l)) {
+            free(name);
+            fclose(fh);
+
+            return NULL;
+        }
+
+        strncpy(name, device_name, name_l);
+    }
+
+    /* Write initial data length */
+    unsigned char data_l_s[8];
+    lrpt_utils_s_uint64_t(0, data_l_s);
+
+    if (fwrite(data_l_s, sizeof(unsigned char), 8, fh) != 8) {
+        free(name);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Create I/Q data file object and return it */
+    lrpt_iq_file_t *file = malloc(sizeof(lrpt_iq_file_t));
+
+    if (!file) {
+        free(name);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    file->fhandle = fh;
+    file->write_mode = true;
+    file->version = LRPT_IQ_FILE_VER_1;
+    file->samplerate = samplerate;
+    file->device_name = name;
+    file->header_length = 20 + name_l; /* Just a sum of all elements previously written */
+    file->data_length = 0;
+
+    return file;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_file_close() */
 void lrpt_iq_file_close(
-        lrpt_iq_file_t *handle) {
-    if (!handle)
+        lrpt_iq_file_t *file) {
+    if (!file)
         return;
 
-    free(handle->device_name);
-    fclose(handle->fhandle);
-    free(handle);
+    free(file->device_name);
+    fclose(file->fhandle);
+    free(file);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_file_version() */
 uint8_t lrpt_iq_file_version(
-        const lrpt_iq_file_t *handle) {
-    return handle->version;
+        const lrpt_iq_file_t *file) {
+    return file->version;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_file_samplerate() */
 uint32_t lrpt_iq_file_samplerate(
-        const lrpt_iq_file_t *handle) {
-    return handle->samplerate;
+        const lrpt_iq_file_t *file) {
+    return file->samplerate;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_file_devicename() */
 const char *lrpt_iq_file_devicename(
-        const lrpt_iq_file_t *handle) {
-    return handle->device_name;
+        const lrpt_iq_file_t *file) {
+    return file->device_name;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_file_length() */
 uint64_t lrpt_iq_file_length(
-        const lrpt_iq_file_t *handle) {
-    return handle->data_length;
+        const lrpt_iq_file_t *file) {
+    return file->data_length;
 }
 
 /*************************************************************************************************/

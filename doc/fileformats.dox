@@ -4,21 +4,25 @@
  *
  * \section lrptiq Raw I/Q data file format
  * liblrpt is able to store/read raw I/Q data to/from files on hard drive. However it expects that
- * these files are in special format. In common, raw I/Q files consist of 5 sections following each
- * other without padding/spaces: header, version info, sampling rate, device name and data.
- * Here we're providing specification details for each of those sections.
+ * these files are in special format. Raw I/Q files consist of several consecutive sections which
+ * contents and order depends on the file format version. However, all raw I/Q files should start
+ * with the 2 sections at least: header and version info.
  *
- * \subsection lrptiq_header Header section
+ * \subsection lrptiq_common Common sections
+ *
+ * \subsubsection lrptiq_header Header section
  * All raw I/Q files should start with \c lrptiq sequence of ASCII chars.
  *
- * \subsection lrptiq_version Version info
+ * \subsubsection lrptiq_version Version info
  * Right after header version info should be stored as 1-byte unsigned integer.
  *
- * \subsection lrptiq_samplerate Sampling rate
+ * \subsection lrptiq_ver1 Version 1 specific sections (version == 0x01)
+ *
+ * \subsubsection lrptiq_samplerate Sampling rate
  * Sampling rate should be stored as well so QPSK demodulator will be able to perform demodulation.
  * Sampling rate is stored after version info as 4-byte unsigned integer in Big Endian form.
  *
- * \subsection lrptiq_devicename Device name
+ * \subsubsection lrptiq_devicename Device name
  * Device name section should be presented in raw I/Q file even if actual device name is
  * empty string. This section is actually splitted into two adjacent subsections: length and
  * the device name itself. Length is stored as 1-byte unsigned integer so maximum device name is
@@ -26,7 +30,7 @@
  * exactly that length. For example, device name "RTLSDR" should be presented in I/Q file as the
  * following hex values: \c 0x06 \c 0x52 \c 0x54 \c 0x4C \c 0x53 \c 0x44 \c 0x52.
  *
- * \subsection lrptiq_data Data
+ * \subsubsection lrptiq_data Data
  * Final section of I/Q file is the I/Q data itself. For portability purposes special form of
  * storing complex-valued I/Q samples was developed.
  *

@@ -29,6 +29,7 @@
 
 /*************************************************************************************************/
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -37,6 +38,7 @@
 /** Storage type for I/Q data file */
 struct lrpt_iq_file__ {
     FILE *fhandle; /**< File object handle */
+    bool write_mode; /**< Flag for write mode */
     uint8_t version; /**< File format version */
     uint32_t samplerate; /**< Sampling rate */
     char *device_name; /**< Device name info */

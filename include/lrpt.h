@@ -103,6 +103,11 @@ typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 /** Data type for I/Q samples file */
 typedef struct lrpt_iq_file__ lrpt_iq_file_t;
 
+/** Supported I/Q samples file format versions */
+typedef enum lrpt_iq_file_version__ {
+    LRPT_IQ_FILE_VER_1 /**< Version 1 */
+} lrpt_iq_file_version_t;
+
 /** Data type for QPSK soft symbols file */
 typedef struct lrpt_qpsk_file__ lrpt_qpsk_file_t;
 
@@ -170,41 +175,41 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(
 
 /** Free previously allocated I/Q data storage.
  *
- * \param handle Pointer to the I/Q data storage object.
+ * \param data Pointer to the I/Q data storage object.
  */
 LRPT_API void lrpt_iq_data_free(
-        lrpt_iq_data_t *handle);
+        lrpt_iq_data_t *data);
 
 /** Length of I/Q data storage.
  *
- * \param handle Pointer to the I/Q data storage object.
+ * \param data Pointer to the I/Q data storage object.
  *
- * \return Number of I/Q pairs currently stored in \p handle.
+ * \return Number of I/Q pairs currently stored in \p data.
  */
 LRPT_API size_t lrpt_iq_data_length(
-        const lrpt_iq_data_t *handle);
+        const lrpt_iq_data_t *data);
 
 /** Resize existing I/Q data storage.
  *
- * If valid \p handle is provided it will be resized to accomodate \p new_length I/Q pairs.
+ * If valid \p data is provided it will be resized to accomodate \p new_length I/Q pairs.
  *
- * \param handle Pointer to the I/Q data storage object.
- * \param new_length New length \p handle will be resized to.
+ * \param data Pointer to the I/Q data storage object.
+ * \param new_length New length \p data will be resized to.
  *
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_iq_data_resize(
-        lrpt_iq_data_t *handle,
+        lrpt_iq_data_t *data,
         size_t new_length);
 
 /** Merge separate arrays of double-typed I/Q samples into library format.
  *
  * Merges arrays of I and Q samples (\p i and \p q) of size \p length each into library format
- * of I/Q data storage. Storage given with \p handle will be auto-resized to fit
+ * of I/Q data storage. Storage given with \p data will be auto-resized to fit
  * requested data length.
  *
- * \param handle Pointer to the I/Q data storage object.
+ * \param data Pointer to the I/Q data storage object.
  * \param i Pointer to the array of I samples.
  * \param q Pointer to the array of Q samples.
  * \param length Number of samples in I and Q arrays to merge into I/Q data.
@@ -215,7 +220,7 @@ LRPT_API bool lrpt_iq_data_resize(
  * \p length samples!
  */
 LRPT_API bool lrpt_iq_data_from_doubles(
-        lrpt_iq_data_t *handle,
+        lrpt_iq_data_t *data,
         const double *i,
         const double *q,
         size_t length);
@@ -243,9 +248,9 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
 /** Convert array of raw I/Q samples into library format.
  *
  * Converts array of raw I/Q samples \p iq of size \p length into library format of I/Q
- * data storage. Storage given with \p handle will be auto-resized to fit requested data length.
+ * data storage. Storage given with \p data will be auto-resized to fit requested data length.
  *
- * \param handle Pointer to the I/Q data storage object.
+ * \param data Pointer to the I/Q data storage object.
  * \param iq Pointer to the array of raw I/Q samples.
  * \param length Number of samples to merge into I/Q data.
  *
@@ -255,7 +260,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
  * \p length samples!
  */
 LRPT_API bool lrpt_iq_data_from_samples(
-        lrpt_iq_data_t *handle,
+        lrpt_iq_data_t *data,
         const lrpt_iq_raw_t *iq,
         size_t length);
 
@@ -294,23 +299,23 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
 
 /** Free previously allocated QPSK soft symbol data storage.
  *
- * \param handle Pointer to the QPSK soft symbol data storage object.
+ * \param data Pointer to the QPSK soft symbol data storage object.
  */
 LRPT_API void lrpt_qpsk_data_free(
-        lrpt_qpsk_data_t *handle);
+        lrpt_qpsk_data_t *data);
 
 /** Resize existing QPSK soft symbol data storage.
  *
- * If valid \p handle is provided it will be resized to accomodate \p new_length QPSK soft symbols.
+ * If valid \p data is provided it will be resized to accomodate \p new_length QPSK soft symbols.
  *
- * \param handle Pointer to the QPSK soft symbol data storage object.
- * \param new_length New length \p handle will be resized to.
+ * \param data Pointer to the QPSK soft symbol data storage object.
+ * \param new_length New length \p data will be resized to.
  *
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_qpsk_data_resize(
-        lrpt_qpsk_data_t *handle,
+        lrpt_qpsk_data_t *data,
         size_t new_length);
 
 /** @} */
@@ -321,58 +326,75 @@ LRPT_API bool lrpt_qpsk_data_resize(
 
 /** Open raw I/Q data file for reading.
  *
- * Opens and checks file with raw I/Q data. File format is described at \ref lrptiq section.
- * User should close file properly with #lrpt_iq_file_close() after use.
+ * File format is described at \ref lrptiq section. User should close file properly with
+ * #lrpt_iq_file_close() after use.
  *
  * \param fname Name of file with raw I/Q data.
  *
  * \return Pointer to the allocated I/Q data file object or \c NULL in case of error.
  */
-LRPT_API lrpt_iq_file_t *lrpt_iq_file_open(
+LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
         const char *fname);
+
+/** Open raw I/Q data file of Version 1 for writing.
+ *
+ * File format is described at \ref lrptiq section. User should close file properly with
+ * #lrpt_iq_file_close() after use.
+ *
+ * \param fname Name of file to write I/Q data to.
+ * \param samplerate Sampling rate.
+ * \param device_name Device name string. If \p device_name is \c NULL no device name info will
+ * be written.
+ *
+ * \return Pointer to the writable I/Q file object or \c NULL in case of error.
+ */
+LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
+        const char *fname,
+        uint32_t samplerate,
+        const char *device_name);
 
 /** Close previously opened file with raw I/Q data.
  *
- * \param handle Pointer to the I/Q data file object.
+ * \param file Pointer to the I/Q data file object.
  */
 LRPT_API void lrpt_iq_file_close(
-        lrpt_iq_file_t *handle);
+        lrpt_iq_file_t *file);
 
 /** File format version info.
  *
- * \param handle Pointer to the I/Q data file object.
+ * \param file Pointer to the I/Q data file object.
  *
  * \return File version number info.
  */
 LRPT_API uint8_t lrpt_iq_file_version(
-        const lrpt_iq_file_t *handle);
+        const lrpt_iq_file_t *file);
 
 /** File sampling rate.
  *
- * \param handle Pointer to the I/Q data file object.
+ * \param file Pointer to the I/Q data file object.
  *
  * \return Sampling rate at which file was created.
  */
 LRPT_API uint32_t lrpt_iq_file_samplerate(
-        const lrpt_iq_file_t *handle);
+        const lrpt_iq_file_t *file);
 
 /** Name of device used to write file.
  *
- * \param handle Pointer to the I/Q data file object.
+ * \param file Pointer to the I/Q data file object.
  *
  * \return Pointer to the device name string.
  */
 LRPT_API const char *lrpt_iq_file_devicename(
-        const lrpt_iq_file_t *handle);
+        const lrpt_iq_file_t *file);
 
 /** Number of I/Q samples stored in file.
  *
- * \param handle Pointer to the I/Q data file object.
+ * \param file Pointer to the I/Q data file object.
  *
  * \return Number of I/Q samples stored in file.
  */
 LRPT_API uint64_t lrpt_iq_file_length(
-        const lrpt_iq_file_t *handle);
+        const lrpt_iq_file_t *file);
 
 /** Read I/Q data from file.
  *
@@ -428,7 +450,7 @@ LRPT_API bool lrpt_iq_data_save_to_file(
 /** Initialize recursive Chebyshev filter.
  *
  * \param bandwidth Bandwidth of the signal, Hz.
- * \param sample_rate Signal's sampling rate.
+ * \param samplerate Signal sampling rate.
  * \param ripple Ripple level, %.
  * \param num_poles Number of filter poles.
  * \param type Filter type.
@@ -437,27 +459,27 @@ LRPT_API bool lrpt_iq_data_save_to_file(
  */
 LRPT_API lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         uint32_t bandwidth,
-        double sample_rate,
+        double samplerate,
         double ripple,
         uint8_t num_poles,
         lrpt_dsp_filter_type_t type);
 
 /** Free allocated Chebyshev filter.
  *
- * \param handle Pointer to the Chebyshev filter object.
+ * \param filter Pointer to the Chebyshev filter object.
  */
 LRPT_API void lrpt_dsp_filter_deinit(
-        lrpt_dsp_filter_t *handle);
+        lrpt_dsp_filter_t *filter);
 
 /** Apply recursive Chebyshev filter to the raw I/Q data.
  *
- * \param handle Pointer to the Chebyshev filter object.
+ * \param filter Pointer to the Chebyshev filter object.
  * \param data Pointer to the I/Q data object.
  *
- * \return \c false if \p handle is empty and \c true otherwise.
+ * \return \c false if \p filter is empty and \c true otherwise.
  */
 LRPT_API bool lrpt_dsp_filter_apply(
-        lrpt_dsp_filter_t *handle,
+        lrpt_dsp_filter_t *filter,
         lrpt_iq_data_t *data);
 
 /** @} */
