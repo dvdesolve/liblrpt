@@ -54,20 +54,20 @@ lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(
 
 /** Frees allocated AGC object.
  *
- * \param handle AGC object.
+ * \param agc AGC object.
  */
 void lrpt_demodulator_agc_deinit(
-        lrpt_demodulator_agc_t *handle);
+        lrpt_demodulator_agc_t *agc);
 
 /** Applies gain to the sample.
  *
- * \param handle AGC object.
+ * \param agc AGC object.
  * \param sample Input I/Q sample.
  *
  * \return Sample with gain applied.
  */
 complex double lrpt_demodulator_agc_apply(
-        lrpt_demodulator_agc_t *handle,
+        lrpt_demodulator_agc_t *agc,
         complex double sample);
 
 /*************************************************************************************************/

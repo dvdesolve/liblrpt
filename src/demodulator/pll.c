@@ -86,12 +86,12 @@ static inline double lut_tanh(
 /** (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
  * parameters and updates/sets them in the PLL object.
  *
- * \param handle PLL object.
+ * \param pll PLL object.
  * \param damping Damping factor.
  * \param bandwidth Costas' PLL bandwidth.
  */
 static void recompute_coeffs(
-        lrpt_demodulator_pll_t *handle,
+        lrpt_demodulator_pll_t *pll,
         double damping,
         double bandwidth);
 
@@ -129,14 +129,14 @@ static inline double lut_tanh(
 
 /* recompute_coeffs() */
 static void recompute_coeffs(
-        lrpt_demodulator_pll_t *handle,
+        lrpt_demodulator_pll_t *pll,
         double damping,
         double bandwidth) {
     const double bw2 = bandwidth * bandwidth;
     const double denom = (1.0 + 2.0 * damping * bandwidth + bw2);
 
-    handle->alpha = (4.0 * damping * bandwidth) / denom;
-    handle->beta = (4.0 * bw2) / denom;
+    pll->alpha = (4.0 * damping * bandwidth) / denom;
+    pll->beta = (4.0 * bw2) / denom;
 }
 
 /*************************************************************************************************/
@@ -146,51 +146,51 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
         double threshold,
         lrpt_demodulator_mode_t mode) {
-    /* Try to allocate our handle */
-    lrpt_demodulator_pll_t *handle = malloc(sizeof(lrpt_demodulator_pll_t));
+    /* Try to allocate our PLL */
+    lrpt_demodulator_pll_t *pll = malloc(sizeof(lrpt_demodulator_pll_t));
 
-    if (!handle)
+    if (!pll)
         return NULL;
 
     /* Populate lookup table for tanh() */
     for (size_t i = 0; i < 256; i++)
-        handle->lut_tanh[i] = tanh((double)((int)i - 128));
+        pll->lut_tanh[i] = tanh((double)((int)i - 128));
 
     /* Set default parameters */
-    handle->nco_freq = PLL_INIT_FREQ;
-    handle->nco_phase = 0.0;
+    pll->nco_freq = PLL_INIT_FREQ;
+    pll->nco_phase = 0.0;
 
-    recompute_coeffs(handle, PLL_DAMPING, bandwidth);
-    handle->damping = PLL_DAMPING;
-    handle->bw = bandwidth;
+    recompute_coeffs(pll, PLL_DAMPING, bandwidth);
+    pll->damping = PLL_DAMPING;
+    pll->bw = bandwidth;
 
     /* Set up thresholds for PLL hysteresis feature */
     /* TODO may be we should use more customizable way to provide hysteresis feature of PLL lock */
-    handle->pll_locked = threshold;
-    handle->pll_unlocked = 1.03 * threshold;
+    pll->pll_locked = threshold;
+    pll->pll_unlocked = 1.03 * threshold;
 
     /* TODO previously it allowed to reset of avg_winsize in Costas_Resync()
      * if receiving is stopped and restarted while PLL is locked. May be we need to use false instead */
-    handle->locked = true;
+    pll->locked = true;
 
     /* Needed to cut off stray locks at startup */
-    handle->moving_average = 1.0e6;
+    pll->moving_average = 1.0e6;
 
     /* Error scaling depends on modulation mode */
     switch (mode) {
         case LRPT_DEMODULATOR_MODE_QPSK:
-            handle->err_scale = PLL_ERR_SCALE_QPSK;
+            pll->err_scale = PLL_ERR_SCALE_QPSK;
 
             break;
 
         case LRPT_DEMODULATOR_MODE_OQPSK:
-            handle->err_scale = PLL_ERR_SCALE_OQPSK;
+            pll->err_scale = PLL_ERR_SCALE_OQPSK;
 
             break;
 
         /* All other modes are unsupported */
         default:
-            lrpt_demodulator_pll_deinit(handle);
+            lrpt_demodulator_pll_deinit(pll);
 
             return NULL;
 
@@ -198,32 +198,32 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     }
 
     /* Initialize internal variables for phase correction routine */
-    handle->avg_winsize = PLL_AVG_WINSIZE;
-    handle->avg_winsize_1 = PLL_AVG_WINSIZE - 1.0;
-    handle->delta = 0.0;
+    pll->avg_winsize = PLL_AVG_WINSIZE;
+    pll->avg_winsize_1 = PLL_AVG_WINSIZE - 1.0;
+    pll->delta = 0.0;
 
-    return handle;
+    return pll;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_pll_deinit() */
 void lrpt_demodulator_pll_deinit(
-        lrpt_demodulator_pll_t *handle) {
-    free(handle);
+        lrpt_demodulator_pll_t *pll) {
+    free(pll);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_pll_mix() */
 complex double lrpt_demodulator_pll_mix(
-        lrpt_demodulator_pll_t *handle,
+        lrpt_demodulator_pll_t *pll,
         complex double sample) {
-    const complex double nco_out = cexp(-(complex double)I * handle->nco_phase);
+    const complex double nco_out = cexp(-(complex double)I * pll->nco_phase);
     const complex double retval = sample * nco_out;
 
-    handle->nco_phase += handle->nco_freq;
-    handle->nco_phase = fmod(handle->nco_phase, LRPT_M_2PI);
+    pll->nco_phase += pll->nco_freq;
+    pll->nco_phase = fmod(pll->nco_phase, LRPT_M_2PI);
 
     return retval;
 }
@@ -232,69 +232,69 @@ complex double lrpt_demodulator_pll_mix(
 
 /* lrpt_demodulator_pll_delta() */
 double lrpt_demodulator_pll_delta(
-        const lrpt_demodulator_pll_t *handle,
+        const lrpt_demodulator_pll_t *pll,
         complex double sample,
         complex double cosample) {
     return (
-            (lut_tanh(handle->lut_tanh, creal(sample)) * cimag(sample)) -
-            (lut_tanh(handle->lut_tanh, cimag(cosample)) * creal(cosample))) /
-        handle->err_scale;
+            (lut_tanh(pll->lut_tanh, creal(sample)) * cimag(sample)) -
+            (lut_tanh(pll->lut_tanh, cimag(cosample)) * creal(cosample))) /
+        pll->err_scale;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_pll_correct_phase() */
 void lrpt_demodulator_pll_correct_phase(
-        lrpt_demodulator_pll_t *handle,
+        lrpt_demodulator_pll_t *pll,
         double error,
         uint8_t interp_factor) {
     error = clamp_double(error, 1.0);
 
-    handle->moving_average *= handle->avg_winsize_1;
-    handle->moving_average += fabs(error);
-    handle->moving_average /= handle->avg_winsize;
+    pll->moving_average *= pll->avg_winsize_1;
+    pll->moving_average += fabs(error);
+    pll->moving_average /= pll->avg_winsize;
 
-    handle->nco_phase += handle->alpha * error;
-    handle->nco_phase = fmod(handle->nco_phase, LRPT_M_2PI);
+    pll->nco_phase += pll->alpha * error;
+    pll->nco_phase = fmod(pll->nco_phase, LRPT_M_2PI);
 
     /* Calculate sliding window average of phase error */
-    if (handle->locked)
+    if (pll->locked)
         error /= PLL_LOCKED_ERR_SCALE;
 
-    handle->delta *= PLL_DELTA_WINSIZE_1;
-    handle->delta += handle->beta * error;
-    handle->delta /= PLL_DELTA_WINSIZE;
-    handle->nco_freq += handle->delta;
+    pll->delta *= PLL_DELTA_WINSIZE_1;
+    pll->delta += pll->beta * error;
+    pll->delta /= PLL_DELTA_WINSIZE;
+    pll->nco_freq += pll->delta;
 
     /* Detect whether the PLL is locked, and decrease the bandwidth if it is */
-    if (!handle->locked && (handle->moving_average < handle->pll_locked)) {
+    if (!pll->locked && (pll->moving_average < pll->pll_locked)) {
         recompute_coeffs(
-                handle,
-                handle->damping,
-                handle->bw / PLL_LOCKED_BW_REDUCE);
-        handle->locked = true;
+                pll,
+                pll->damping,
+                pll->bw / PLL_LOCKED_BW_REDUCE);
+        pll->locked = true;
 
-        handle->avg_winsize = PLL_AVG_WINSIZE * PLL_LOCKED_WINSIZEX / (double)interp_factor;
-        handle->avg_winsize_1 = handle->avg_winsize - 1.0;
+        pll->avg_winsize = PLL_AVG_WINSIZE * PLL_LOCKED_WINSIZEX / (double)interp_factor;
+        pll->avg_winsize_1 = pll->avg_winsize - 1.0;
 
         /* TODO we can report PLL lock here */
     }
-    else if (handle->locked && (handle->moving_average > handle->pll_unlocked)) {
+    else if (pll->locked && (pll->moving_average > pll->pll_unlocked)) {
         recompute_coeffs(
-                handle,
-                handle->damping,
-                handle->bw);
-        handle->locked = false;
+                pll,
+                pll->damping,
+                pll->bw);
+        pll->locked = false;
 
-        handle->avg_winsize = PLL_AVG_WINSIZE / (double)interp_factor;
-        handle->avg_winsize_1 = handle->avg_winsize - 1.0;
+        pll->avg_winsize = PLL_AVG_WINSIZE / (double)interp_factor;
+        pll->avg_winsize_1 = pll->avg_winsize - 1.0;
 
         /* TODO we can report PLL unlock, framing loss (may be not) and zero signal quality here */
     }
 
     /* Limit frequency to a sensible range */
-    if ((handle->nco_freq <= -FREQ_MAX) || (handle->nco_freq >= FREQ_MAX))
-        handle->nco_freq = 0.0;
+    if ((pll->nco_freq <= -FREQ_MAX) || (pll->nco_freq >= FREQ_MAX))
+        pll->nco_freq = 0.0;
 }
 
 /*************************************************************************************************/

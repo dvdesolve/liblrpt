@@ -62,20 +62,20 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
 
 /** Frees previously allocated RRC filter object.
  *
- * \param handle RRC filter object.
+ * \param rrc RRC filter object.
  */
 void lrpt_demodulator_rrc_filter_deinit(
-        lrpt_demodulator_rrc_filter_t *handle);
+        lrpt_demodulator_rrc_filter_t *rrc);
 
 /** Applies RRC filter to the I/Q sample.
  *
- * \param handle RRC filter object.
+ * \param rrc RRC filter object.
  * \param value Input I/Q sample.
  *
  * \return Filtered I/Q sample.
  */
 complex double lrpt_demodulator_rrc_filter_apply(
-        lrpt_demodulator_rrc_filter_t *handle,
+        lrpt_demodulator_rrc_filter_t *rrc,
         const complex double value);
 
 /*************************************************************************************************/

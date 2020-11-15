@@ -88,43 +88,43 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
 /** Frees previously allocated PLL object.
  *
- * \param handle PLL object.
+ * \param pll PLL object.
  */
 void lrpt_demodulator_pll_deinit(
-        lrpt_demodulator_pll_t *handle);
+        lrpt_demodulator_pll_t *pll);
 
 /** Performs mixing of a sample with PLL NCO frequency.
  *
- * \param handle PLL object.
+ * \param pll PLL object.
  * \param sample I/Q sample.
  *
  * \return I/Q sample mixed with NCO frequency.
  */
 complex double lrpt_demodulator_pll_mix(
-        lrpt_demodulator_pll_t *handle,
+        lrpt_demodulator_pll_t *pll,
         complex double sample);
 
 /** Computes the delta phase value to use when correcting the NCO frequency.
  *
- * \param handle PLL object.
+ * \param pll PLL object.
  * \param sample I/Q sample.
  * \param cosample I/Q co-sample.
  *
  * \return Delta phase value.
  */
 double lrpt_demodulator_pll_delta(
-        const lrpt_demodulator_pll_t *handle,
+        const lrpt_demodulator_pll_t *pll,
         complex double sample,
         complex double cosample);
 
 /** Corrects the phase angle of the Costas' PLL.
  *
- * \param handle PLL object.
+ * \param pll PLL object.
  * \param error Error value.
  * \param interp_factor Interpolation factor.
  */
 void lrpt_demodulator_pll_correct_phase(
-        lrpt_demodulator_pll_t *handle,
+        lrpt_demodulator_pll_t *pll,
         double error,
         uint8_t interp_factor);
 

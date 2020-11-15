@@ -365,12 +365,12 @@ bool lrpt_iq_data_read_from_file(
 
 /* lrpt_iq_data_save_to_file() */
 bool lrpt_iq_data_save_to_file(
-        lrpt_iq_data_t *handle,
+        lrpt_iq_data_t *data,
         const char *fname,
         uint8_t version,
         uint32_t samplerate,
         const char *device_name) {
-    if (!handle || (handle->len == 0) || !handle->iq)
+    if (!data || (data->len == 0) || !data->iq)
         return false;
 
     FILE *fh = fopen(fname, "wb");
@@ -407,13 +407,13 @@ bool lrpt_iq_data_save_to_file(
     /* Write data */
     unsigned char data_l_s[8];
 
-    lrpt_utils_s_uint64_t(handle->len, data_l_s);
+    lrpt_utils_s_uint64_t(data->len, data_l_s);
     fwrite(data_l_s, sizeof(unsigned char), 8, fh); /* Data length (in number of I/Q samples) */
 
-    for (size_t k = 0; k < handle->len; k++) {
+    for (size_t k = 0; k < data->len; k++) {
         unsigned char v_s[10];
 
-        if (!lrpt_utils_s_double(handle->iq[k].i, v_s)) {
+        if (!lrpt_utils_s_double(data->iq[k].i, v_s)) {
             fclose(fh);
 
             return false;
@@ -421,7 +421,7 @@ bool lrpt_iq_data_save_to_file(
         else
             fwrite(v_s, sizeof(unsigned char), 10, fh);
 
-        if (!lrpt_utils_s_double(handle->iq[k].q, v_s)) {
+        if (!lrpt_utils_s_double(data->iq[k].q, v_s)) {
             fclose(fh);
 
             return false;

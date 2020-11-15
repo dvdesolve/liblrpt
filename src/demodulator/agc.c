@@ -48,53 +48,53 @@ const double AGC_BIAS_WINSIZE_1 = AGC_BIAS_WINSIZE - 1.0;
 /* lrpt_demodulator_agc_init() */
 lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(
         double target) {
-    /* Try to allocate our handle */
-    lrpt_demodulator_agc_t *handle = malloc(sizeof(lrpt_demodulator_agc_t));
+    /* Try to allocate our AGC */
+    lrpt_demodulator_agc_t *agc = malloc(sizeof(lrpt_demodulator_agc_t));
 
-    if (!handle)
+    if (!agc)
         return NULL;
 
     /* Set default parameters */
-    handle->target = target;
-    handle->average = target;
-    handle->gain = 1.0;
-    handle->bias = 0.0;
+    agc->target = target;
+    agc->average = target;
+    agc->gain = 1.0;
+    agc->bias = 0.0;
 
-    return handle;
+    return agc;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_agc_deinit() */
 void lrpt_demodulator_agc_deinit(
-        lrpt_demodulator_agc_t *handle) {
-    free(handle);
+        lrpt_demodulator_agc_t *agc) {
+    free(agc);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_agc_apply() */
 complex double lrpt_demodulator_agc_apply(
-        lrpt_demodulator_agc_t *handle,
+        lrpt_demodulator_agc_t *agc,
         complex double sample) {
     /* Sliding window average */
-    handle->bias *= AGC_BIAS_WINSIZE_1;
-    handle->bias += sample;
-    handle->bias /= AGC_BIAS_WINSIZE;
-    sample -= handle->bias;
+    agc->bias *= AGC_BIAS_WINSIZE_1;
+    agc->bias += sample;
+    agc->bias /= AGC_BIAS_WINSIZE;
+    sample -= agc->bias;
 
     /* Update the sample magnitude average */
-    handle->average *= AGC_WINSIZE_1;
-    handle->average += cabs(sample);
-    handle->average /= AGC_WINSIZE;
+    agc->average *= AGC_WINSIZE_1;
+    agc->average += cabs(sample);
+    agc->average /= AGC_WINSIZE;
 
     /* Apply AGC to the sample */
-    handle->gain = handle->target / handle->average;
+    agc->gain = agc->target / agc->average;
 
-    if (handle->gain > AGC_MAX_GAIN)
-        handle->gain = AGC_MAX_GAIN;
+    if (agc->gain > AGC_MAX_GAIN)
+        agc->gain = AGC_MAX_GAIN;
 
-    return (sample * handle->gain);
+    return (sample * agc->gain);
 }
 
 /*************************************************************************************************/

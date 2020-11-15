@@ -419,10 +419,10 @@ LRPT_API bool lrpt_iq_data_read_from_file(
 
 /** Save I/Q data to file.
  *
- * Saves raw I/Q data pointed by \p handle to file with name \p fname. If file already exists it
+ * Saves raw I/Q data pointed by \p data to file with name \p fname. If file already exists it
  * will be overwritten.
  *
- * \param handle Pointer to the I/Q data storage object.
+ * \param data Pointer to the I/Q data storage object.
  * \param fname Name of file to save raw I/Q data to.
  * \param version File format version.
  * \param samplerate Sampling rate.
@@ -435,7 +435,7 @@ LRPT_API bool lrpt_iq_data_read_from_file(
  * \note Resulting file maintains internal library format. For more details see \ref lrptiq section.
  */
 LRPT_API bool lrpt_iq_data_save_to_file(
-        lrpt_iq_data_t *handle,
+        lrpt_iq_data_t *data,
         const char *fname,
         uint8_t version,
         uint32_t samplerate,
@@ -517,60 +517,60 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
 
 /** Free previously allocated demodulator object.
  *
- * \param handle Pointer to the demodulator object.
+ * \param demod Pointer to the demodulator object.
  */
 LRPT_API void lrpt_demodulator_deinit(
-        lrpt_demodulator_t *handle);
+        lrpt_demodulator_t *demod);
 
 /** Current gain applied by demodulator.
  *
  * Returns current gain applied by demodulator's AGC.
  *
- * \param handle Pointer to the demodulator object.
+ * \param demod Pointer to the demodulator object.
  * \param gain Pointer to the resulting value.
  *
  * \return \c true if valid demodulator object was given and \c false otherwise.
  */
 LRPT_API bool lrpt_demodulator_gain(
-        const lrpt_demodulator_t *handle,
+        const lrpt_demodulator_t *demod,
         double *gain);
 
 /** Current signal level.
  *
- * \param handle Pointer to the demodulator object.
+ * \param demod Pointer to the demodulator object.
  * \param level Pointer to the resulting value.
  *
  * \return \c true if valid demodulator object was given and \c false otherwise.
  */
 LRPT_API bool lrpt_demodulator_siglvl(
-        const lrpt_demodulator_t *handle,
+        const lrpt_demodulator_t *demod,
         double *level);
 
 /** Current Costas PLL average phase error.
  *
- * \param handle Pointer to the demodulator object.
+ * \param demod Pointer to the demodulator object.
  * \param error Pointer to the resulting value.
  *
  * \return \c true if valid demodulator object was given and \c false otherwise.
  */
 LRPT_API bool lrpt_demodulator_pllavg(
-        const lrpt_demodulator_t *handle,
+        const lrpt_demodulator_t *demod,
         double *error);
 
 /** Perform QPSK demodulation.
  *
  * Runs demodulation on given \p input I/Q samples. Input samples are filtered with Chebyshev
- * recursive filter and then demodulated with \p handle demodulator object. Resulting QPSK soft
+ * recursive filter and then demodulated with \p demod demodulator object. Resulting QPSK soft
  * symbols will be stored in \p output QPSK data storage.
  *
- * \param handle Pointer to the demodulator object.
+ * \param demod Pointer to the demodulator object.
  * \param input Raw I/Q samples to demodulate.
  * \param[out] output Demodulated QPSK soft symbols.
  *
  * \return \c true on successfull demodulation and \c false in case of error.
  */
 LRPT_API bool lrpt_demodulator_exec(
-        lrpt_demodulator_t *handle,
+        lrpt_demodulator_t *demod,
         const lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output,
         FILE *fh /* TODO debug only */);

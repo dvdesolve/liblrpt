@@ -63,27 +63,27 @@ static inline int8_t clamp_int8(
 
 /** Performs plain QPSK demodulation.
  *
- * \param handle Demodulator object.
+ * \param demod Demodulator object.
  * \param fdata I/Q sample.
  * \param[out] buffer Output buffer.
  *
  * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
  */
 static bool demod_qpsk(
-        lrpt_demodulator_t *handle,
+        lrpt_demodulator_t *demod,
         complex double fdata,
         int8_t *buffer);
 
 /** Performs offset QPSK demodulation.
  *
- * \param handle Demodulator object.
+ * \param demod Demodulator object.
  * \param fdata I/Q sample.
  * \param[out] buffer Output buffer.
  *
  * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
  */
 static bool demod_oqpsk(
-        lrpt_demodulator_t *handle,
+        lrpt_demodulator_t *demod,
         complex double fdata,
         int8_t *buffer);
 
@@ -108,47 +108,47 @@ static inline int8_t clamp_int8(
 
 /* demod_qpsk() */
 static bool demod_qpsk(
-        lrpt_demodulator_t *handle,
+        lrpt_demodulator_t *demod,
         complex double fdata,
         int8_t *buffer) {
     /** \todo check for qpsk mode explicitly */
     /** \todo deal with int8_t vs uint8_t data types */
     /* Helper variables */
-    const double sym_period = handle->sym_period;
+    const double sym_period = demod->sym_period;
     const double sp2 = sym_period / 2.0;
     const double sp2p1 = sp2 + 1.0;
 
     /* Symbol timing recovery (Gardner) */
-    if ((handle->resync_offset >= sp2) && (handle->resync_offset < sp2p1))
-        handle->middle = lrpt_demodulator_agc_apply(handle->agc, fdata);
-    else if (handle->resync_offset >= sym_period) {
-        complex double current = lrpt_demodulator_agc_apply(handle->agc, fdata);
+    if ((demod->resync_offset >= sp2) && (demod->resync_offset < sp2p1))
+        demod->middle = lrpt_demodulator_agc_apply(demod->agc, fdata);
+    else if (demod->resync_offset >= sym_period) {
+        complex double current = lrpt_demodulator_agc_apply(demod->agc, fdata);
 
-        handle->resync_offset -= sym_period;
+        demod->resync_offset -= sym_period;
 
         const double resync_error =
-            (cimag(current) - cimag(handle->before)) * cimag(handle->middle);
+            (cimag(current) - cimag(demod->before)) * cimag(demod->middle);
 
-        handle->resync_offset += (resync_error * sym_period / DEMOD_RESYNC_SCALE_QPSK);
-        handle->before = current;
+        demod->resync_offset += (resync_error * sym_period / DEMOD_RESYNC_SCALE_QPSK);
+        demod->before = current;
 
         /* Costas' loop frequency/phase tuning */
-        current = lrpt_demodulator_pll_mix(handle->pll, current);
+        current = lrpt_demodulator_pll_mix(demod->pll, current);
 
-        const double delta = lrpt_demodulator_pll_delta(handle->pll, current, current);
+        const double delta = lrpt_demodulator_pll_delta(demod->pll, current, current);
 
-        lrpt_demodulator_pll_correct_phase(handle->pll, delta, handle->interp_factor);
-        handle->resync_offset += 1.0;
+        lrpt_demodulator_pll_correct_phase(demod->pll, delta, demod->interp_factor);
+        demod->resync_offset += 1.0;
 
         /* Save result in buffer */
         /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
         /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
-        buffer[(handle->buf_idx)++] = clamp_int8(creal(current) / 2.0);
-        buffer[(handle->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
+        buffer[(demod->buf_idx)++] = clamp_int8(creal(current) / 2.0);
+        buffer[(demod->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
 
         /* If we've reached frame length reset buffer index and signal caller with true */
-        if (handle->buf_idx >= LRPT_SOFT_FRAME_LEN) {
-            handle->buf_idx = 0;
+        if (demod->buf_idx >= LRPT_SOFT_FRAME_LEN) {
+            demod->buf_idx = 0;
 
             return true;
         }
@@ -156,7 +156,7 @@ static bool demod_qpsk(
             return false;
     }
 
-    handle->resync_offset += 1.0;
+    demod->resync_offset += 1.0;
 
     return false;
 }
@@ -165,54 +165,54 @@ static bool demod_qpsk(
 
 /* demod_oqpsk() */
 static bool demod_oqpsk(
-        lrpt_demodulator_t *handle,
+        lrpt_demodulator_t *demod,
         complex double fdata,
         int8_t *buffer) {
     /** \todo check for oqpsk mode explicitly */
     /** \todo deal with int8_t vs uint8_t data types */
     /* Helper variables */
-    const double sym_period = handle->sym_period;
+    const double sym_period = demod->sym_period;
     const double sp2 = sym_period / 2.0;
     const double sp2p1 = sp2 + 1.0;
 
     /* Symbol timing recovery (Gardner) */
-    if ((handle->resync_offset >= sp2) && (handle->resync_offset < sp2p1)) {
-        complex double agc = lrpt_demodulator_agc_apply(handle->agc, fdata);
+    if ((demod->resync_offset >= sp2) && (demod->resync_offset < sp2p1)) {
+        complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
 
-        handle->inphase = lrpt_demodulator_pll_mix(handle->pll, agc);
-        handle->middle = handle->prev_I + (complex double)I * cimag(handle->inphase);
-        handle->prev_I = creal(handle->inphase);
+        demod->inphase = lrpt_demodulator_pll_mix(demod->pll, agc);
+        demod->middle = demod->prev_I + (complex double)I * cimag(demod->inphase);
+        demod->prev_I = creal(demod->inphase);
     }
-    else if (handle->resync_offset >= sym_period) {
+    else if (demod->resync_offset >= sym_period) {
         /* Symbol timing recovery (Gardner) */
-        complex double agc = lrpt_demodulator_agc_apply(handle->agc, fdata);
-        complex double quadrature = lrpt_demodulator_pll_mix(handle->pll, agc);
-        complex double current = handle->prev_I + (complex double)I * cimag(quadrature);
+        complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
+        complex double quadrature = lrpt_demodulator_pll_mix(demod->pll, agc);
+        complex double current = demod->prev_I + (complex double)I * cimag(quadrature);
 
-        handle->prev_I = creal(quadrature);
-        handle->resync_offset -= sym_period;
+        demod->prev_I = creal(quadrature);
+        demod->resync_offset -= sym_period;
 
         const double resync_error =
-            (cimag(quadrature) - cimag(handle->before)) * cimag(handle->middle);
+            (cimag(quadrature) - cimag(demod->before)) * cimag(demod->middle);
 
-        handle->resync_offset += resync_error * sym_period / DEMOD_RESYNC_SCALE_OQPSK;
-        handle->before = current;
+        demod->resync_offset += resync_error * sym_period / DEMOD_RESYNC_SCALE_OQPSK;
+        demod->before = current;
 
         /* Carrier tracking */
-        const double delta = lrpt_demodulator_pll_delta(handle->pll, handle->inphase, quadrature);
+        const double delta = lrpt_demodulator_pll_delta(demod->pll, demod->inphase, quadrature);
 
-        lrpt_demodulator_pll_correct_phase(handle->pll, delta, handle->interp_factor);
-        handle->resync_offset += 1.0;
+        lrpt_demodulator_pll_correct_phase(demod->pll, delta, demod->interp_factor);
+        demod->resync_offset += 1.0;
 
         /* Save result in buffer */
         /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
         /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
-        buffer[(handle->buf_idx)++] = clamp_int8(creal(current) / 2.0);
-        buffer[(handle->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
+        buffer[(demod->buf_idx)++] = clamp_int8(creal(current) / 2.0);
+        buffer[(demod->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
 
         /* If we've reached frame length reset buffer index and signal caller with true */
-        if (handle->buf_idx >= LRPT_SOFT_FRAME_LEN) {
-            handle->buf_idx = 0;
+        if (demod->buf_idx >= LRPT_SOFT_FRAME_LEN) {
+            demod->buf_idx = 0;
 
             return true;
         }
@@ -220,7 +220,7 @@ static bool demod_oqpsk(
             return false;
     }
 
-    handle->resync_offset += 1.0;
+    demod->resync_offset += 1.0;
 
     return false;
 }
@@ -237,57 +237,57 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         uint16_t rrc_order,
         double rrc_alpha,
         double pll_threshold) {
-    /* Allocate our working handle */
-    lrpt_demodulator_t *handle = malloc(sizeof(lrpt_demodulator_t));
+    /* Allocate our working demodulator */
+    lrpt_demodulator_t *demod = malloc(sizeof(lrpt_demodulator_t));
 
-    if (!handle)
+    if (!demod)
         return NULL;
 
     /* NULL-init internal objects for safe deallocation */
-    handle->agc = NULL;
-    handle->pll = NULL;
-    handle->rrc = NULL;
-    handle->lut_isqrt = NULL;
-    handle->out_buffer = NULL; /* TODO debug only */
+    demod->agc = NULL;
+    demod->pll = NULL;
+    demod->rrc = NULL;
+    demod->lut_isqrt = NULL;
+    demod->out_buffer = NULL; /* TODO debug only */
 
     /* Initialize demodulator parameters */
-    handle->sym_rate = symbol_rate;
-    handle->sym_period = (double)interp_factor * demod_samplerate / (double)symbol_rate;
-    handle->interp_factor = interp_factor;
+    demod->sym_rate = symbol_rate;
+    demod->sym_period = (double)interp_factor * demod_samplerate / (double)symbol_rate;
+    demod->interp_factor = interp_factor;
 
     /* Initialize AGC object */
-    handle->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET);
+    demod->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET);
 
-    if (!handle->agc) {
-        lrpt_demodulator_deinit(handle);
+    if (!demod->agc) {
+        lrpt_demodulator_deinit(demod);
 
         return NULL;
     }
 
     /* Initialize Costas' PLL object */
     const double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
-    handle->pll = lrpt_demodulator_pll_init(pll_bw, pll_threshold, mode);
+    demod->pll = lrpt_demodulator_pll_init(pll_bw, pll_threshold, mode);
 
-    if (!handle->pll) {
-        lrpt_demodulator_deinit(handle);
+    if (!demod->pll) {
+        lrpt_demodulator_deinit(demod);
 
         return NULL;
     }
 
     /* Initialize RRC filter object */
     const double osf = demod_samplerate / (double)symbol_rate;
-    handle->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
+    demod->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
 
-    if (!handle->rrc) {
-        lrpt_demodulator_deinit(handle);
+    if (!demod->rrc) {
+        lrpt_demodulator_deinit(demod);
 
         return NULL;
     }
 
     /* TODO debug only */
-    handle->out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
-    if (!handle->out_buffer) {
-        lrpt_demodulator_deinit(handle);
+    demod->out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
+    if (!demod->out_buffer) {
+        lrpt_demodulator_deinit(demod);
 
         return NULL;
     }
@@ -295,25 +295,25 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     /* Select demodulator function */
     switch (mode) {
         case LRPT_DEMODULATOR_MODE_QPSK:
-            handle->lut_isqrt = NULL;
-            handle->demod_func = demod_qpsk;
+            demod->lut_isqrt = NULL;
+            demod->demod_func = demod_qpsk;
 
             break;
 
         case LRPT_DEMODULATOR_MODE_OQPSK:
-            if (!lrpt_demodulator_lut_isqrt_init(handle->lut_isqrt)) {
-                lrpt_demodulator_deinit(handle);
+            if (!lrpt_demodulator_lut_isqrt_init(demod->lut_isqrt)) {
+                lrpt_demodulator_deinit(demod);
 
                 return NULL;
             }
 
-            handle->demod_func = demod_oqpsk;
+            demod->demod_func = demod_oqpsk;
 
             break;
 
         /* All other modes are unsupported */
         default:
-            lrpt_demodulator_deinit(handle);
+            lrpt_demodulator_deinit(demod);
 
             return NULL;
 
@@ -321,44 +321,44 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     }
 
     /* Initialize internal working variables */
-    handle->resync_offset = 0.0;
-    handle->before = 0.0;
-    handle->middle = 0.0;
-    handle->inphase = 0.0;
-    handle->prev_I = 0.0;
-    handle->buf_idx = 0;
-    handle->pr_I = 0;
-    handle->pr_Q = 0;
+    demod->resync_offset = 0.0;
+    demod->before = 0.0;
+    demod->middle = 0.0;
+    demod->inphase = 0.0;
+    demod->prev_I = 0.0;
+    demod->buf_idx = 0;
+    demod->pr_I = 0;
+    demod->pr_Q = 0;
 
-    return handle;
+    return demod;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_deinit() */
 void lrpt_demodulator_deinit(
-        lrpt_demodulator_t *handle) {
-    if (!handle)
+        lrpt_demodulator_t *demod) {
+    if (!demod)
         return;
 
-    free(handle->out_buffer); /* TODO debug only */
-    lrpt_demodulator_lut_isqrt_deinit(handle->lut_isqrt);
-    lrpt_demodulator_rrc_filter_deinit(handle->rrc);
-    lrpt_demodulator_pll_deinit(handle->pll);
-    lrpt_demodulator_agc_deinit(handle->agc);
-    free(handle);
+    free(demod->out_buffer); /* TODO debug only */
+    lrpt_demodulator_lut_isqrt_deinit(demod->lut_isqrt);
+    lrpt_demodulator_rrc_filter_deinit(demod->rrc);
+    lrpt_demodulator_pll_deinit(demod->pll);
+    lrpt_demodulator_agc_deinit(demod->agc);
+    free(demod);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_gain() */
 bool lrpt_demodulator_gain(
-        const lrpt_demodulator_t *handle,
+        const lrpt_demodulator_t *demod,
         double *gain) {
-    if (!handle || !handle->agc)
+    if (!demod || !demod->agc)
         return false;
 
-    *gain = handle->agc->gain;
+    *gain = demod->agc->gain;
     return true;
 }
 
@@ -366,12 +366,12 @@ bool lrpt_demodulator_gain(
 
 /* lrpt_demodulator_siglvl() */
 bool lrpt_demodulator_siglvl(
-        const lrpt_demodulator_t *handle,
+        const lrpt_demodulator_t *demod,
         double *level) {
-    if (!handle || !handle->agc)
+    if (!demod || !demod->agc)
         return false;
 
-    *level = handle->agc->average;
+    *level = demod->agc->average;
     return true;
 }
 
@@ -379,12 +379,12 @@ bool lrpt_demodulator_siglvl(
 
 /* lrpt_demodulator_phaseerr() */
 bool lrpt_demodulator_phaseerr(
-        const lrpt_demodulator_t *handle,
+        const lrpt_demodulator_t *demod,
         double *error) {
-    if (!handle || !handle->pll)
+    if (!demod || !demod->pll)
         return false;
 
-    *error = handle->pll->moving_average;
+    *error = demod->pll->moving_average;
     return true;
 }
 
@@ -392,7 +392,7 @@ bool lrpt_demodulator_phaseerr(
 
 /* lrpt_demodulator_exec() */
 bool lrpt_demodulator_exec(
-        lrpt_demodulator_t *handle,
+        lrpt_demodulator_t *demod,
         const lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output,
         FILE *fh /* TODO debug only */) {
@@ -420,14 +420,14 @@ bool lrpt_demodulator_exec(
         /* Make complex variable from filtered sample */
         complex double cdata = input->iq[i].i + input->iq[i].q * (complex double)I;
 
-        for (uint8_t j = 0; j < handle->interp_factor; j++) {
+        for (uint8_t j = 0; j < demod->interp_factor; j++) {
             /* Pass samples through interpolator RRC filter */
-            complex double fdata = lrpt_demodulator_rrc_filter_apply(handle->rrc, cdata);
+            complex double fdata = lrpt_demodulator_rrc_filter_apply(demod->rrc, cdata);
 
             /* Demodulate using appropriate function */
-            if (handle->demod_func(handle, fdata, handle->out_buffer)) {
-                //lrpt_demodulator_dediffcode(handle, data);
-                fwrite(handle->out_buffer, sizeof(int8_t), LRPT_SOFT_FRAME_LEN, fh); /* TODO debug only */
+            if (demod->demod_func(demod, fdata, demod->out_buffer)) {
+                //lrpt_demodulator_dediffcode(demod, data);
+                fwrite(demod->out_buffer, sizeof(int8_t), LRPT_SOFT_FRAME_LEN, fh); /* TODO debug only */
                 /* TODO just store resulting symbol in output buffer */
 //                /* Try to decode one or more LRPT frames */
 //                Decode_Image( (uint8_t *)out_buffer, SOFT_FRAME_LEN );

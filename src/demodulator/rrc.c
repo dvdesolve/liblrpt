@@ -84,78 +84,78 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
         uint8_t factor,
         double osf,
         double alpha) {
-    /* Try to allocate our handle */
-    lrpt_demodulator_rrc_filter_t *handle = malloc(sizeof(lrpt_demodulator_rrc_filter_t));
+    /* Try to allocate our RRC */
+    lrpt_demodulator_rrc_filter_t *rrc = malloc(sizeof(lrpt_demodulator_rrc_filter_t));
 
-    if (!handle)
+    if (!rrc)
         return NULL;
 
     /* NULL-init internal storage for safe deallocation */
-    handle->coeffs = NULL;
-    handle->memory = NULL;
+    rrc->coeffs = NULL;
+    rrc->memory = NULL;
 
     /* Try to allocate storage for coefficients and memory */
     const uint16_t taps = order * 2 + 1;
 
-    handle->count = taps;
-    handle->coeffs = calloc((size_t)taps, sizeof(double));
-    handle->idm = 0;
-    handle->memory = calloc((size_t)taps, sizeof(complex double));
+    rrc->count = taps;
+    rrc->coeffs = calloc((size_t)taps, sizeof(double));
+    rrc->idm = 0;
+    rrc->memory = calloc((size_t)taps, sizeof(complex double));
 
-    if (!handle->coeffs || !handle->memory) {
-        lrpt_demodulator_rrc_filter_deinit(handle);
+    if (!rrc->coeffs || !rrc->memory) {
+        lrpt_demodulator_rrc_filter_deinit(rrc);
 
         return NULL;
     }
 
     /* Compute filter coefficients */
     for (size_t i = 0; i < taps; i++)
-        handle->coeffs[i] = rrc_coeff((uint16_t)i, taps, osf * (double)factor, alpha);
+        rrc->coeffs[i] = rrc_coeff((uint16_t)i, taps, osf * (double)factor, alpha);
 
-    return handle;
+    return rrc;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_rrc_filter_deinit() */
 void lrpt_demodulator_rrc_filter_deinit(
-        lrpt_demodulator_rrc_filter_t *handle) {
-    if (!handle)
+        lrpt_demodulator_rrc_filter_t *rrc) {
+    if (!rrc)
         return;
 
-    free(handle->coeffs);
-    free(handle->memory);
-    free(handle);
+    free(rrc->coeffs);
+    free(rrc->memory);
+    free(rrc);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_rrc_filter_apply() */
 complex double lrpt_demodulator_rrc_filter_apply(
-        lrpt_demodulator_rrc_filter_t *handle,
+        lrpt_demodulator_rrc_filter_t *rrc,
         complex double value) {
     /* Update the memory nodes, save input value to first node */
-    handle->memory[handle->idm] = value;
+    rrc->memory[rrc->idm] = value;
 
     /* Calculate the feed-forward output */
     complex double result = 0.0;
     uint16_t idc = 0; /* Index for coefficients */
 
     /* Summate nodes till the end of the ring buffer */
-    while (handle->idm < (int16_t)handle->count)
-        result += handle->memory[(handle->idm)++] * handle->coeffs[idc++];
+    while (rrc->idm < (int16_t)rrc->count)
+        result += rrc->memory[(rrc->idm)++] * rrc->coeffs[idc++];
 
     /* Go back to the beginning of the ring buffer and summate remaining nodes */
-    handle->idm = 0;
+    rrc->idm = 0;
 
-    while (idc < handle->count)
-        result += handle->memory[(handle->idm)++] * handle->coeffs[idc++];
+    while (idc < rrc->count)
+        result += rrc->memory[(rrc->idm)++] * rrc->coeffs[idc++];
 
     /* Move back in the ring buffer */
-    (handle->idm)--;
+    (rrc->idm)--;
 
-    if (handle->idm < 0)
-        handle->idm += handle->count;
+    if (rrc->idm < 0)
+        rrc->idm += rrc->count;
 
     return result;
 }
