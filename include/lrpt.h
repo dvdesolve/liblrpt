@@ -105,7 +105,7 @@ typedef struct lrpt_iq_file__ lrpt_iq_file_t;
 
 /** Supported I/Q samples file format versions */
 typedef enum lrpt_iq_file_version__ {
-    LRPT_IQ_FILE_VER_1 /**< Version 1 */
+    LRPT_IQ_FILE_VER_1 = 0x01 /**< Version 1 */
 } lrpt_iq_file_version_t;
 
 /** Data type for QPSK soft symbols file */
@@ -396,50 +396,53 @@ LRPT_API const char *lrpt_iq_file_devicename(
 LRPT_API uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *file);
 
+/** Set current position in I/Q data file stream.
+ *
+ * \param file Pointer to the I/Q data file object.
+ * \param sample Sample index to set file pointer to. Index enumeration starts with 0.
+ *
+ * \return \c true on successfull positioning and \c false otherwise.
+ */
+LRPT_API bool lrpt_iq_file_goto(
+        lrpt_iq_file_t *file,
+        uint64_t sample);
+
 /** Read I/Q data from file.
  *
- * Reads \p length consecutive I/Q samples into I/Q storage \p data from data file \p file
- * starting at sample with index \p start. Storage will be auto-resized to proper length.
+ * Reads \p length consecutive I/Q samples into I/Q storage \p data from file \p file.
+ * Storage will be auto-resized to proper length.
  *
  * \param[out] data Pointer to the I/Q data storage object.
  * \param file Pointer to the I/Q data file object.
- * \param start Index of I/Q sample to start from.
  * \param length Number of I/Q samples to read.
+ * \param rewind If true, sample position in file stream will be preserved after reading.
  *
  * \return \c true on successfull reading and \c false otherwise.
  *
  * \note File with I/Q data is expected to be compatible with internal library format, e. g.
- * created with #lrpt_iq_data_save_to_file(). For more details see \ref lrptiq section.
-  */
+ * written with #lrpt_iq_data_write_to_file(). For more details see \ref lrptiq section.
+ */
 LRPT_API bool lrpt_iq_data_read_from_file(
         lrpt_iq_data_t *data,
         lrpt_iq_file_t *file,
-        uint64_t start,
-        uint64_t length);
+        size_t length,
+        bool rewind);
 
-/** Save I/Q data to file.
+/** Write I/Q data to file.
  *
- * Saves raw I/Q data pointed by \p data to file with name \p fname. If file already exists it
- * will be overwritten.
+ * Writes raw I/Q data pointed by \p data to file \p file.
  *
  * \param data Pointer to the I/Q data storage object.
- * \param fname Name of file to save raw I/Q data to.
- * \param version File format version.
- * \param samplerate Sampling rate.
- * \param device_name Pointer to the device name string. If \p device_name is \c NULL no
- * device name will be saved. Maximum length of \p device_name is limited to the 255 symbols.
- * All extra symbols will be truncated if presented.
+ * \param file Pointer to the I/Q file object to write raw I/Q data to.
  *
  * \return \c true on successfull writing and \c false otherwise.
  *
- * \note Resulting file maintains internal library format. For more details see \ref lrptiq section.
+ * \note Resulting file maintains internal library format. For more details see
+ * \ref lrptiq section.
  */
-LRPT_API bool lrpt_iq_data_save_to_file(
-        lrpt_iq_data_t *data,
-        const char *fname,
-        uint8_t version,
-        uint32_t samplerate,
-        const char *device_name);
+LRPT_API bool lrpt_iq_data_write_to_file(
+        const lrpt_iq_data_t *data,
+        lrpt_iq_file_t *file);
 
 /** @} */
 

@@ -44,6 +44,7 @@ struct lrpt_iq_file__ {
     char *device_name; /**< Device name info */
     uint64_t header_length; /**< Length of header data */
     uint64_t data_length; /**< Number of I/Q samples in file */
+    uint64_t current; /**< Current I/Q sample in file stream */
 };
 
 /** Storage type for QPSK soft symbols data file */
