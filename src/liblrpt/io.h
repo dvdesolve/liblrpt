@@ -38,13 +38,18 @@
 /** Storage type for I/Q data file */
 struct lrpt_iq_file__ {
     FILE *fhandle; /**< File object handle */
+
     bool write_mode; /**< Flag for write mode */
+
     uint8_t version; /**< File format version */
     uint32_t samplerate; /**< Sampling rate */
     char *device_name; /**< Device name info */
+
     uint64_t header_length; /**< Length of header data */
     uint64_t data_length; /**< Number of I/Q samples in file */
     uint64_t current; /**< Current I/Q sample in file stream */
+
+    unsigned char *iobuf; /**< Temporary buffer for reading/writing */
 };
 
 /** Storage type for QPSK soft symbols data file */

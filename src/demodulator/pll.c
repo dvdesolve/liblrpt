@@ -40,24 +40,24 @@
 /*************************************************************************************************/
 
 /* Library defaults */
-const double PLL_INIT_FREQ = 0.001; /* Initial Costas' PLL frequency */
-//const double PLL_DAMPING = 1.0 / M_SQRT2; /* Damping factor */
-const double PLL_DAMPING = 0.7071; /* TODO change after debug */
+static const double PLL_INIT_FREQ = 0.001; /* Initial Costas' PLL frequency */
+//static const double PLL_DAMPING = 1.0 / M_SQRT2; /* Damping factor */
+static const double PLL_DAMPING = 0.7071; /* TODO change after debug */
 
-const double PLL_ERR_SCALE_QPSK = 43.0; /* Scaling factors to control error magnitude */
-const double PLL_ERR_SCALE_OQPSK = 80.0;
+static const double PLL_ERR_SCALE_QPSK = 43.0; /* Scaling factors to control error magnitude */
+static const double PLL_ERR_SCALE_OQPSK = 80.0;
 
-const double PLL_LOCKED_ERR_SCALE = 10.0; /* Phase error scale on lock */
+static const double PLL_LOCKED_ERR_SCALE = 10.0; /* Phase error scale on lock */
 
-const double PLL_DELTA_WINSIZE = 100.0; /* Moving average window for phase errors */
-const double PLL_DELTA_WINSIZE_1 = PLL_DELTA_WINSIZE - 1.0;
+static const double PLL_DELTA_WINSIZE = 100.0; /* Moving average window for phase errors */
+static const double PLL_DELTA_WINSIZE_1 = PLL_DELTA_WINSIZE - 1.0;
 
-const double PLL_LOCKED_BW_REDUCE = 4.0; /* PLL bandwidth reduction (in lock) */
+static const double PLL_LOCKED_BW_REDUCE = 4.0; /* PLL bandwidth reduction (in lock) */
 
-const double PLL_AVG_WINSIZE = 20000.0; /* Interpolation factor is taken into account now */
-const double PLL_LOCKED_WINSIZEX = 10.0; /* Error average window size multiplier (in lock) */
+static const double PLL_AVG_WINSIZE = 20000.0; /* Interpolation factor is taken into account now */
+static const double PLL_LOCKED_WINSIZEX = 10.0; /* Error average window size multiplier (in lock) */
 
-const double FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
+static const double FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
 
 /*************************************************************************************************/
 

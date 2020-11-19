@@ -45,10 +45,10 @@
 /*************************************************************************************************/
 
 /* Library defaults */
-const double DEMOD_RESYNC_SCALE_QPSK = 2000000.0;
-const double DEMOD_RESYNC_SCALE_OQPSK = 2000000.0;
+static const double DEMOD_RESYNC_SCALE_QPSK = 2000000.0;
+static const double DEMOD_RESYNC_SCALE_OQPSK = 2000000.0;
 
-const double DEMOD_AGC_TARGET = 180.0;
+static const double DEMOD_AGC_TARGET = 180.0;
 
 /*************************************************************************************************/
 

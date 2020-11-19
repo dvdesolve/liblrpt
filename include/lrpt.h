@@ -434,6 +434,8 @@ LRPT_API bool lrpt_iq_data_read_from_file(
  *
  * \param data Pointer to the I/Q data storage object.
  * \param file Pointer to the I/Q file object to write raw I/Q data to.
+ * \param inplace Determines whether data length should be dumped as soon as possible (after every
+ * chunk, slower) or at the end of writing (faster).
  *
  * \return \c true on successfull writing and \c false otherwise.
  *
@@ -442,7 +444,8 @@ LRPT_API bool lrpt_iq_data_read_from_file(
  */
 LRPT_API bool lrpt_iq_data_write_to_file(
         const lrpt_iq_data_t *data,
-        lrpt_iq_file_t *file);
+        lrpt_iq_file_t *file,
+        bool inplace);
 
 /** @} */
 

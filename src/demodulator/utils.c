@@ -42,17 +42,17 @@
 /*************************************************************************************************/
 
 /* Library defaults */
-const size_t INTLV_BRANCHES = 36;
-const size_t INTLV_DELAY = 2048;
-const size_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
-const size_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols (usually 72 for Meteor) */
-const size_t INTLV_SYNC_LEN = 8; /* The length of sync word (usually 8 for Meteor) */
-const size_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
+static const size_t INTLV_BRANCHES = 36;
+static const size_t INTLV_DELAY = 2048;
+static const size_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
+static const size_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols (usually 72 for Meteor) */
+static const size_t INTLV_SYNC_LEN = 8; /* The length of sync word (usually 8 for Meteor) */
+static const size_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
 
-const size_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
-const size_t SYNCD_BUF_MARGIN = SYNCD_DEPTH * INTLV_SYNCDATA;
-const size_t SYNCD_BLOCK_SIZ = (SYNCD_DEPTH + 1) * INTLV_SYNCDATA;
-const size_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
+static const size_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
+static const size_t SYNCD_BUF_MARGIN = SYNCD_DEPTH * INTLV_SYNCDATA;
+static const size_t SYNCD_BLOCK_SIZ = (SYNCD_DEPTH + 1) * INTLV_SYNCDATA;
+static const size_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
 
 /*************************************************************************************************/
 
