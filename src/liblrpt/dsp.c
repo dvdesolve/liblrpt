@@ -60,10 +60,8 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* NULL-init internal storage for safe deallocation */
     filter->a = NULL;
     filter->b = NULL;
-    filter->x_i = NULL;
-    filter->y_i = NULL;
-    filter->x_q = NULL;
-    filter->y_q = NULL;
+    filter->x = NULL;
+    filter->y = NULL;
 
     /* Number of poles should be even and not greater than 252 to fit in uint8_t type */
     if ((num_poles > 252) || ((num_poles % 2) != 0)) {
@@ -73,8 +71,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     }
 
     filter->npoles = num_poles;
-    filter->ri_i = 0;
-    filter->ri_q = 0;
+    filter->ri = 0;
 
     /* Allocate data and coefficients arrays */
     size_t n = (size_t)(num_poles + 3);
@@ -87,14 +84,11 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* Allocate saved input and output arrays */
     n = (size_t)(num_poles + 1);
 
-    filter->x_i = calloc(n, sizeof(double));
-    filter->y_i = calloc(n, sizeof(double));
-    filter->x_q = calloc(n, sizeof(double));
-    filter->y_q = calloc(n, sizeof(double));
+    filter->x = calloc(n, sizeof(complex double));
+    filter->y = calloc(n, sizeof(complex double));
 
     /* Check for allocation problems */
-    if (!ta || !tb || !filter->a || !filter->b ||
-            !filter->x_i || !filter->y_i || !filter->x_q || !filter->y_q) {
+    if (!ta || !tb || !filter->a || !filter->b || !filter->x || !filter->y) {
         lrpt_dsp_filter_deinit(filter);
         free(ta);
         free(tb);
@@ -226,10 +220,8 @@ void lrpt_dsp_filter_deinit(
 
     free(filter->a);
     free(filter->b);
-    free(filter->x_i);
-    free(filter->y_i);
-    free(filter->x_q);
-    free(filter->y_q);
+    free(filter->x);
+    free(filter->y);
     free(filter);
 }
 
@@ -248,64 +240,35 @@ bool lrpt_dsp_filter_apply(
     const size_t len = data->len;
     complex double * const samples = data->iq;
 
-    /* I samples first, then Q */
-    for (size_t k = 0; k < 2; k++) {
-        /* Filter samples in the buffer */
-        for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
-            complex double *cur_s = samples + buf_idx;
-            double cur_part;
-            double *cur_x;
-            double *cur_y;
-            uint8_t *cur_ri;
+    /* Filter samples in the buffer */
+    for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
+        complex double *cur_s = samples + buf_idx;
 
-            if (k == 0) {
-                cur_part = creal(*cur_s);
-                cur_x = filter->x_i;
-                cur_y = filter->y_i;
-                cur_ri = &(filter->ri_i);
-            }
-            else {
-                cur_part = cimag(*cur_s);
-                cur_x = filter->x_q;
-                cur_y = filter->y_q;
-                cur_ri = &(filter->ri_q);
-            }
+        /* Calculate and save filtered samples */
+        complex double yn0 = *cur_s * filter->a[0];
 
-            /* Calculate and save filtered samples */
-            double yn0 = cur_part * filter->a[0];
+        for (uint8_t idx = 1; idx < npp1; idx++) {
+            /* Summate contribution of past input samples */
+            yn0 += filter->x[filter->ri] * filter->a[idx];
 
-            for (uint8_t idx = 1; idx < npp1; idx++) {
-                double y;
+            /* Summate contribution of past output samples */
+            yn0 += filter->y[filter->ri] * filter->b[idx];
 
-                /* Summate contribution of past input samples */
-                y = filter->a[idx];
-                y *= cur_x[*cur_ri];
-                yn0 += y;
+            /* Advance ring buffers index */
+            filter->ri++;
 
-                /* Summate contribution of past output samples */
-                y = filter->b[idx];
-                y *= cur_y[*cur_ri];
-                yn0 += y;
-
-                /* Advance ring buffers index */
-                (*cur_ri)++;
-
-                if (*cur_ri >= npp1)
-                    *cur_ri = 0;
-            }
-
-            /* Save new yn0 output to y ring buffer */
-            cur_y[*cur_ri] = yn0;
-
-            /* Save current input sample to x ring buffer */
-            cur_x[*cur_ri] = cur_part;
-
-            /* Return filtered samples */
-            if (k == 0)
-                *cur_s = yn0 + cimag(*cur_s) * (complex double)I;
-            else
-                *cur_s = creal(*cur_s) + yn0 * (complex double)I;
+            if (filter->ri >= npp1)
+                filter->ri = 0;
         }
+
+        /* Save new yn0 output to y ring buffer */
+        filter->y[filter->ri] = yn0;
+
+        /* Save current input sample to x ring buffer */
+        filter->x[filter->ri] = *cur_s;
+
+        /* Return filtered samples */
+        *cur_s = yn0;
     }
 
     return true;

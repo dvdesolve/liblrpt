@@ -29,6 +29,7 @@
 
 /*************************************************************************************************/
 
+#include <complex.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
@@ -43,13 +44,13 @@ struct lrpt_dsp_filter__ {
     /** @} */
 
     /** @{ */
-    /** Saved input and output values for both I and Q samples */
-    double *x_i, *y_i, *x_q, *y_q;
+    /** Saved input and output values for I/Q samples */
+    complex double *x, *y;
     /** @} */
 
     /** @{ */
-    /** Ring buffer indices for both I and Q samples */
-    uint8_t ri_i, ri_q;
+    /** Ring buffer index for I/Q samples */
+    uint8_t ri;
     /** @} */
 };
 
