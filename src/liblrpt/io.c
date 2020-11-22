@@ -30,6 +30,7 @@
 #include "lrpt.h"
 #include "utils.h"
 
+#include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -536,16 +537,19 @@ bool lrpt_iq_data_read_from_file(
         /* Parse block */
         for (size_t j = 0; j < toread; j++) {
             unsigned char v_s[10];
+            double i_part, q_part;
 
             memcpy(v_s, file->iobuf + 20 * j, 10); /* I sample */
 
-            if (!lrpt_utils_ds_double(v_s, &(data->iq[i * IQ_DATA_IO_N + j].i)))
+            if (!lrpt_utils_ds_double(v_s, &i_part))
                 return false;
 
             memcpy(v_s, file->iobuf + 20 * j + 10, 10); /* Q sample */
 
-            if (!lrpt_utils_ds_double(v_s, &(data->iq[i * IQ_DATA_IO_N + j].q)))
+            if (!lrpt_utils_ds_double(v_s, &q_part))
                 return false;
+
+            data->iq[i * IQ_DATA_IO_N + j] = i_part + q_part * (complex double)I;
         }
     }
 
@@ -582,12 +586,12 @@ bool lrpt_iq_data_write_to_file(
         for (size_t j = 0; j < towrite; j++) {
             unsigned char v_s[10];
 
-            if (!lrpt_utils_s_double(data->iq[i * IQ_DATA_IO_N + j].i, v_s))
+            if (!lrpt_utils_s_double(creal(data->iq[i * IQ_DATA_IO_N + j]), v_s))
                 return false;
 
             memcpy(file->iobuf + 20 * j, v_s, 10); /* I sample */
 
-            if (!lrpt_utils_s_double(data->iq[i * IQ_DATA_IO_N + j].q, v_s))
+            if (!lrpt_utils_s_double(cimag(data->iq[i * IQ_DATA_IO_N + j]), v_s))
                 return false;
 
             memcpy(file->iobuf + 20 * j + 10, v_s, 10); /* Q sample */

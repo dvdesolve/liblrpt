@@ -30,6 +30,7 @@
 
 #include "../../include/lrpt.h"
 
+#include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -61,7 +62,7 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(
     data->len = length;
 
     if (length > 0) {
-        data->iq = calloc(length, sizeof(lrpt_iq_raw_t));
+        data->iq = calloc(length, sizeof(complex double));
 
         /* Return NULL only if allocation attempt has failed */
         if (!data->iq) {
@@ -118,7 +119,7 @@ bool lrpt_iq_data_resize(
         data->iq = NULL;
     }
     else {
-        lrpt_iq_raw_t *new_iq = reallocarray(data->iq, new_length, sizeof(lrpt_iq_raw_t));
+        complex double *new_iq = reallocarray(data->iq, new_length, sizeof(complex double));
 
         if (!new_iq)
             return false;
@@ -151,10 +152,8 @@ bool lrpt_iq_data_from_doubles(
         return false;
 
     /* Repack doubles into I/Q data */
-    for (size_t k = 0; k < length; k++) {
-        data->iq[k].i = *(i + k);
-        data->iq[k].q = *(q + k);
-    }
+    for (size_t k = 0; k < length; k++)
+        data->iq[k] = i[k] + q[k] * (complex double)I;
 
     return true;
 }
@@ -185,7 +184,7 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
 /* lrpt_iq_data_from_samples() */
 bool lrpt_iq_data_from_samples(
         lrpt_iq_data_t *data,
-        const lrpt_iq_raw_t *iq,
+        const complex double *iq,
         size_t length) {
     if (!data)
         return false;
@@ -205,7 +204,7 @@ bool lrpt_iq_data_from_samples(
 
 /* lrpt_iq_data_create_from_samples() */
 lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
-        const lrpt_iq_raw_t *iq,
+        const complex double *iq,
         size_t length) {
     lrpt_iq_data_t *data = lrpt_iq_data_alloc(length);
 
@@ -235,7 +234,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
     data->len = length;
 
     if (length > 0) {
-        data->qpsk = calloc(length, sizeof(lrpt_qpsk_raw_t));
+        data->qpsk = calloc(length, 1);
 
         /* Return NULL only if allocation attempt has failed */
         if (!data->qpsk) {
@@ -292,7 +291,7 @@ bool lrpt_qpsk_data_resize(
         data->qpsk = NULL;
     }
     else {
-        lrpt_qpsk_raw_t *new_s = reallocarray(data->qpsk, new_length, sizeof(lrpt_qpsk_raw_t));
+        int8_t *new_s = reallocarray(data->qpsk, new_length, 1);
 
         if (!new_s)
             return false;

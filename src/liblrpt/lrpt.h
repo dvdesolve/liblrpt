@@ -29,8 +29,7 @@
 
 /*************************************************************************************************/
 
-#include "../../include/lrpt.h"
-
+#include <complex.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -44,21 +43,15 @@
 
 /*************************************************************************************************/
 
-/** Storage type for single I/Q pair */
-struct lrpt_iq_raw__ {
-    double i; /**< I sample value */
-    double q; /**< Q sample value */
-};
-
 /** Storage type for raw I/Q data */
 struct lrpt_iq_data__ {
-    lrpt_iq_raw_t *iq; /**< Array of I/Q pairs */
+    complex double *iq; /**< Array of I/Q pairs */
     size_t len; /**< Total number of I/Q pairs */
 };
 
 /** Storage type for QPSK soft symbols data */
 struct lrpt_qpsk_data__ {
-    lrpt_qpsk_raw_t *qpsk; /**< Array of QPSK soft symbols */
+    int8_t *qpsk; /**< Array of QPSK soft symbols */
     size_t len; /**< Total number of QPSK soft symbols */
 };
 

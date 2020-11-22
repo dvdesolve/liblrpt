@@ -418,7 +418,7 @@ bool lrpt_demodulator_exec(
     /* Now we're ready to process filtered I/Q data and get soft-symbols */
     for (size_t i = 0; i < input->len; i++) {
         /* Make complex variable from filtered sample */
-        complex double cdata = input->iq[i].i + input->iq[i].q * (complex double)I;
+        complex double cdata = input->iq[i];
 
         for (uint8_t j = 0; j < demod->interp_factor; j++) {
             /* Pass samples through interpolator RRC filter */

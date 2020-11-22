@@ -34,6 +34,7 @@
 #include "../../include/lrpt.h"
 #include "lrpt.h"
 
+#include <complex.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -245,44 +246,45 @@ bool lrpt_dsp_filter_apply(
     /* For convenient access purposes */
     const uint8_t npp1 = filter->npoles + 1;
     const size_t len = data->len;
-    lrpt_iq_raw_t * const samples = data->iq;
+    complex double * const samples = data->iq;
 
     /* I samples first, then Q */
     for (size_t k = 0; k < 2; k++) {
         /* Filter samples in the buffer */
         for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
-            double *cur_s;
+            complex double *cur_s = samples + buf_idx;
+            double cur_part;
             double *cur_x;
             double *cur_y;
             uint8_t *cur_ri;
 
             if (k == 0) {
-                cur_s = &(samples[buf_idx].i);
+                cur_part = creal(*cur_s);
                 cur_x = filter->x_i;
                 cur_y = filter->y_i;
                 cur_ri = &(filter->ri_i);
             }
             else {
-                cur_s = &(samples[buf_idx].q);
+                cur_part = cimag(*cur_s);
                 cur_x = filter->x_q;
                 cur_y = filter->y_q;
                 cur_ri = &(filter->ri_q);
             }
 
             /* Calculate and save filtered samples */
-            double yn0 = *cur_s * filter->a[0];
+            double yn0 = cur_part * filter->a[0];
 
             for (uint8_t idx = 1; idx < npp1; idx++) {
                 double y;
 
                 /* Summate contribution of past input samples */
                 y = filter->a[idx];
-                y   *= cur_x[*cur_ri];
+                y *= cur_x[*cur_ri];
                 yn0 += y;
 
                 /* Summate contribution of past output samples */
-                y    = filter->b[idx];
-                y   *= cur_y[*cur_ri];
+                y = filter->b[idx];
+                y *= cur_y[*cur_ri];
                 yn0 += y;
 
                 /* Advance ring buffers index */
@@ -296,10 +298,13 @@ bool lrpt_dsp_filter_apply(
             cur_y[*cur_ri] = yn0;
 
             /* Save current input sample to x ring buffer */
-            cur_x[*cur_ri] = *cur_s;
+            cur_x[*cur_ri] = cur_part;
 
             /* Return filtered samples */
-            *cur_s = yn0;
+            if (k == 0)
+                *cur_s = yn0 + cimag(*cur_s) * (complex double)I;
+            else
+                *cur_s = creal(*cur_s) + yn0 * (complex double)I;
         }
     }
 

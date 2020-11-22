@@ -320,8 +320,8 @@ bool lrpt_demodulator_dediffcode(
     if (!data || data->len < 2 || (data->len % 2) != 0)
         return false;
 
-    lrpt_qpsk_raw_t t1 = data->qpsk[0];
-    lrpt_qpsk_raw_t t2 = data->qpsk[1];
+    int8_t t1 = data->qpsk[0];
+    int8_t t2 = data->qpsk[1];
 
     data->qpsk[0] = lut_isqrt(demod->lut_isqrt, data->qpsk[0] * demod->pr_I);
     data->qpsk[1] = lut_isqrt(demod->lut_isqrt, -(data->qpsk[1]) * demod->pr_Q);

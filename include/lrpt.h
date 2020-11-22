@@ -61,6 +61,7 @@
 
 /*************************************************************************************************/
 
+#include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -78,16 +79,8 @@
  * @{
  */
 
-/** Data type for single I/Q sample */
-/* TODO do we need it actually? */
-typedef struct lrpt_iq_raw__ lrpt_iq_raw_t;
-
 /** Data type for storing I/Q samples */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
-
-/** Data type for single QPSK symbol */
-/* TODO do we need it actually? */
-typedef int8_t lrpt_qpsk_raw_t;
 
 /** Data type for storing QPSK soft symbols */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
@@ -269,7 +262,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
  */
 LRPT_API bool lrpt_iq_data_from_samples(
         lrpt_iq_data_t *data,
-        const lrpt_iq_raw_t *iq,
+        const complex double *iq,
         size_t length);
 
 /** Create I/Q storage object from raw I/Q samples.
@@ -287,7 +280,7 @@ LRPT_API bool lrpt_iq_data_from_samples(
  * caution about \p iq array length is actual.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
-        const lrpt_iq_raw_t *iq,
+        const complex double *iq,
         size_t length);
 
 /** Allocate QPSK soft symbol data storage object.
