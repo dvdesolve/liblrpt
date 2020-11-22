@@ -320,18 +320,18 @@ bool lrpt_demodulator_dediffcode(
     if (!data || data->len < 2 || (data->len % 2) != 0)
         return false;
 
-    int8_t t1 = data->s[0];
-    int8_t t2 = data->s[1];
+    lrpt_qpsk_raw_t t1 = data->qpsk[0];
+    lrpt_qpsk_raw_t t2 = data->qpsk[1];
 
-    data->s[0] = lut_isqrt(demod->lut_isqrt, data->s[0] * demod->pr_I);
-    data->s[1] = lut_isqrt(demod->lut_isqrt, -(data->s[1]) * demod->pr_Q);
+    data->qpsk[0] = lut_isqrt(demod->lut_isqrt, data->qpsk[0] * demod->pr_I);
+    data->qpsk[1] = lut_isqrt(demod->lut_isqrt, -(data->qpsk[1]) * demod->pr_Q);
 
     for (size_t i = 2; i <= (data->len - 2); i += 2) {
-        int8_t x = data->s[i];
-        int8_t y = data->s[i + 1];
+        int8_t x = data->qpsk[i];
+        int8_t y = data->qpsk[i + 1];
 
-        data->s[i] = lut_isqrt(demod->lut_isqrt, data->s[i] * t1);
-        data->s[i + 1] = lut_isqrt(demod->lut_isqrt, -(data->s[i + 1]) * t2);
+        data->qpsk[i] = lut_isqrt(demod->lut_isqrt, data->qpsk[i] * t1);
+        data->qpsk[i + 1] = lut_isqrt(demod->lut_isqrt, -(data->qpsk[i + 1]) * t2);
 
         t1 = x;
         t2 = y;

@@ -79,14 +79,17 @@
  */
 
 /** Data type for single I/Q sample */
+/* TODO do we need it actually? */
 typedef struct lrpt_iq_raw__ lrpt_iq_raw_t;
 
 /** Data type for storing I/Q samples */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 
-/** Data type for storing QPSK soft symbols
- * \todo add raw QPSK soft-symbol type
- */
+/** Data type for single QPSK symbol */
+/* TODO do we need it actually? */
+typedef int8_t lrpt_qpsk_raw_t;
+
+/** Data type for storing QPSK soft symbols */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
 /** @} */
@@ -110,6 +113,11 @@ typedef enum lrpt_iq_file_version__ {
 
 /** Data type for QPSK soft symbols file */
 typedef struct lrpt_qpsk_file__ lrpt_qpsk_file_t;
+
+/** Supported QPSK samples file format versions */
+typedef enum lrpt_qpsk_file_version__ {
+    LRPT_QPSK_FILE_VER_1 = 0x01 /**< Version 1 */
+} lrpt_qpsk_file_version_t;
 
 /** @} */
 
@@ -304,6 +312,15 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
 LRPT_API void lrpt_qpsk_data_free(
         lrpt_qpsk_data_t *data);
 
+/** Length of QPSK data storage.
+ *
+ * \param data Pointer to the QPSK data storage object.
+ *
+ * \return Number of QPSK symbols currently stored in \p data.
+ */
+LRPT_API size_t lrpt_qpsk_data_length(
+        const lrpt_qpsk_data_t *data);
+
 /** Resize existing QPSK soft symbol data storage.
  *
  * If valid \p data is provided it will be resized to accomodate \p new_length QPSK soft symbols.
@@ -360,7 +377,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 LRPT_API void lrpt_iq_file_close(
         lrpt_iq_file_t *file);
 
-/** File format version info.
+/** I/Q raw data file format version info.
  *
  * \param file Pointer to the I/Q data file object.
  *
@@ -446,6 +463,124 @@ LRPT_API bool lrpt_iq_data_write_to_file(
         const lrpt_iq_data_t *data,
         lrpt_iq_file_t *file,
         bool inplace);
+
+/** Open QPSK data file for reading.
+ *
+ * File format is described at \ref lrptqpsk section. User should close file properly with
+ * #lrpt_qpsk_file_close() after use.
+ *
+ * \param fname Name of file with QPSK data.
+ *
+ * \return Pointer to the allocated QPSK data file object or \c NULL in case of error.
+ */
+LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
+        const char *fname);
+
+/** Open QPSK data file of Version 1 for writing.
+ *
+ * File format is described at \ref lrptqpsk section. User should close file properly with
+ * #lrpt_qpsk_file_close() after use.
+ *
+ * \param fname Name of file to write QPSK data to.
+ * \param offset Whether Offset QPSK was used during modulation.
+ * \param differential Whether differential coding was used during modulation.
+ * \param interleaved Whether interleaving was used during modulation.
+ * \param hard Determines whether data is in hard samples format (if \p hard is \c true) or soft
+ * (\p hard is \c false).
+ * \param symrate Symbol rate.
+ *
+ * \return Pointer to the writable QPSK file object or \c NULL in case of error.
+ */
+LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
+        const char *fname,
+        bool offset,
+        bool differential,
+        bool interleaved,
+        bool hard,
+        uint32_t symrate);
+
+/** Close previously opened file with QPSK data.
+ *
+ * \param file Pointer to the QPSK data file object.
+ */
+LRPT_API void lrpt_qpsk_file_close(
+        lrpt_qpsk_file_t *file);
+
+/** QPSK data file format version info.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return File version number info.
+ */
+LRPT_API uint8_t lrpt_qpsk_file_version(
+        const lrpt_qpsk_file_t *file);
+
+/** Tells whether Offset QPSK modulation was used.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return \c true if Offset QPSK was used and \c false otherwise.
+ */
+LRPT_API bool lrpt_qpsk_file_is_offsetted(
+        const lrpt_qpsk_file_t *file);
+
+/** Tells whether differential coding modulation was used.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return \c true if differential coding was used and \c false otherwise.
+ */
+LRPT_API bool lrpt_qpsk_file_is_diffcoded(
+        const lrpt_qpsk_file_t *file);
+
+/** Tells whether interleaving was used.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return \c true if interleaving was used and \c false otherwise.
+ */
+LRPT_API bool lrpt_qpsk_file_is_interleaved(
+        const lrpt_qpsk_file_t *file);
+
+/** Tells whether symbols are in hard format.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return \c true if samples are in hard format and \c false otherwise.
+ */
+LRPT_API bool lrpt_qpsk_file_is_hardsampled(
+        const lrpt_qpsk_file_t *file);
+
+/** File symbol rate.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return Symbol rate at which file was created.
+ */
+LRPT_API uint32_t lrpt_qpsk_file_symrate(
+        const lrpt_qpsk_file_t *file);
+
+/** Number of QPSK symbols stored in file.
+ *
+ * \param file Pointer to the QPSK data file object.
+ *
+ * \return Number of QPSK symbols stored in file.
+ *
+ * \todo add code for hard samples.
+ */
+LRPT_API uint64_t lrpt_qpsk_file_length(
+        const lrpt_qpsk_file_t *file);
+
+/** Set current position in QPSK data file stream.
+ *
+ * \param file Pointer to the QPSK data file object.
+ * \param symbol Symbol index to set file pointer to. Index enumeration starts with 0.
+ *
+ * \return \c true on successfull positioning and \c false otherwise.
+ */
+LRPT_API bool lrpt_qpsk_file_goto(
+        lrpt_qpsk_file_t *file,
+        uint64_t symbol);
 
 /** @} */
 

@@ -58,7 +58,7 @@ struct lrpt_iq_data__ {
 
 /** Storage type for QPSK soft symbols data */
 struct lrpt_qpsk_data__ {
-    int8_t *s; /**< Array of QPSK soft symbols */
+    lrpt_qpsk_raw_t *qpsk; /**< Array of QPSK soft symbols */
     size_t len; /**< Total number of QPSK soft symbols */
 };
 

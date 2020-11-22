@@ -56,4 +56,7 @@
  * we'll get \c 0xFFFA as serialized exponent and \c 0xFFEBC621B7E0AC7E as serialized mantissa.
  * As a result the sequence of \c 0x0007 \c 0x001EDD2F1A9FBE77 \c 0xFFFA \c 0xFFEBC621B7E0AC7E
  * represents this I/Q sample in liblrpt's format.
+ *
+ * \section lrptqpsk QPSK symbols data file format
+ * \todo Fill here.
  */

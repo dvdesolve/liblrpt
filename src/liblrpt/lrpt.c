@@ -235,17 +235,17 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
     data->len = length;
 
     if (length > 0) {
-        data->s = calloc(length, sizeof(int8_t));
+        data->qpsk = calloc(length, sizeof(lrpt_qpsk_raw_t));
 
         /* Return NULL only if allocation attempt has failed */
-        if (!data->s) {
+        if (!data->qpsk) {
             lrpt_qpsk_data_free(data);
 
             return NULL;
         }
     }
     else
-        data->s = NULL;
+        data->qpsk = NULL;
 
     return data;
 }
@@ -258,8 +258,16 @@ void lrpt_qpsk_data_free(
     if (!data)
         return;
 
-    free(data->s);
+    free(data->qpsk);
     free(data);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_length() */
+size_t lrpt_qpsk_data_length(
+        const lrpt_qpsk_data_t *data) {
+    return data->len;
 }
 
 /*************************************************************************************************/
@@ -269,7 +277,7 @@ bool lrpt_qpsk_data_resize(
         lrpt_qpsk_data_t *data,
         size_t new_length) {
     /* We accept only valid data objects or simple empty objects */
-    if (!data || ((data->len > 0) && !data->s))
+    if (!data || ((data->len > 0) && !data->qpsk))
         return false;
 
     /* Is sizes are the same just return true */
@@ -278,13 +286,13 @@ bool lrpt_qpsk_data_resize(
 
     /* In case of zero length create empty but valid data object */
     if (new_length == 0) {
-        free(data->s);
+        free(data->qpsk);
 
         data->len = 0;
-        data->s = NULL;
+        data->qpsk = NULL;
     }
     else {
-        int8_t *new_s = reallocarray(data->s, new_length, sizeof(int8_t));
+        lrpt_qpsk_raw_t *new_s = reallocarray(data->qpsk, new_length, sizeof(lrpt_qpsk_raw_t));
 
         if (!new_s)
             return false;
@@ -294,7 +302,7 @@ bool lrpt_qpsk_data_resize(
                 memset(new_s + data->len, 0, new_length - data->len);
 
             data->len = new_length;
-            data->s = new_s;
+            data->qpsk = new_s;
         }
     }
 

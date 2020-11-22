@@ -39,7 +39,8 @@
 
 /*************************************************************************************************/
 
-static const size_t IQ_DATA_IO_N = 1024; /**< Block size for I/O operations */
+static const size_t IQ_DATA_IO_N = 1024; /**< Block size for I/O operations with I/Q data */
+static const size_t QPSK_DATA_IO_N = 1024; /**< Block size for I/O operations with QPSK data */
 
 /*************************************************************************************************/
 
@@ -49,13 +50,22 @@ static const size_t IQ_DATA_IO_N = 1024; /**< Block size for I/O operations */
  *
  * \return Pointer to the I/Q file object or \c NULL in case of error.
  */
-static lrpt_iq_file_t *file_open_r_v1(
+static lrpt_iq_file_t *iq_file_open_r_v1(
+        FILE *fh);
+
+/** Open QPSK symbols data file of Version 1 for reading.
+ *
+ * \param fh Pointer to the \c FILE object.
+ *
+ * \return Pointer to the QPSK file object or \c NULL in case of error.
+ */
+static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
         FILE *fh);
 
 /*************************************************************************************************/
 
-/* file_open_r_v1() */
-static lrpt_iq_file_t *file_open_r_v1(
+/* iq_file_open_r_v1() */
+static lrpt_iq_file_t *iq_file_open_r_v1(
         FILE *fh) {
     /* File position = 7 */
 
@@ -117,6 +127,7 @@ static lrpt_iq_file_t *file_open_r_v1(
     /* Perform sanity checking - one complex I/Q sample is encoded as two doubles and each double
      * is serialized to the 10 unsigned chars
      */
+    /* TODO check for incomplete samples (use remainder of the division) and warn about truncation */
     uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
     uint64_t n_iq = (ftell(fh) - cur_pos) / (10 * 2);
@@ -165,6 +176,95 @@ static lrpt_iq_file_t *file_open_r_v1(
 
 /*************************************************************************************************/
 
+/* qpsk_file_open_r_v1() */
+static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
+        FILE *fh) {
+    /* File position = 9 */
+
+    /* Read flags */
+    unsigned char flags;
+
+    if (fread(&flags, 1, 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 10 */
+
+    /* Read symbol rate */
+    unsigned char sr_s[4];
+
+    if (fread(sr_s, 1, 4, fh) != 4) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
+
+    /* File position = 14 */
+
+    /* Read data length */
+    unsigned char data_l_s[8];
+
+    if (fread(data_l_s, 1, 8, fh) != 8) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
+
+    /* File position = 22 */
+
+    /* Perform sanity checking - one soft QPSK symbol is encoded as one int8_t */
+    /* TODO add code for hard samples */
+    uint64_t cur_pos = ftell(fh);
+    fseek(fh, 0, SEEK_END);
+    uint64_t n_sym = ftell(fh) - cur_pos;
+    fseek(fh, cur_pos, SEEK_SET);
+
+    if (n_sym != data_l) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Try to allocate temporary I/O buffer */
+    /* TODO add code for hard samples */
+    unsigned char *iobuf = calloc(QPSK_DATA_IO_N, 1);
+
+    if (!iobuf) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Create QPSK data file object and return it */
+    lrpt_qpsk_file_t *file = malloc(sizeof(lrpt_qpsk_file_t));
+
+    if (!file) {
+        free(iobuf);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    file->fhandle = fh;
+    file->write_mode = false;
+    file->version = LRPT_QPSK_FILE_VER_1;
+    file->flags = flags;
+    file->symrate = sr;
+    file->header_length = 22; /* Just a sum of all elements previously read */
+    file->data_length = data_l; /* TODO add code for hard samples */
+    file->current = 0;
+    file->iobuf = iobuf;
+
+    return file;
+}
+/*************************************************************************************************/
+
 /* lrpt_iq_file_open_r() */
 lrpt_iq_file_t *lrpt_iq_file_open_r(
         const char *fname) {
@@ -199,7 +299,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_r(
 
     switch (ver) {
         case LRPT_IQ_FILE_VER_1:
-            return file_open_r_v1(fh);
+            return iq_file_open_r_v1(fh);
 
             break;
 
@@ -530,6 +630,253 @@ bool lrpt_iq_data_write_to_file(
 
     return true;
 }
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_open_r() */
+lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
+        const char *fname) {
+    FILE *fh = fopen(fname, "rb");
+
+    if (!fh)
+        return NULL;
+
+    /* File position = 0 */
+
+    /* Check file header information. Header should be 8-character string "lrptqpsk" */
+    char header[8];
+
+    if ((fread(header, 1, 8, fh) != 8) || strncmp(header, "lrptqpsk", 8) != 0) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 8 */
+
+    /* Read file format version info */
+    uint8_t ver;
+
+    if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 9 */
+
+    switch (ver) {
+        case LRPT_QPSK_FILE_VER_1:
+            return qpsk_file_open_r_v1(fh);
+
+            break;
+
+        default:
+            fclose(fh);
+
+            return NULL;
+    }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_open_w_v1() */
+lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
+        const char *fname,
+        bool offset,
+        bool differential,
+        bool interleaved,
+        bool hard,
+        uint32_t symrate) {
+    FILE *fh = fopen(fname, "wb");
+
+    if (!fh)
+        return NULL;
+
+    /* File position = 0 */
+
+    const uint8_t version = LRPT_QPSK_FILE_VER_1;
+
+    /* Write file header and version */
+    if (fwrite("lrptqpsk", 1, 8, fh) != 8) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 8 */
+
+    if (fwrite(&version, sizeof(uint8_t), 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 9 */
+
+    /* Write flags */
+    unsigned char flags = 0;
+
+    if (offset) /* Offset QPSK */
+        flags |= 0x01;
+
+    if (differential) /* Diffcoded QPSK */
+        flags |= 0x02;
+
+    if (interleaved) /* Interleaved QPSK */
+        flags |= 0x04;
+
+    if (hard) /* Hard samples */
+        flags |= 0x08;
+
+    if (fwrite(&flags, 1, 1, fh) != 1) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 10 */
+
+    /* Write symbol rate info */
+    unsigned char sr_s[4];
+    lrpt_utils_s_uint32_t(symrate, sr_s);
+
+    if (fwrite(sr_s, 1, 4, fh) != 4) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 14 */
+
+    /* Write initial data length */
+    unsigned char data_l_s[8];
+    lrpt_utils_s_uint64_t(0, data_l_s);
+
+    if (fwrite(data_l_s, 1, 8, fh) != 8) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* File position = 22 */
+
+    /* Try to allocate temporary I/O buffer */
+    /* TODO add code for hard samples */
+    unsigned char *iobuf = calloc(QPSK_DATA_IO_N, 1);
+
+    if (!iobuf) {
+        fclose(fh);
+
+        return NULL;
+    }
+
+    /* Create QPSK data file object and return it */
+    lrpt_qpsk_file_t *file = malloc(sizeof(lrpt_qpsk_file_t));
+
+    if (!file) {
+        free(iobuf);
+        fclose(fh);
+
+        return NULL;
+    }
+
+    file->fhandle = fh;
+    file->write_mode = true;
+    file->version = LRPT_QPSK_FILE_VER_1;
+    file->flags = flags;
+    file->symrate = symrate;
+    file->header_length = 22; /* Just a sum of all elements previously written */
+    file->data_length = 0; /* TODO add code for hard samples */
+    file->current = 0;
+    file->iobuf = iobuf;
+
+    return file;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_close() */
+void lrpt_qpsk_file_close(
+        lrpt_qpsk_file_t *file) {
+    if (!file)
+        return;
+
+    free(file->iobuf);
+    fclose(file->fhandle);
+    free(file);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_version() */
+uint8_t lrpt_qpsk_file_version(
+        const lrpt_qpsk_file_t *file) {
+    return file->version;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_is_offsetted() */
+bool lrpt_qpsk_file_is_offsetted(
+        const lrpt_qpsk_file_t *file) {
+    return (file->flags & 0x01);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_is_diffcoded() */
+bool lrpt_qpsk_file_is_diffcoded(
+        const lrpt_qpsk_file_t *file) {
+    return (file->flags & 0x02);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_is_interleaved() */
+bool lrpt_qpsk_file_is_interleaved(
+        const lrpt_qpsk_file_t *file) {
+    return (file->flags & 0x04);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_is_hardsampled() */
+bool lrpt_qpsk_file_is_hardsampled(
+        const lrpt_qpsk_file_t *file) {
+    return (file->flags & 0x08);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_symrate() */
+uint32_t lrpt_qpsk_file_symrate(
+        const lrpt_qpsk_file_t *file) {
+    return file->symrate;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_length() */
+uint64_t lrpt_qpsk_file_length(
+        const lrpt_qpsk_file_t *file) {
+    return file->data_length; /* TODO add code for hard samples */
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_file_goto() */
+bool lrpt_qpsk_file_goto(
+        lrpt_qpsk_file_t *file,
+        uint64_t symbol) {
+    if (!file || !file->fhandle || symbol > file->data_length)
+        return false;
+
+    fseek(file->fhandle, file->header_length + symbol, SEEK_SET); /* TODO add code for hard samples */
+
+    return true;
+}
+
 
 /*************************************************************************************************/
 

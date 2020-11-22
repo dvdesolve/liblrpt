@@ -55,12 +55,18 @@ struct lrpt_iq_file__ {
 /** Storage type for QPSK soft symbols data file */
 struct lrpt_qpsk_file__ {
     FILE *fhandle; /**< File object handle */
+
+    bool write_mode; /**< Flag for write mode */
+
     uint8_t version; /**< File format version */
-    uint8_t mode; /**< Demodulation mode */
+    unsigned char flags; /**< Demod flags (mode, diffcoding, interleaving, symbol type etc) */
     uint32_t symrate; /**< Symbol rate */
-    uint8_t symtype; /**< Symbol type (soft/hard) */
+
     uint64_t header_length; /**< Length of header data */
     uint64_t data_length; /**< Number of QPSK samples in file */
+    uint64_t current; /**< Current QPSK sample in file stream */
+
+    unsigned char *iobuf; /**< Temporary buffer for reading/writing */
 };
 
 /*************************************************************************************************/
