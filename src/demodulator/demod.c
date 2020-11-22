@@ -180,14 +180,14 @@ static bool demod_oqpsk(
         complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
 
         demod->inphase = lrpt_demodulator_pll_mix(demod->pll, agc);
-        demod->middle = demod->prev_I + (complex double)I * cimag(demod->inphase);
+        demod->middle = demod->prev_I + cimag(demod->inphase) * I;
         demod->prev_I = creal(demod->inphase);
     }
     else if (demod->resync_offset >= sym_period) {
         /* Symbol timing recovery (Gardner) */
         complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
         complex double quadrature = lrpt_demodulator_pll_mix(demod->pll, agc);
-        complex double current = demod->prev_I + (complex double)I * cimag(quadrature);
+        complex double current = demod->prev_I + cimag(quadrature) * I;
 
         demod->prev_I = creal(quadrature);
         demod->resync_offset -= sym_period;

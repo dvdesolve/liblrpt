@@ -219,7 +219,7 @@ void lrpt_demodulator_pll_deinit(
 complex double lrpt_demodulator_pll_mix(
         lrpt_demodulator_pll_t *pll,
         complex double sample) {
-    const complex double nco_out = cexp(-(complex double)I * pll->nco_phase);
+    const complex double nco_out = cexp(-I * pll->nco_phase);
     const complex double retval = sample * nco_out;
 
     pll->nco_phase += pll->nco_freq;

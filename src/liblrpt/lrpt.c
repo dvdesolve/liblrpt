@@ -153,7 +153,7 @@ bool lrpt_iq_data_from_doubles(
 
     /* Repack doubles into I/Q data */
     for (size_t k = 0; k < length; k++)
-        data->iq[k] = i[k] + q[k] * (complex double)I;
+        data->iq[k] = i[k] + q[k] * I;
 
     return true;
 }

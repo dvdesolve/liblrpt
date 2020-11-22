@@ -549,7 +549,7 @@ bool lrpt_iq_data_read_from_file(
             if (!lrpt_utils_ds_double(v_s, &q_part))
                 return false;
 
-            data->iq[i * IQ_DATA_IO_N + j] = i_part + q_part * (complex double)I;
+            data->iq[i * IQ_DATA_IO_N + j] = i_part + q_part * I;
         }
     }
 
