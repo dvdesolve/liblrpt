@@ -138,6 +138,47 @@ bool lrpt_iq_data_resize(
 
 /*************************************************************************************************/
 
+/* lrpt_iq_data_from_samples() */
+bool lrpt_iq_data_from_samples(
+        lrpt_iq_data_t *data,
+        const complex double *iq,
+        size_t length) {
+    if (!data)
+        return false;
+
+    /* Resize storage */
+    if (!lrpt_iq_data_resize(data, length))
+        return false;
+
+    /* Merge samples into I/Q data */
+    for (size_t k = 0; k < length; k++)
+        data->iq[k] = *(iq + k); /* TODO may be use memcpy here */
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_data_create_from_samples() */
+lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
+        const complex double *iq,
+        size_t length) {
+    lrpt_iq_data_t *data = lrpt_iq_data_alloc(length);
+
+    if (!data)
+        return NULL;
+
+    if (!lrpt_iq_data_from_samples(data, iq, length)) {
+        lrpt_iq_data_free(data);
+
+        return NULL;
+    }
+
+    return data;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_iq_data_from_doubles() */
 bool lrpt_iq_data_from_doubles(
         lrpt_iq_data_t *data,
@@ -171,47 +212,6 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         return NULL;
 
     if (!lrpt_iq_data_from_doubles(data, i, q, length)) {
-        lrpt_iq_data_free(data);
-
-        return NULL;
-    }
-
-    return data;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_data_from_samples() */
-bool lrpt_iq_data_from_samples(
-        lrpt_iq_data_t *data,
-        const complex double *iq,
-        size_t length) {
-    if (!data)
-        return false;
-
-    /* Resize storage */
-    if (!lrpt_iq_data_resize(data, length))
-        return false;
-
-    /* Merge samples into I/Q data */
-    for (size_t k = 0; k < length; k++)
-        data->iq[k] = *(iq + k);
-
-    return true;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_data_create_from_samples() */
-lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
-        const complex double *iq,
-        size_t length) {
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(length);
-
-    if (!data)
-        return NULL;
-
-    if (!lrpt_iq_data_from_samples(data, iq, length)) {
         lrpt_iq_data_free(data);
 
         return NULL;
@@ -306,6 +306,47 @@ bool lrpt_qpsk_data_resize(
     }
 
     return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_from_symbols() */
+bool lrpt_qpsk_data_from_symbols(
+        lrpt_qpsk_data_t *data,
+        const int8_t *qpsk,
+        size_t length) {
+    if (!data)
+        return false;
+
+    /* Resize storage */
+    if (!lrpt_qpsk_data_resize(data, length))
+        return false;
+
+    /* Merge symbols into QPSK data */
+    for (size_t k = 0; k < length; k++)
+        data->qpsk[k] = *(qpsk + k); /* TODO may be use memcpy here */
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_create_from_symbols() */
+lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
+        const int8_t *qpsk,
+        size_t length) {
+    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(length);
+
+    if (!data)
+        return NULL;
+
+    if (!lrpt_qpsk_data_from_symbols(data, qpsk, length)) {
+        lrpt_qpsk_data_free(data);
+
+        return NULL;
+    }
+
+    return data;
 }
 
 /*************************************************************************************************/

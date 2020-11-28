@@ -301,7 +301,9 @@ lrpt_demodulator_t *lrpt_demodulator_init(
             break;
 
         case LRPT_DEMODULATOR_MODE_OQPSK:
-            if (!lrpt_demodulator_lut_isqrt_init(demod->lut_isqrt)) {
+            demod->lut_isqrt = lrpt_demodulator_lut_isqrt_init();
+
+            if (!demod->lut_isqrt) {
                 lrpt_demodulator_deinit(demod);
 
                 return NULL;

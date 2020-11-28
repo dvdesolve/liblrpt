@@ -289,17 +289,16 @@ static bool resync_stream(
 
 /* lrpt_demodulator_lut_isqrt_init() */
 /* TODO review */
-bool lrpt_demodulator_lut_isqrt_init(
-        uint8_t *lut) {
-    lut = calloc(16385, sizeof(uint8_t));
+uint8_t *lrpt_demodulator_lut_isqrt_init(void) {
+    uint8_t *lut = calloc(16385, sizeof(uint8_t));
 
     if (!lut)
-        return false;
+        return NULL;
 
     for (uint16_t i = 0; i < 16385; i++)
         lut[i] = (uint8_t)sqrt((double)i);
 
-    return true;
+    return lut;
 }
 
 /*************************************************************************************************/

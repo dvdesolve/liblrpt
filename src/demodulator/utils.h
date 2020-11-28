@@ -36,12 +36,9 @@
 
 /** Allocates and initializes lookup table for integer square roots.
  *
- * \param[out] lut Lookup table for integer square roots.
- *
- * \return \c true on successfull allocation or \c false otherwise.
+ * \return Pointer to the allocated lookup table or \c NULL otherwise.
  */
-bool lrpt_demodulator_lut_isqrt_init(
-        uint8_t *lut);
+uint8_t *lrpt_demodulator_lut_isqrt_init(void);
 
 /** Frees previously allocated lookup table for integer square roots.
  *
