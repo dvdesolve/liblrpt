@@ -312,6 +312,7 @@ void lrpt_demodulator_lut_isqrt_deinit(
 /*************************************************************************************************/
 
 /* lrpt_demodulator_dediffcode() */
+/* TODO may be implement separate dediffcoder instead of using this one */
 bool lrpt_demodulator_dediffcode(
         lrpt_demodulator_t *demod,
         lrpt_qpsk_data_t *data) {
@@ -359,7 +360,7 @@ bool lrpt_demodulator_deinterleave(
 
     /* Allocate resulting buffer */
     if (*resync_siz && (*resync_siz < raw_siz)) {
-        *resync = malloc(sizeof(int8_t) * *resync_siz); /* TODO use calloc */
+        *resync = calloc(*resync_siz, 1);
 
         if (!resync)
             return false;
@@ -372,7 +373,7 @@ bool lrpt_demodulator_deinterleave(
      */
     for (size_t i = 0; i < *resync_siz; i++) {
         /* Offset by half a message to include leading and trailing fuzz */
-        long long int pos =
+        int64_t pos =
             i +
             (INTLV_BRANCHES - 1) * INTLV_DELAY -
             (i % INTLV_BRANCHES) * INTLV_BASE_LEN +
