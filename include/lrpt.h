@@ -816,23 +816,16 @@ LRPT_API bool lrpt_demodulator_dediffcode(
         lrpt_demodulator_t *demod,
         lrpt_qpsk_data_t *data);
 
-/** Resynchronizes a stream of soft symbols and deinterleaves it.
+/** Resynchronize and deinterleave a stream of QPSK soft symbols.
  *
  * Performs resynchronization and deinterleaving of QPSK symbols stream.
  *
- * \param[in,out] raw Pointer to the input buffer.
- * \param raw_siz The length of input data.
- * \param[out] resync Pointer to the pointer of the resulting resynced and deinterleaved data. User
- * should free it by hand after the use.
- * \param[out] resync_siz Pointer to the resulting length of processed QPSK data.
+ * \param[in,out] data Pointer to the QPSK data storage.
  *
  * \return \c true on successfull deinterleaving and \c false otherwise.
  */
 LRPT_API bool lrpt_demodulator_deinterleave(
-        uint8_t *raw,
-        size_t raw_siz,
-        uint8_t **resync,
-        size_t *resync_siz);
+        lrpt_qpsk_data_t *data);
 
 /** @} */
 

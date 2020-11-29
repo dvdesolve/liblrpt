@@ -77,8 +77,8 @@ static inline int8_t lut_isqrt(
  *
  * \return Byte representation for given QPSK data.
  */
-static uint8_t qpsk_to_byte(
-        const uint8_t *data);
+static unsigned char qpsk_to_byte(
+        const int8_t *data);
 
 /** Find sync in the data stream.
  *
@@ -97,12 +97,12 @@ static uint8_t qpsk_to_byte(
  * \return \c true if sync was found and false otherwise.
  */
 static bool find_sync(
-        const uint8_t *data,
+        const int8_t *data,
         size_t block_siz,
         size_t step,
         size_t depth,
         size_t *offset,
-        uint8_t *sync);
+        unsigned char *sync);
 
 /** Perform stream resyncing.
  *
@@ -111,16 +111,12 @@ static bool find_sync(
  * Before passing QPSK data to the decoder the sync words must be removed and the stream
  * should be stitched back together.
  *
- * \param[in,out] raw_buf Pointer to the data buffer that will be processed.
- * \param raw_siz The length of the original data.
- * \param[out] resync_siz Pointer to the resulting size of resynced buffer.
+ * \param[in,out] data Pointer to the QPSK data storage.
  *
  * \return \c true on successfull resyncing and \c false otherwise.
  */
 static bool resync_stream(
-        uint8_t *raw_buf,
-        size_t raw_siz,
-        size_t *resync_siz);
+        lrpt_qpsk_data_t *data);
 
 /*************************************************************************************************/
 
@@ -137,12 +133,12 @@ static inline int8_t lut_isqrt(
 /*************************************************************************************************/
 
 /* qpsk_to_byte() */
-static uint8_t qpsk_to_byte(
-        const uint8_t *data) {
-    uint8_t b = 0;
+static unsigned char qpsk_to_byte(
+        const int8_t *data) {
+    unsigned char b = 0;
 
     for (uint8_t i = 0; i < 8; i++) {
-        uint8_t bit = (data[i] < 128) ? 1 : 0;
+        unsigned char bit = (data[i] < 0) ? 0 : 1;
 
         b |= bit << i;
     }
@@ -154,14 +150,14 @@ static uint8_t qpsk_to_byte(
 
 /* find_sync() */
 static bool find_sync(
-        const uint8_t *data,
+        const int8_t *data,
         size_t block_siz,
         size_t step,
         size_t depth,
         size_t *offset,
-        uint8_t *sync) {
+        unsigned char *sync) {
     int limit;
-    uint8_t test;
+    unsigned char test;
     bool result;
 
     *offset = 0;
@@ -206,36 +202,33 @@ static bool find_sync(
 
 /* resync_stream() */
 static bool resync_stream(
-        uint8_t *raw_buf,
-        size_t raw_siz,
-        size_t *resync_siz) {
-    if ((raw_siz < SYNCD_BUF_MARGIN) || (raw_siz < INTLV_SYNCDATA))
+        lrpt_qpsk_data_t *data) {
+    if ((data->len < SYNCD_BUF_MARGIN) || (data->len < INTLV_SYNCDATA))
         return false;
 
     /* Allocate temporary buffer for resyncing */
-    uint8_t *src_buf = malloc(sizeof(uint8_t) * raw_siz); /* TODO use calloc */
+    int8_t *tmp_buf = calloc(data->len, 1);
 
-    if (!src_buf)
+    if (!tmp_buf)
         return false;
 
     /* Do a copy of the original data */
-    memcpy(src_buf, raw_buf, raw_siz);
+    memcpy(tmp_buf, data->qpsk, data->len);
 
-    *resync_siz = 0;
-
+    size_t resync_siz = 0;
     size_t posn = 0;
     size_t offset = 0;
-    size_t limit1 = raw_siz - SYNCD_BUF_MARGIN;
-    size_t limit2 = raw_siz - INTLV_SYNCDATA;
+    size_t limit1 = data->len - SYNCD_BUF_MARGIN;
+    size_t limit2 = data->len - INTLV_SYNCDATA;
 
     /* Do while there is a room in the raw buffer for the find_sync() to search for
      * sync candidates
      */
     while (posn < limit1) {
-        uint8_t sync;
+        unsigned char sync;
         /* Only search for sync if look-forward below fails to find a sync train */
         if (!find_sync(
-                    &src_buf[posn],
+                    &tmp_buf[posn],
                     SYNCD_BLOCK_SIZ,
                     INTLV_SYNCDATA,
                     SYNCD_DEPTH,
@@ -256,7 +249,7 @@ static bool resync_stream(
                 size_t tmp = posn + i * INTLV_SYNCDATA;
 
                 if (tmp < limit2) {
-                    uint8_t test = qpsk_to_byte(&src_buf[tmp]);
+                    unsigned char test = qpsk_to_byte(&tmp_buf[tmp]);
 
                     if (sync == test) {
                         ok = true;
@@ -271,8 +264,8 @@ static bool resync_stream(
             /* Copy the actual data after the sync train and update total number of
              * copied symbols
              */
-            memcpy(&raw_buf[*resync_siz], &src_buf[posn + 8], INTLV_DATA_LEN);
-            *resync_siz += INTLV_DATA_LEN;
+            memcpy(data->qpsk + resync_siz, &tmp_buf[posn + 8], INTLV_DATA_LEN);
+            resync_siz += INTLV_DATA_LEN;
 
             /* Move on to the next sync train position */
             posn += INTLV_SYNCDATA;
@@ -280,7 +273,10 @@ static bool resync_stream(
     }
 
     /* Free temporary buffer */
-    free(src_buf);
+    free(tmp_buf);
+
+    if (!lrpt_qpsk_data_resize(data, resync_siz))
+        return false;
 
     return true;
 }
@@ -288,7 +284,6 @@ static bool resync_stream(
 /*************************************************************************************************/
 
 /* lrpt_demodulator_lut_isqrt_init() */
-/* TODO review */
 uint8_t *lrpt_demodulator_lut_isqrt_init(void) {
     uint8_t *lut = calloc(16385, sizeof(uint8_t));
 
@@ -316,7 +311,6 @@ void lrpt_demodulator_lut_isqrt_deinit(
 bool lrpt_demodulator_dediffcode(
         lrpt_demodulator_t *demod,
         lrpt_qpsk_data_t *data) {
-    /** \todo check for oqpsk mode explicitly */
     if (!data || data->len < 2 || (data->len % 2) != 0)
         return false;
 
@@ -347,22 +341,21 @@ bool lrpt_demodulator_dediffcode(
 
 /* lrpt_demodulator_deinterleave() */
 bool lrpt_demodulator_deinterleave(
-        uint8_t *raw,
-        size_t raw_siz,
-        uint8_t **resync,
-        size_t *resync_siz) {
-    /** \todo deal with data types, use internal library preferably (and for all internal functions) */
+        lrpt_qpsk_data_t *data) {
+    size_t old_size = data->len;
+    int8_t *res_buf = NULL;
+
     /* Resynchronize raw data at the bottom of the raw buffer after the
      * INTLV_BRANCHES * INTLV_BASE_LEN and up to the end
      */
-    if (!resync_stream(raw, raw_siz, resync_siz))
+    if (!resync_stream(data))
         return false;
 
     /* Allocate resulting buffer */
-    if (*resync_siz && (*resync_siz < raw_siz)) {
-        *resync = calloc(*resync_siz, 1);
+    if ((data->len > 0) && (data->len < old_size)) {
+        res_buf = calloc(data->len, 1);
 
-        if (!resync)
+        if (!res_buf)
             return false;
     }
     else
@@ -371,7 +364,7 @@ bool lrpt_demodulator_deinterleave(
     /* Perform convolutional deinterleaving. Please refer to the
      * https://en.wikipedia.org/wiki/Burst_error-correcting_code#Convolutional_interleaver
      */
-    for (size_t i = 0; i < *resync_siz; i++) {
+    for (size_t i = 0; i < data->len; i++) {
         /* Offset by half a message to include leading and trailing fuzz */
         int64_t pos =
             i +
@@ -379,9 +372,13 @@ bool lrpt_demodulator_deinterleave(
             (i % INTLV_BRANCHES) * INTLV_BASE_LEN +
             (INTLV_BRANCHES / 2) * INTLV_BASE_LEN;
 
-        if ((pos >= 0) && (pos < *resync_siz))
-            (*resync)[pos] = raw[i];
+        if ((pos >= 0) && (pos < data->len))
+            res_buf[pos] = data->qpsk[i];
     }
+
+    /* Reassign pointers */
+    free(data->qpsk);
+    data->qpsk = res_buf;
 
     /* For some reason original code (above) was changed to the following, however it yields
      * trimmed data. I'll keep it here for the history.
