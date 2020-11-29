@@ -247,9 +247,9 @@ static bool resync_stream(
 
         posn += offset;
 
-        /* Do while there is room in the raw buffer to look forward for sync trains */
+        /* Do while there is a room in the raw buffer to look forward for sync trains */
         while (posn < limit2) {
-            /* Look ahead to prevent it losing sync on weak signal */
+            /* Look ahead to prevent it losing sync on a weak signal */
             bool ok = false;
 
             for (size_t i = 0; i < 128; i++) {
@@ -367,16 +367,30 @@ bool lrpt_demodulator_deinterleave(
     else
         return false;
 
-    /* Deinterleave INTLV_BASE_LEN number of symbols, so that all symbols in raw buffer
-     * up to this length are used up
+    /* Perform convolutional deinterleaving. Please refer to the
+     * https://en.wikipedia.org/wiki/Burst_error-correcting_code#Convolutional_interleaver
      */
-    for (size_t resync_idx = 0; resync_idx < *resync_siz; resync_idx++) {
-        /* This is the convolutional interleaving algorithm used in reverse to deinterleave */
+    for (size_t i = 0; i < *resync_siz; i++) {
+        /* Offset by half a message to include leading and trailing fuzz */
+        long long int pos =
+            i +
+            (INTLV_BRANCHES - 1) * INTLV_DELAY -
+            (i % INTLV_BRANCHES) * INTLV_BASE_LEN +
+            (INTLV_BRANCHES / 2) * INTLV_BASE_LEN;
+
+        if ((pos >= 0) && (pos < *resync_siz))
+            (*resync)[pos] = raw[i];
+    }
+
+    /* For some reason original code (above) was changed to the following, however it yields
+     * trimmed data. I'll keep it here for the history.
+     */
+    /*for (size_t resync_idx = 0; resync_idx < *resync_siz; resync_idx++) {
         size_t raw_idx = resync_idx + (resync_idx % INTLV_BRANCHES) * INTLV_BASE_LEN;
 
         if (raw_idx < *resync_siz)
             (*resync)[resync_idx] = raw[raw_idx];
-    }
+    }*/
 
     return true;
 }

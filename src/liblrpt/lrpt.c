@@ -351,4 +351,19 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
 
 /*************************************************************************************************/
 
+/* lrpt_qpsk_data_to_ints() */
+bool lrpt_qpsk_data_to_ints(
+        const lrpt_qpsk_data_t *data,
+        int8_t *qpsk,
+        size_t length) {
+    if (!data || !data->qpsk || (length > data->len))
+        return false;
+
+    memcpy(qpsk, data->qpsk, length);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
 /** \endcond */

@@ -365,6 +365,22 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
         const int8_t *qpsk,
         size_t length);
 
+/** Return QPSK data as an int8_t bytes.
+ *
+ * Copies \p length QPSK symbols to the resulting \p qpsk array. Caller should be responsible
+ * that \p qpsk is large enough to hold at least \p length elements!
+ *
+ * \param data Pointer to the QPSK data storage object.
+ * \param qpsk Pointer to the resulting storage.
+ * \param length Number of QPSK symbols to copy.
+ *
+ * \return \c true on successful copy and \c false otherwise.
+ */
+LRPT_API bool lrpt_qpsk_data_to_ints(
+        const lrpt_qpsk_data_t *data,
+        int8_t *qpsk,
+        size_t length);
+
 /** @} */
 
 /** \addtogroup io
