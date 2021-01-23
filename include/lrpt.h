@@ -65,7 +65,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h> /* TODO debug only */
 
 /*************************************************************************************************/
 
@@ -802,8 +801,7 @@ LRPT_API bool lrpt_demodulator_pllavg(
 LRPT_API bool lrpt_demodulator_exec(
         lrpt_demodulator_t *demod,
         const lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output,
-        FILE *fh /* TODO debug only */);
+        lrpt_qpsk_data_t *output);
 
 /** Allocate and initialize dediffcoder object.
  *

@@ -839,6 +839,7 @@ uint32_t lrpt_qpsk_file_symrate(
 /* lrpt_qpsk_file_length() */
 uint64_t lrpt_qpsk_file_length(
         const lrpt_qpsk_file_t *file) {
+    /* TODO actually one QPSK symbol consist of two bytes. Need to report exactly this number */
     return file->data_length; /* TODO add code for hard symbols */
 }
 

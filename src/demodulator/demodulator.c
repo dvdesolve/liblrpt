@@ -27,7 +27,7 @@
 
 /*************************************************************************************************/
 
-#include "demod.h"
+#include "demodulator.h"
 
 #include "../../include/lrpt.h"
 #include "../liblrpt/lrpt.h"
@@ -41,6 +41,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+/*************************************************************************************************/
+
+/** Convenient type for passing QPSK symbols */
+typedef struct qpsk_sym__ {
+    int8_t f, s;
+} qpsk_sym_t;
 
 /*************************************************************************************************/
 
@@ -65,27 +72,27 @@ static inline int8_t clamp_int8(
  *
  * \param demod Demodulator object.
  * \param fdata I/Q sample.
- * \param[out] buffer Output buffer.
+ * \param[out] sym Pointer to the output symbol.
  *
  * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
  */
 static bool demod_qpsk(
         lrpt_demodulator_t *demod,
         complex double fdata,
-        int8_t *buffer);
+        qpsk_sym_t *sym);
 
 /** Performs offset QPSK demodulation.
  *
  * \param demod Demodulator object.
  * \param fdata I/Q sample.
- * \param[out] buffer Output buffer.
+ * \param[out] sym Pointer to the output symbol.
  *
  * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
  */
 static bool demod_oqpsk(
         lrpt_demodulator_t *demod,
         complex double fdata,
-        int8_t *buffer);
+        qpsk_sym_t *sym);
 
 /*************************************************************************************************/
 
@@ -110,9 +117,7 @@ static inline int8_t clamp_int8(
 static bool demod_qpsk(
         lrpt_demodulator_t *demod,
         complex double fdata,
-        int8_t *buffer) {
-    /** \todo check for qpsk mode explicitly */
-    /** \todo deal with int8_t vs uint8_t data types */
+        qpsk_sym_t *sym) {
     /* Helper variables */
     const double sym_period = demod->sym_period;
     const double sp2 = sym_period / 2.0;
@@ -140,20 +145,11 @@ static bool demod_qpsk(
         lrpt_demodulator_pll_correct_phase(demod->pll, delta, demod->interp_factor);
         demod->resync_offset += 1.0;
 
-        /* Save result in buffer */
-        /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
-        /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
-        buffer[(demod->buf_idx)++] = clamp_int8(creal(current) / 2.0);
-        buffer[(demod->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
+        /* Save result */
+        sym->f = clamp_int8(creal(current) / 2.0);
+        sym->s = clamp_int8(cimag(current) / 2.0);
 
-        /* If we've reached frame length reset buffer index and signal caller with true */
-        if (demod->buf_idx >= LRPT_SOFT_FRAME_LEN) {
-            demod->buf_idx = 0;
-
-            return true;
-        }
-        else
-            return false;
+        return true;
     }
 
     demod->resync_offset += 1.0;
@@ -167,9 +163,7 @@ static bool demod_qpsk(
 static bool demod_oqpsk(
         lrpt_demodulator_t *demod,
         complex double fdata,
-        int8_t *buffer) {
-    /** \todo check for oqpsk mode explicitly */
-    /** \todo deal with int8_t vs uint8_t data types */
+        qpsk_sym_t *sym) {
     /* Helper variables */
     const double sym_period = demod->sym_period;
     const double sp2 = sym_period / 2.0;
@@ -204,20 +198,11 @@ static bool demod_oqpsk(
         lrpt_demodulator_pll_correct_phase(demod->pll, delta, demod->interp_factor);
         demod->resync_offset += 1.0;
 
-        /* Save result in buffer */
-        /* TODO may be ring buffer will be more appropriate so there will be no need in SOFT_FRAME_LEN */
-        /* TODO may be it's better to just return soft-symbols directly; wrapper should be responsible to store them where necessary */
-        buffer[(demod->buf_idx)++] = clamp_int8(creal(current) / 2.0);
-        buffer[(demod->buf_idx)++] = clamp_int8(cimag(current) / 2.0);
+        /* Save result */
+        sym->f = clamp_int8(creal(current) / 2.0);
+        sym->s = clamp_int8(cimag(current) / 2.0);
 
-        /* If we've reached frame length reset buffer index and signal caller with true */
-        if (demod->buf_idx >= LRPT_SOFT_FRAME_LEN) {
-            demod->buf_idx = 0;
-
-            return true;
-        }
-        else
-            return false;
+        return true;
     }
 
     demod->resync_offset += 1.0;
@@ -247,7 +232,15 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->agc = NULL;
     demod->pll = NULL;
     demod->rrc = NULL;
-    demod->out_buffer = NULL; /* TODO debug only */
+
+    /* Store correct demodulation mode */
+    if ((mode != LRPT_DEMODULATOR_MODE_QPSK) && (mode != LRPT_DEMODULATOR_MODE_OQPSK)) {
+        lrpt_demodulator_deinit(demod);
+
+        return NULL;
+    }
+
+    demod->mode = mode;
 
     /* Initialize demodulator parameters */
     demod->sym_rate = symbol_rate;
@@ -283,42 +276,12 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         return NULL;
     }
 
-    /* TODO debug only */
-    demod->out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
-    if (!demod->out_buffer) {
-        lrpt_demodulator_deinit(demod);
-
-        return NULL;
-    }
-
-    /* Select demodulator function */
-    switch (mode) {
-        case LRPT_DEMODULATOR_MODE_QPSK:
-            demod->demod_func = demod_qpsk;
-
-            break;
-
-        case LRPT_DEMODULATOR_MODE_OQPSK:
-            demod->demod_func = demod_oqpsk;
-
-            break;
-
-        /* All other modes are unsupported */
-        default:
-            lrpt_demodulator_deinit(demod);
-
-            return NULL;
-
-            break;
-    }
-
     /* Initialize internal working variables */
     demod->resync_offset = 0.0;
     demod->before = 0.0;
     demod->middle = 0.0;
     demod->inphase = 0.0;
     demod->prev_I = 0.0;
-    demod->buf_idx = 0;
 
     return demod;
 }
@@ -331,7 +294,6 @@ void lrpt_demodulator_deinit(
     if (!demod)
         return;
 
-    free(demod->out_buffer); /* TODO debug only */
     lrpt_demodulator_rrc_filter_deinit(demod->rrc);
     lrpt_demodulator_pll_deinit(demod->pll);
     lrpt_demodulator_agc_deinit(demod->agc);
@@ -383,26 +345,26 @@ bool lrpt_demodulator_phaseerr(
 bool lrpt_demodulator_exec(
         lrpt_demodulator_t *demod,
         const lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output,
-        FILE *fh /* TODO debug only */) {
+        lrpt_qpsk_data_t *output) {
     /* Return immediately if no valid input or output were given */
-    /* TODO debug only */
-    if (!input)
+    if (!input || !output)
         return false;
-//    if (!input || !output)
-//        return false;
 
-//    /* Resize output data structure if it is more than twice shorter than input I/Q data */
-//    if (output->len < (2 * input->len))
-//        if (!lrpt_qpsk_data_resize(output, 2 * input->len))
-//            return false;
+    /* Resize output data structure */
+    if (output->len < (2 * input->len * demod->interp_factor))
+        if (!lrpt_qpsk_data_resize(output, 2 * input->len * demod->interp_factor))
+            return false;
 
-//    /* Allocate output buffer */
-//    /* TODO may be move inside demodulator object */
-//    int8_t *out_buffer = calloc(LRPT_SOFT_FRAME_LEN, sizeof(int8_t));
-//
-//    if (!out_buffer)
-//        return false;
+    bool (*demod_func)(lrpt_demodulator_t *, complex double, qpsk_sym_t *);
+
+    if (demod->mode == LRPT_DEMODULATOR_MODE_QPSK)
+        demod_func = demod_qpsk;
+    else if (demod->mode == LRPT_DEMODULATOR_MODE_OQPSK)
+        demod_func = demod_oqpsk;
+
+    /* Intermediate result storage */
+    qpsk_sym_t sym;
+    size_t out_len = 0;
 
     /* Now we're ready to process filtered I/Q data and get soft-symbols */
     for (size_t i = 0; i < input->len; i++) {
@@ -414,22 +376,17 @@ bool lrpt_demodulator_exec(
             complex double fdata = lrpt_demodulator_rrc_filter_apply(demod->rrc, cdata);
 
             /* Demodulate using appropriate function */
-            if (demod->demod_func(demod, fdata, demod->out_buffer)) {
-                //lrpt_demodulator_dediffcode(demod, data);
-                fwrite(demod->out_buffer, sizeof(int8_t), LRPT_SOFT_FRAME_LEN, fh); /* TODO debug only */
-                /* TODO just store resulting symbol in output buffer */
-//                /* Try to decode one or more LRPT frames */
-//                Decode_Image( (uint8_t *)out_buffer, SOFT_FRAME_LEN );
-//
-//                /* The mtd_record.pos and mtd_record.prev_pos pointers must be
-//                 * decrimented to point back to the same data in the soft buffer */
-//                mtd_record.pos      -= SOFT_FRAME_LEN;
-//                mtd_record.prev_pos -= SOFT_FRAME_LEN;
+            if (demod_func(demod, fdata, &sym)) {
+                output->qpsk[out_len] = sym.f;
+                output->qpsk[out_len + 1] = sym.s;
+
+                out_len += 2;
             }
         }
     }
 
-    /* Free output buffer */
+    if (!lrpt_qpsk_data_resize(output, out_len))
+        return false;
 
     return true;
 }

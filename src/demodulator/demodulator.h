@@ -24,11 +24,12 @@
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DEMODULATOR_DEMOD_H
-#define LRPT_DEMODULATOR_DEMOD_H
+#ifndef LRPT_DEMODULATOR_DEMODULATOR_H
+#define LRPT_DEMODULATOR_DEMODULATOR_H
 
 /*************************************************************************************************/
 
+#include "../../include/lrpt.h"
 #include "agc.h"
 #include "pll.h"
 #include "rrc.h"
@@ -46,16 +47,12 @@ struct lrpt_demodulator__ {
     lrpt_demodulator_pll_t *pll; /**< PLL object */
     lrpt_demodulator_rrc_filter_t *rrc; /**< RRC filter object */
 
+    lrpt_demodulator_mode_t mode; /**< Demodulator mode (QPSK or OQPSK) */
+
     uint32_t sym_rate; /**< Symbol rate */
     double sym_period; /**< Symbol period */
 
     uint8_t interp_factor; /**< Interpolation factor */
-
-    /** \todo add demodulator type and use it instead of pointer to the function */
-    bool (*demod_func)( /**< Demodulator function */
-            lrpt_demodulator_t *,
-            complex double,
-            int8_t *);
 
     /** @{ */
     /** Used by QPSK demodulator functions */
@@ -63,11 +60,7 @@ struct lrpt_demodulator__ {
     complex double before, middle;
     complex double inphase;
     double prev_I;
-    size_t buf_idx;
     /** @} */
-
-    /* TODO debug only */
-    int8_t *out_buffer;
 };
 
 /*************************************************************************************************/

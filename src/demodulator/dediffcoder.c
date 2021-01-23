@@ -105,7 +105,6 @@ void lrpt_dediffcoder_deinit(
 /*************************************************************************************************/
 
 /* lrpt_dediffcoder_exec() */
-/* TODO add reinit method */
 bool lrpt_dediffcoder_exec(
         lrpt_dediffcoder_t *dediff,
         lrpt_qpsk_data_t *data) {

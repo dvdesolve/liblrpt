@@ -19,7 +19,7 @@ set(lrpt_SOURCES
     demodulator/agc.c
     demodulator/dediffcoder.c
     demodulator/deinterleaver.c
-    demodulator/demod.c
+    demodulator/demodulator.c
     demodulator/pll.c
     demodulator/rrc.c
     liblrpt/dsp.c
@@ -33,7 +33,7 @@ set(lrpt_HEADERS
     demodulator/agc.h
     demodulator/dediffcoder.h
     demodulator/deinterleaver.h
-    demodulator/demod.h
+    demodulator/demodulator.h
     demodulator/pll.h
     demodulator/rrc.h
     liblrpt/dsp.h

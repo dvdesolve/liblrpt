@@ -30,7 +30,6 @@
 
 #include "../../include/lrpt.h"
 #include "../liblrpt/lrpt.h"
-#include "demod.h"
 
 #include <math.h>
 #include <stdbool.h>
