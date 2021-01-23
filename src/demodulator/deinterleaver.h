@@ -19,33 +19,13 @@
 
 /** \file
  *
- * Public internal API for different utils and routines for QPSK demodulator.
+ * Public internal API for deinterleaver routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DEMODULATOR_UTILS_H
-#define LRPT_DEMODULATOR_UTILS_H
-
-/*************************************************************************************************/
-
-#include <stdbool.h>
-#include <stdint.h>
-
-/*************************************************************************************************/
-
-/** Allocates and initializes lookup table for integer square roots.
- *
- * \return Pointer to the allocated lookup table or \c NULL otherwise.
- */
-uint8_t *lrpt_demodulator_lut_isqrt_init(void);
-
-/** Frees previously allocated lookup table for integer square roots.
- *
- * \param lut Lookup table for integer square roots.
- */
-void lrpt_demodulator_lut_isqrt_deinit(
-        uint8_t *lut);
+#ifndef LRPT_DEMODULATOR_DEINTERLEAVER_H
+#define LRPT_DEMODULATOR_DEINTERLEAVER_H
 
 /*************************************************************************************************/
 

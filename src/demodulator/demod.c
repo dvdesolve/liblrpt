@@ -34,7 +34,7 @@
 #include "agc.h"
 #include "pll.h"
 #include "rrc.h"
-#include "utils.h"
+#include "deinterleaver.h"
 
 #include <complex.h>
 #include <stdbool.h>
@@ -247,7 +247,6 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->agc = NULL;
     demod->pll = NULL;
     demod->rrc = NULL;
-    demod->lut_isqrt = NULL;
     demod->out_buffer = NULL; /* TODO debug only */
 
     /* Initialize demodulator parameters */
@@ -295,20 +294,11 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     /* Select demodulator function */
     switch (mode) {
         case LRPT_DEMODULATOR_MODE_QPSK:
-            demod->lut_isqrt = NULL;
             demod->demod_func = demod_qpsk;
 
             break;
 
         case LRPT_DEMODULATOR_MODE_OQPSK:
-            demod->lut_isqrt = lrpt_demodulator_lut_isqrt_init();
-
-            if (!demod->lut_isqrt) {
-                lrpt_demodulator_deinit(demod);
-
-                return NULL;
-            }
-
             demod->demod_func = demod_oqpsk;
 
             break;
@@ -329,8 +319,6 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->inphase = 0.0;
     demod->prev_I = 0.0;
     demod->buf_idx = 0;
-    demod->pr_I = 0;
-    demod->pr_Q = 0;
 
     return demod;
 }
@@ -344,7 +332,6 @@ void lrpt_demodulator_deinit(
         return;
 
     free(demod->out_buffer); /* TODO debug only */
-    lrpt_demodulator_lut_isqrt_deinit(demod->lut_isqrt);
     lrpt_demodulator_rrc_filter_deinit(demod->rrc);
     lrpt_demodulator_pll_deinit(demod->pll);
     lrpt_demodulator_agc_deinit(demod->agc);

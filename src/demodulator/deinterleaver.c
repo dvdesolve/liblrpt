@@ -19,14 +19,14 @@
 
 /** \file
  *
- * Different utils and routines for QPSK demodulator.
+ * Deinterleaver routines.
  *
- * This source file contains different routines used by QPSK demodulator.
+ * This source file contains deinterleaver routines used by QPSK demodulator.
  */
 
 /*************************************************************************************************/
 
-#include "utils.h"
+#include "deinterleaver.h"
 
 #include "../../include/lrpt.h"
 #include "../liblrpt/lrpt.h"
@@ -55,17 +55,6 @@ static const size_t SYNCD_BLOCK_SIZ = (SYNCD_DEPTH + 1) * INTLV_SYNCDATA;
 static const size_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
 
 /*************************************************************************************************/
-
-/** Returns integer square root for given value.
- *
- * \param lut Initilized lookup table for sqrt().
- * \param value Input value.
- *
- * \return Integer square root of value.
- */
-static inline int8_t lut_isqrt(
-        const uint8_t lut[],
-        int16_t value);
 
 /** Make byte from QPSK data stream.
  *
@@ -117,18 +106,6 @@ static bool find_sync(
  */
 static bool resync_stream(
         lrpt_qpsk_data_t *data);
-
-/*************************************************************************************************/
-
-/* lut_isqrt() */
-static inline int8_t lut_isqrt(
-        const uint8_t lut[],
-        int16_t value) {
-    if (value >= 0)
-        return (int8_t)lut[value];
-    else
-        return -(int8_t)lut[-value];
-}
 
 /*************************************************************************************************/
 
@@ -283,64 +260,8 @@ static bool resync_stream(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_lut_isqrt_init() */
-uint8_t *lrpt_demodulator_lut_isqrt_init(void) {
-    uint8_t *lut = calloc(16385, sizeof(uint8_t));
-
-    if (!lut)
-        return NULL;
-
-    for (uint16_t i = 0; i < 16385; i++)
-        lut[i] = (uint8_t)sqrt((double)i);
-
-    return lut;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_demodulator_lut_isqrt_deinit() */
-void lrpt_demodulator_lut_isqrt_deinit(
-        uint8_t *lut) {
-    free(lut);
-}
-
-/*************************************************************************************************/
-
-/* lrpt_demodulator_dediffcode() */
-/* TODO may be implement separate dediffcoder instead of using this one */
-bool lrpt_demodulator_dediffcode(
-        lrpt_demodulator_t *demod,
-        lrpt_qpsk_data_t *data) {
-    if (!data || data->len < 2 || (data->len % 2) != 0)
-        return false;
-
-    int8_t t1 = data->qpsk[0];
-    int8_t t2 = data->qpsk[1];
-
-    data->qpsk[0] = lut_isqrt(demod->lut_isqrt, data->qpsk[0] * demod->pr_I);
-    data->qpsk[1] = lut_isqrt(demod->lut_isqrt, -(data->qpsk[1]) * demod->pr_Q);
-
-    for (size_t i = 2; i <= (data->len - 2); i += 2) {
-        int8_t x = data->qpsk[i];
-        int8_t y = data->qpsk[i + 1];
-
-        data->qpsk[i] = lut_isqrt(demod->lut_isqrt, data->qpsk[i] * t1);
-        data->qpsk[i + 1] = lut_isqrt(demod->lut_isqrt, -(data->qpsk[i + 1]) * t2);
-
-        t1 = x;
-        t2 = y;
-    }
-
-    demod->pr_I = t1;
-    demod->pr_Q = t2;
-
-    return true;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_demodulator_deinterleave() */
-bool lrpt_demodulator_deinterleave(
+/* lrpt_deinterleaver_exec() */
+bool lrpt_deinterleaver_exec(
         lrpt_qpsk_data_t *data) {
     size_t old_size = data->len;
     int8_t *res_buf = NULL;
