@@ -16,6 +16,7 @@
 
 # sources
 set(lrpt_SOURCES
+    decoder/decoder.c
     demodulator/agc.c
     demodulator/dediffcoder.c
     demodulator/deinterleaver.c
@@ -30,6 +31,7 @@ set(lrpt_SOURCES
 
 set(lrpt_HEADERS
     ../include/lrpt.h
+    decoder/decoder.h
     demodulator/agc.h
     demodulator/dediffcoder.h
     demodulator/deinterleaver.h

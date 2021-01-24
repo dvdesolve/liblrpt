@@ -19,41 +19,17 @@
 
 /** \file
  *
- * Public internal API for basic data types and memory management.
+ * Public internal API for decoder routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_LRPT_H
-#define LRPT_LIBLRPT_LRPT_H
+#ifndef LRPT_DECODER_DECODER_H
+#define LRPT_DECODER_DECODER_H
 
 /*************************************************************************************************/
 
-#include <complex.h>
-#include <stddef.h>
-#include <stdint.h>
-
 /*************************************************************************************************/
-
-/** Local define for 2 * π */
-#define LRPT_M_2PI 6.28318530717958647692
-
-/** Length of soft frame */
-#define LRPT_SOFT_FRAME_LEN 16384
-
-/*************************************************************************************************/
-
-/** Storage type for I/Q data */
-struct lrpt_iq_data__ {
-    complex double *iq; /**< Array of I/Q pairs */
-    size_t len; /**< Total number of I/Q pairs */
-};
-
-/** Storage type for QPSK soft symbols data */
-struct lrpt_qpsk_data__ {
-    int8_t *qpsk; /**< Array of QPSK soft symbols */
-    size_t len; /**< Total number of QPSK soft symbols */
-};
 
 /*************************************************************************************************/
 

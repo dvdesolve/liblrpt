@@ -13,6 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
+ *
+ * Author: Viktor Drobot
  */
 
 /*************************************************************************************************/
@@ -72,16 +74,16 @@
  *
  * Common utility routines.
  *
- * This API provides an interface for basic utility routines such as data allocation, freeing and
- * conversion.
+ * This API provides an interface for basic utility routines such as data allocation, freeing,
+ * conversion and manipulation.
  *
  * @{
  */
 
-/** Data type for storing I/Q samples */
+/** Type for I/Q samples storage */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 
-/** Data type for storing QPSK soft symbols */
+/** Type for QPSK data storage */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
 /** @} */
@@ -95,7 +97,7 @@ typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
  * @{
  */
 
-/** Data type for I/Q samples file */
+/** Type for I/Q samples file */
 typedef struct lrpt_iq_file__ lrpt_iq_file_t;
 
 /** Supported I/Q samples file format versions */
@@ -103,10 +105,10 @@ typedef enum lrpt_iq_file_version__ {
     LRPT_IQ_FILE_VER_1 = 0x01 /**< Version 1 */
 } lrpt_iq_file_version_t;
 
-/** Data type for QPSK soft symbols file */
+/** Type for QPSK data file */
 typedef struct lrpt_qpsk_file__ lrpt_qpsk_file_t;
 
-/** Supported QPSK samples file format versions */
+/** Supported QPSK data file format versions */
 typedef enum lrpt_qpsk_file_version__ {
     LRPT_QPSK_FILE_VER_1 = 0x01 /**< Version 1 */
 } lrpt_qpsk_file_version_t;
@@ -138,7 +140,7 @@ typedef enum lrpt_dsp_filter_type__ {
  *
  * QPSK demodulation routines.
  *
- * This API provides an interface for performing QPSK demodulation routines.
+ * This API provides an interface for performing QPSK demodulation.
  *
  * @{
  */
@@ -146,7 +148,7 @@ typedef enum lrpt_dsp_filter_type__ {
 /** Demodulator object type */
 typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 
-/** Available PSK demodulator modes */
+/** Available QPSK demodulator modes */
 typedef enum lrpt_demodulator_mode__ {
     LRPT_DEMODULATOR_MODE_QPSK,   /**< Plain QPSK */
     LRPT_DEMODULATOR_MODE_OQPSK /**< Offset QPSK */
@@ -163,13 +165,13 @@ typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
  * @{
  */
 
-/** Allocate raw I/Q data storage object.
+/** Allocate I/Q data storage object.
  *
- * Tries to allocate storage for raw I/Q data of requested \p length. User should properly free
- * the object with #lrpt_iq_data_free() after use.
+ * Tries to allocate storage for I/Q data of requested \p length. User should free the object with
+ * #lrpt_iq_data_free() after use.
  *
  * \param length Length of new I/Q data storage. If zero length is requested, empty storage
- * will be allocated but it's still possible to resize it later with #lrpt_iq_data_resize().
+ * will be allocated but it will be possible to resize it later with #lrpt_iq_data_resize().
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation has failed.
  */
@@ -187,17 +189,18 @@ LRPT_API void lrpt_iq_data_free(
  *
  * \param data Pointer to the I/Q data storage object.
  *
- * \return Number of I/Q pairs currently stored in \p data.
+ * \return Number of I/Q samples currently stored in \p data.
  */
 LRPT_API size_t lrpt_iq_data_length(
         const lrpt_iq_data_t *data);
 
 /** Resize existing I/Q data storage.
  *
- * If valid \p data is provided it will be resized to accomodate \p new_length I/Q pairs.
+ * If valid \p data is provided it will be resized to accomodate \p new_length I/Q pairs. If new
+ * storage was allocated during resize it will be initialized to 0.
  *
  * \param data Pointer to the I/Q data storage object.
- * \param new_length New length \p data will be resized to.
+ * \param new_length Length \p data will be resized to.
  *
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
@@ -206,13 +209,13 @@ LRPT_API bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
         size_t new_length);
 
-/** Convert array of raw I/Q samples into library format.
+/** Convert array of I/Q samples into library format.
  *
- * Converts array of raw I/Q samples \p iq of size \p length into library format of I/Q
+ * Converts array of I/Q samples \p iq of size \p length into library format of I/Q
  * data storage. Storage given with \p data will be auto-resized to fit requested data length.
  *
  * \param data Pointer to the I/Q data storage object.
- * \param iq Pointer to the array of raw I/Q samples.
+ * \param iq Pointer to the array of I/Q samples.
  * \param length Number of samples to merge into I/Q data.
  *
  * \return \c true on successfull converting and \c false otherwise.
@@ -225,12 +228,12 @@ LRPT_API bool lrpt_iq_data_from_samples(
         const complex double *iq,
         size_t length);
 
-/** Create I/Q storage object from raw I/Q samples.
+/** Create I/Q storage object from I/Q samples.
  *
  * This function behaves much like #lrpt_iq_data_from_samples(), however, it allocates
  * I/Q storage automatically.
  *
- * \param iq Pointer to the array of raw I/Q samples.
+ * \param iq Pointer to the array of I/Q samples.
  * \param length Number of samples in I and Q arrays to repack into I/Q data.
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation was
@@ -285,24 +288,23 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *q,
         size_t length);
 
-/** Allocate QPSK soft symbol data storage object.
+/** Allocate QPSK data storage object.
  *
- * Tries to allocate storage for QPSK soft symbol data of requested \p length. User should properly
- * free the object with #lrpt_qpsk_data_free() after use.
+ * Tries to allocate storage for QPSK data of requested \p length. User should free the object with
+ * #lrpt_qpsk_data_free() after use.
  *
- * \param length Length of new QPSK soft symbol data storage. If zero length is requested,
+ * \param length Length of new QPSK data storage. If zero length is requested,
  * empty storage will be allocated but it's still possible to resize it later with
  * #lrpt_qpsk_data_resize().
  *
- * \return Pointer to the allocated QPSK soft symbol data storage object or \c NULL if allocation
- * has failed.
+ * \return Pointer to the allocated QPSK data storage object or \c NULL if allocation has failed.
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
         size_t length);
 
-/** Free previously allocated QPSK soft symbol data storage.
+/** Free previously allocated QPSK data storage.
  *
- * \param data Pointer to the QPSK soft symbol data storage object.
+ * \param data Pointer to the QPSK data storage object.
  */
 LRPT_API void lrpt_qpsk_data_free(
         lrpt_qpsk_data_t *data);
@@ -311,7 +313,8 @@ LRPT_API void lrpt_qpsk_data_free(
  *
  * \param data Pointer to the QPSK data storage object.
  *
- * \return Number of QPSK symbols currently stored in \p data.
+ * \return Number of QPSK bytes currently stored in \p data. Actual number of soft symbols is half
+ * as much as the number of QPSK bytes.
  */
 LRPT_API size_t lrpt_qpsk_data_length(
         const lrpt_qpsk_data_t *data);
