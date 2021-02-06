@@ -159,6 +159,20 @@ typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
 
 /** @} */
 
+/** \addtogroup decoder Decoder
+ *
+ * LRPT data decoder routines.
+ *
+ * This API provides an interface for performing LRPT data decoding.
+ *
+ * @{
+ */
+
+/** Decoder object type */
+typedef struct lrpt_decoder__ lrpt_decoder_t;
+
+/** @} */
+
 /*************************************************************************************************/
 
 /** \addtogroup common
@@ -845,6 +859,28 @@ LRPT_API bool lrpt_dediffcoder_exec(
  */
 LRPT_API bool lrpt_deinterleaver_exec(
         lrpt_qpsk_data_t *data);
+
+/** @} */
+
+/** \addtogroup decoder
+ * @{
+ */
+
+/** Allocate and initialize decoder object.
+ *
+ * Creates decoder object. User should properly free the object with #lrpt_decoder_deinit()
+ * after use.
+ *
+ * \return Pointer to the decoder object or \c NULL in case of error.
+ */
+LRPT_API lrpt_decoder_t *lrpt_decoder_init(void);
+
+/** Free previously allocated decoder object.
+ *
+ * \param decoder Pointer to the decoder object.
+ */
+LRPT_API void lrpt_decoder_deinit(
+        lrpt_decoder_t *decoder);
 
 /** @} */
 

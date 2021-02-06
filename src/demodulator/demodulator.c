@@ -376,6 +376,7 @@ bool lrpt_demodulator_exec(
             complex double fdata = lrpt_demodulator_rrc_filter_apply(demod->rrc, cdata);
 
             /* Demodulate using appropriate function */
+            /* TODO may be pass flag for offset modulation instead of making two different funcs */
             if (demod_func(demod, fdata, &sym)) {
                 output->qpsk[out_len] = sym.f;
                 output->qpsk[out_len + 1] = sym.s;

@@ -19,33 +19,28 @@
 
 /** \file
  *
- * Public internal API for decoder routines.
+ * Public internal API for bit operations.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DECODER_DECODER_H
-#define LRPT_DECODER_DECODER_H
+#ifndef LRPT_DECODER_BITOP_H
+#define LRPT_DECODER_BITOP_H
 
 /*************************************************************************************************/
 
-#include "correlator.h"
-#include "viterbi.h"
-
-#include <stddef.h>
+#include <stdint.h>
 
 /*************************************************************************************************/
 
-/** Decoder object */
-struct lrpt_decoder__ {
-    lrpt_decoder_correlator_t *corr; /**< Correlator */
-    lrpt_decoder_viterbi_t *vit; /**< Viterbi decoder */
-//
-//    /** @{ */
-//    /** Position information */
-//    size_t pos, prev_pos;
-//    /** @} */
-};
+/** Get number of bits in number.
+ *
+ * \param n Number to count bits for.
+ *
+ * \return Number of bits in number \p n.
+ */
+uint8_t lrpt_decoder_bitop_count(
+        uint32_t n);
 
 /*************************************************************************************************/
 

@@ -28,52 +28,112 @@
 
 #include "decoder.h"
 
+#include "../../include/lrpt.h"
+#include "correlator.h"
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 /*************************************************************************************************/
 
-void Decode_Image(uint8_t *in_buffer, int buf_len) {
-  bool ok;
-  gchar txt[16];
+/* lrpt_decoder_init() */
+lrpt_decoder_t *lrpt_decoder_init(void) {
+    /* Allocate our working decoder */
+    lrpt_decoder_t *decoder = malloc(sizeof(lrpt_decoder_t));
 
-  while( mtd_record.pos < buf_len )
-  {
-    ok = Mtd_One_Frame( &mtd_record, in_buffer );
-    if (ok) {
-      Parse_Cvcdu( mtd_record.ecced_data, HARD_FRAME_LEN - 132 );
-      ok_cnt++;
+    if (!decoder)
+        return NULL;
 
-      /* LIBLRPT GUI-specific */
-      {
-      if( isFlagClear(FRAME_OK_ICON) )
-      {
-        Display_Icon( frame_icon, "gtk-yes" );
-        SetFlag( FRAME_OK_ICON );
-      }
-      }
-    }
-    else {
-        /* LIBLRPT GUI-specific */
-        {
-      if( isFlagSet(FRAME_OK_ICON) )
-      {
-        Display_Icon( frame_icon, "gtk-no" );
-        ClearFlag( FRAME_OK_ICON );
-      }
-        }
+    /* NULL-init internal objects for safe deallocation */
+    decoder->corr = NULL;
+    decoder->vit = NULL;
+
+    /* Initialize correlator object with coded sync word.
+     * Normal sync is 0x1ACFFC1D (00011010 11001111 11111100 00011101).
+     * Coded sync is 0xFCA2B63DB00D9794.
+     */
+    decoder->corr = lrpt_decoder_correlator_init((uint64_t)0xFCA2B63DB00D9794);
+
+    if (!decoder->corr) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
     }
 
-    total_cnt++;
-  }
+    /* Initialize Viterbi decoder */
+    decoder->vit = lrpt_decoder_viterbi_init();
 
-  /* LIBLRPT gui-specific */
-  {
-  /* Print decoder status data */
-  snprintf( txt, sizeof(txt), "%d", mtd_record.sig_q );
-  gtk_entry_set_text( GTK_ENTRY(sig_quality_entry), txt );
-  int percent = ( 100 * ok_cnt ) / total_cnt;
-  snprintf( txt, sizeof(txt), "%d:%d%%", ok_cnt, percent );
-  gtk_entry_set_text( GTK_ENTRY(packet_cnt_entry), txt );
-  }
+    if (!decoder->vit) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
+//    /* Initialize things */
+//    Init_Correlator_Tables();
+//    Mj_Init();
+//    Mtd_Init( &mtd_record );
+//
+//    /* Channel_image[idx] is free'd and set to NULL if
+//     * already allocated, otherwise it is only set to NULL */
+//    for( idx = 0; idx < CHANNEL_IMAGE_NUM; idx++ )
+//        free_ptr( (void **)&channel_image[idx] );
+//    channel_image_size = 0;
+//    channel_image_width = METEOR_IMAGE_WIDTH;
+//
+//    ok_cnt    = 0;
+//    total_cnt = 1; /* LIBLRPT handle accurately, mb have a flag for rist packet */
+
+    return decoder;
 }
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_deinit() */
+void lrpt_decoder_deinit(
+        lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return;
+
+    lrpt_decoder_viterbi_deinit(decoder->vit);
+    lrpt_decoder_correlator_deinit(decoder->corr);
+    free(decoder);
+}
+
+/*************************************************************************************************/
+
+//void lrpt_decoder_exec(
+//        lrpt_decoder_t *decoder,
+//        uint8_t *in_buffer,
+//        size_t buf_len) {
+//    /* Go through data given */
+//    while (decoder->pos < buf_len) {
+//        bool ok = Mtd_One_Frame(decoder, in_buffer);
+//
+//        if (ok) {
+//            Parse_Cvcdu(decoder->ecced_data, HARD_FRAME_LEN - 132);
+//
+//            /* TODO increase total number of successfully decoded packets */
+//            //ok_cnt++;
+//
+//            /* TODO we can report Framing OK here */
+//        }
+//        else {
+//            /* TODO we can report Framing non-OK here */
+//        }
+//
+//        /* TODO increase total number of received packets */
+//        //tal_cnt++;
+//    }
+//
+//    /* TODO we can report here:
+//     * signal quality (sig_q)
+//     * total number of received packets (tot_cnt)
+//     * percent of successfully decoded packets (ok_cnt / tot_cnt * 100)
+//     */
+//}
 
 /*************************************************************************************************/
 

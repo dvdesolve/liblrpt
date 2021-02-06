@@ -16,7 +16,10 @@
 
 # sources
 set(lrpt_SOURCES
+    decoder/bitop.c
+    decoder/correlator.c
     decoder/decoder.c
+    decoder/viterbi.c
     demodulator/agc.c
     demodulator/dediffcoder.c
     demodulator/deinterleaver.c
@@ -31,7 +34,10 @@ set(lrpt_SOURCES
 
 set(lrpt_HEADERS
     ../include/lrpt.h
+    decoder/bitop.h
+    decoder/correlator.h
     decoder/decoder.h
+    decoder/viterbi.h
     demodulator/agc.h
     demodulator/dediffcoder.h
     demodulator/deinterleaver.h
