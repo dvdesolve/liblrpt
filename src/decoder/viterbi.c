@@ -36,8 +36,8 @@
 
 /*************************************************************************************************/
 
-static const uint8_t VITERBI27_POLYA = 79; /**< Viterbi's polynomial A, 01001111 */
-static const uint8_t VITERBI27_POLYB = 109; /**< Viterbi's polynomial B, 01101101 */
+static const uint8_t VITERBI_POLYA = 79; /**< Viterbi's polynomial A, 01001111 */
+static const uint8_t VITERBI_POLYB = 109; /**< Viterbi's polynomial B, 01101101 */
 
 /*************************************************************************************************/
 
@@ -125,9 +125,9 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     for (size_t i = 0; i < 128; i++) {
         vit->table[i] = 0;
 
-        if (lrpt_decoder_bitop_count(i & VITERBI27_POLYA) % 2)
+        if (lrpt_decoder_bitop_count(i & VITERBI_POLYA) % 2)
             vit->table[i] = vit->table[i] | 0x01;
-        if (lrpt_decoder_bitop_count(i & VITERBI27_POLYB) % 2)
+        if (lrpt_decoder_bitop_count(i & VITERBI_POLYB) % 2)
             vit->table[i] = vit->table[i] | 0x02;
     }
 

@@ -35,6 +35,11 @@
 
 /*************************************************************************************************/
 
+/** CCSDS synchronization word (0x1ACFFC1D) in Viterbi-encoded form */
+static const uint64_t CORR_SYNC_WORD_ENC = 0xFCA2B63DB00D9794;
+
+/*************************************************************************************************/
+
 /** Initialize correlator patterns.
  *
  * \param corr Pointer to the correlator object.
@@ -156,8 +161,7 @@ static uint64_t flip_iq_qw(
 /*************************************************************************************************/
 
 /* lrpt_decoder_correlator_init() */
-lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(
-        uint64_t q) {
+lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(void) {
     /* Allocate correlator object */
     lrpt_decoder_correlator_t *corr = malloc(sizeof(lrpt_decoder_correlator_t));
 
@@ -170,16 +174,21 @@ lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(
         corr->invert_iq_tab[i] = (uint8_t)(( (i & 0x55)         << 1) | ((i & 0xAA) >> 1));
     }
 
+    for (size_t i = 0; i < 256; i++)
+        for (size_t j = 0; j < 256; j++)
+            corr->corr_tab[i][j] =
+                (uint8_t)(((i > 127) && (j == 0)) || ((i <= 127) && (j == 255)));
+
     /* Zero out initial states */
     memset(corr->correlation, 0, LRPT_CORRELATOR_PATT_CNT);
     memset(corr->tmp_correlation, 0, LRPT_CORRELATOR_PATT_CNT);
     memset(corr->position, 0, LRPT_CORRELATOR_PATT_CNT);
 
     for (size_t i = 0; i < 4; i++)
-        set_patterns(corr, i, rotate_iq_qw(corr, q, i));
+        set_patterns(corr, i, rotate_iq_qw(corr, CORR_SYNC_WORD_ENC, i));
 
     for (size_t i = 0; i < 4; i++)
-        set_patterns(corr, i + 4, rotate_iq_qw(corr, flip_iq_qw(corr, q), i));
+        set_patterns(corr, i + 4, rotate_iq_qw(corr, flip_iq_qw(corr, CORR_SYNC_WORD_ENC), i));
 
     return corr;
 }

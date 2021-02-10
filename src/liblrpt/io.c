@@ -40,8 +40,8 @@
 
 /*************************************************************************************************/
 
-static const size_t IQ_DATA_IO_N = 1024; /**< Block size for I/O operations with I/Q data */
-static const size_t QPSK_DATA_IO_N = 1024; /**< Block size for I/O operations with QPSK data */
+static const size_t IO_IQ_DATA_N = 1024; /**< Block size for I/O operations with I/Q data */
+static const size_t IO_QPSK_DATA_N = 1024; /**< Block size for I/O operations with QPSK data */
 
 /*************************************************************************************************/
 
@@ -142,7 +142,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     }
 
     /* Try to allocate temporary I/O buffer */
-    unsigned char *iobuf = calloc(IQ_DATA_IO_N * 2 * 10, 1);
+    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, 1);
 
     if (!iobuf) {
         free(name);
@@ -394,7 +394,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     /* File position = 20 + name_l */
 
     /* Try to allocate temporary I/O buffer */
-    unsigned char *iobuf = calloc(IQ_DATA_IO_N * 2 * 10, 1);
+    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, 1);
 
     if (!iobuf) {
         free(name);
@@ -509,10 +509,10 @@ bool lrpt_iq_data_read_from_file(
         return false;
 
     /* Determine required number of block reads */
-    const size_t nreads = length / IQ_DATA_IO_N;
+    const size_t nreads = length / IO_IQ_DATA_N;
 
     for (size_t i = 0; i <= nreads; i++) {
-        const size_t toread = (i == nreads) ? (length - nreads * IQ_DATA_IO_N) : IQ_DATA_IO_N;
+        const size_t toread = (i == nreads) ? (length - nreads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
         if (toread == 0)
             break;
@@ -537,7 +537,7 @@ bool lrpt_iq_data_read_from_file(
             if (!lrpt_utils_ds_double(v_s, &q_part))
                 return false;
 
-            data->iq[i * IQ_DATA_IO_N + j] = i_part + q_part * I;
+            data->iq[i * IO_IQ_DATA_N + j] = i_part + q_part * I;
         }
     }
 
@@ -562,10 +562,10 @@ bool lrpt_iq_data_write_to_file(
 
     /* Determine required number of block writes */
     const size_t length = data->len;
-    const size_t nwrites = length / IQ_DATA_IO_N;
+    const size_t nwrites = length / IO_IQ_DATA_N;
 
     for (size_t i = 0; i <= nwrites; i++) {
-        const size_t towrite = (i == nwrites) ? (length - nwrites * IQ_DATA_IO_N) : IQ_DATA_IO_N;
+        const size_t towrite = (i == nwrites) ? (length - nwrites * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
         if (towrite == 0)
             break;
@@ -574,12 +574,12 @@ bool lrpt_iq_data_write_to_file(
         for (size_t j = 0; j < towrite; j++) {
             unsigned char v_s[10];
 
-            if (!lrpt_utils_s_double(creal(data->iq[i * IQ_DATA_IO_N + j]), v_s))
+            if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s))
                 return false;
 
             memcpy(file->iobuf + 20 * j, v_s, 10); /* I sample */
 
-            if (!lrpt_utils_s_double(cimag(data->iq[i * IQ_DATA_IO_N + j]), v_s))
+            if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s))
                 return false;
 
             memcpy(file->iobuf + 20 * j + 10, v_s, 10); /* Q sample */
@@ -879,16 +879,16 @@ bool lrpt_qpsk_data_read_from_file(
         return false;
 
     /* Determine required number of block reads */
-    const size_t nreads = length / QPSK_DATA_IO_N;
+    const size_t nreads = length / IO_QPSK_DATA_N;
 
     for (size_t i = 0; i <= nreads; i++) {
-        const size_t toread = (i == nreads) ? (length - nreads * QPSK_DATA_IO_N) : QPSK_DATA_IO_N;
+        const size_t toread = (i == nreads) ? (length - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
         if (toread == 0)
             break;
 
         /* Read block */
-        if (fread(data->qpsk + i * QPSK_DATA_IO_N, 1, toread, file->fhandle) != toread)
+        if (fread(data->qpsk + i * IO_QPSK_DATA_N, 1, toread, file->fhandle) != toread)
             return false;
     }
 
@@ -913,16 +913,16 @@ bool lrpt_qpsk_data_write_to_file(
 
     /* Determine required number of block writes */
     const size_t length = data->len;
-    const size_t nwrites = length / QPSK_DATA_IO_N;
+    const size_t nwrites = length / IO_QPSK_DATA_N;
 
     for (size_t i = 0; i <= nwrites; i++) {
-        const size_t towrite = (i == nwrites) ? (length - nwrites * QPSK_DATA_IO_N) : QPSK_DATA_IO_N;
+        const size_t towrite = (i == nwrites) ? (length - nwrites * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
         if (towrite == 0)
             break;
 
         /* Write block */
-        if (fwrite(data->qpsk + i * QPSK_DATA_IO_N, 1, towrite, file->fhandle) != towrite)
+        if (fwrite(data->qpsk + i * IO_QPSK_DATA_N, 1, towrite, file->fhandle) != towrite)
             return false;
 
         file->current += towrite;

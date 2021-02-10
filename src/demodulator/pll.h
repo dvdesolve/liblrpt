@@ -58,7 +58,7 @@ typedef struct lrpt_demodulator_pll__ {
 
     bool locked; /**< Locked state indicator */
 
-    double lut_tanh[256]; /**< Lookup table for tanh() */
+    double *lut_tanh; /**< Lookup table for tanh() */
 
     /** @{ */
     /** Used in phase error correction */

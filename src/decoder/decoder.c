@@ -50,11 +50,8 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     decoder->corr = NULL;
     decoder->vit = NULL;
 
-    /* Initialize correlator object with coded sync word.
-     * Normal sync is 0x1ACFFC1D (00011010 11001111 11111100 00011101).
-     * Coded sync is 0xFCA2B63DB00D9794.
-     */
-    decoder->corr = lrpt_decoder_correlator_init((uint64_t)0xFCA2B63DB00D9794);
+    /* Initialize correlator */
+    decoder->corr = lrpt_decoder_correlator_init();
 
     if (!decoder->corr) {
         lrpt_decoder_deinit(decoder);
@@ -71,8 +68,6 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
         return NULL;
     }
 
-//    /* Initialize things */
-//    Init_Correlator_Tables();
 //    Mj_Init();
 //    Mtd_Init( &mtd_record );
 //

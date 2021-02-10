@@ -52,10 +52,12 @@ typedef struct lrpt_decoder_correlator__ {
     uint8_t patterns[LRPT_CORRELATOR_PATT_SIZE][LRPT_CORRELATOR_PATT_SIZE];
 
     /* TODO may be optimize here and use functions/macros instead of LUTs */
+    /* TODO may be use allocs instead statics */
     /** @{ */
     /** Correlator tables */
     uint8_t rotate_iq_tab[256];
     uint8_t invert_iq_tab[256];
+    uint8_t corr_tab[256][256];
     /** @} */
 } lrpt_decoder_correlator_t;
 
@@ -63,12 +65,9 @@ typedef struct lrpt_decoder_correlator__ {
 
 /** Allocate and initialize correlator object.
  *
- * \param q Coded sync word.
- *
  * \return Correlator object or \c NULL in case of error.
  */
-lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(
-        uint64_t q);
+lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(void);
 
 /** Free correlator object.
  *

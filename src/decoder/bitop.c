@@ -33,7 +33,7 @@
 /*************************************************************************************************/
 
 /** Number of bits in numbers in [0..255] range */
-static const uint8_t bitcnt_tbl[256] = {
+static const uint8_t BITOP_BITCNT_TBL[256] = {
     0, 1, 1, 2, 1, 2, 2, 3,
     1, 2, 2, 3, 2, 3, 3, 4,
     1, 2, 2, 3, 2, 3, 3, 4,
@@ -73,10 +73,10 @@ static const uint8_t bitcnt_tbl[256] = {
 /* lrpt_decoder_bitop_count() */
 uint8_t lrpt_decoder_bitop_count(
         uint32_t n) {
-    return (bitcnt_tbl[n & 0xFF] +
-            bitcnt_tbl[(n >> 8) & 0xFF] +
-            bitcnt_tbl[(n >> 16) & 0xFF] +
-            bitcnt_tbl[(n >> 24) & 0xFF]);
+    return (BITOP_BITCNT_TBL[n & 0xFF] +
+            BITOP_BITCNT_TBL[(n >> 8) & 0xFF] +
+            BITOP_BITCNT_TBL[(n >> 16) & 0xFF] +
+            BITOP_BITCNT_TBL[(n >> 24) & 0xFF]);
 }
 
 /*************************************************************************************************/

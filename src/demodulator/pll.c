@@ -57,7 +57,7 @@ static const double PLL_LOCKED_BW_REDUCE = 4.0; /* PLL bandwidth reduction (in l
 static const double PLL_AVG_WINSIZE = 20000.0; /* Interpolation factor is taken into account now */
 static const double PLL_LOCKED_WINSIZEX = 10.0; /* Error average window size multiplier (in lock) */
 
-static const double FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
+static const double PLL_FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
 
 /*************************************************************************************************/
 
@@ -80,7 +80,7 @@ static inline double clamp_double(
  * \return tanh() value.
  */
 static inline double lut_tanh(
-        const double lut[],
+        const double lut[], /* TODO [] vs * */
         double value);
 
 /** (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
@@ -152,6 +152,19 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     if (!pll)
         return NULL;
 
+    /* NULL-init internal storage for safe deallocation */
+    pll->lut_tanh = NULL;
+
+    /* Allocate lookup table for tanh() */
+    /* TODO avoid magic number 256! */
+    pll->lut_tanh = calloc(256, sizeof(double));
+
+    if (!pll->lut_tanh) {
+        lrpt_demodulator_pll_deinit(pll);
+
+        return NULL;
+    }
+
     /* Populate lookup table for tanh() */
     for (size_t i = 0; i < 256; i++)
         pll->lut_tanh[i] = tanh((double)((int)i - 128));
@@ -210,6 +223,10 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 /* lrpt_demodulator_pll_deinit() */
 void lrpt_demodulator_pll_deinit(
         lrpt_demodulator_pll_t *pll) {
+    if (!pll)
+        return;
+
+    free(pll->lut_tanh);
     free(pll);
 }
 
@@ -293,7 +310,7 @@ void lrpt_demodulator_pll_correct_phase(
     }
 
     /* Limit frequency to a sensible range */
-    if ((pll->nco_freq <= -FREQ_MAX) || (pll->nco_freq >= FREQ_MAX))
+    if ((pll->nco_freq <= -PLL_FREQ_MAX) || (pll->nco_freq >= PLL_FREQ_MAX))
         pll->nco_freq = 0.0;
 }
 
