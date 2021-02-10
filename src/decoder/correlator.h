@@ -33,31 +33,23 @@
 
 /*************************************************************************************************/
 
-#define LRPT_CORRELATOR_PATT_SIZE   64 /**< Pattern size for correlator */
-#define LRPT_CORRELATOR_PATT_CNT    8 /**< Number of patterns */
-
-/*************************************************************************************************/
-
 /** Correlator object */
 typedef struct lrpt_decoder_correlator__ {
-    /* TODO recheck here. Was int instead of uint8_t. May be use const statics instead of defines */
     /** @{ */
     /** Correlator internal state arrays */
-    uint8_t correlation[LRPT_CORRELATOR_PATT_CNT];
-    uint8_t tmp_correlation[LRPT_CORRELATOR_PATT_CNT];
-    uint8_t position[LRPT_CORRELATOR_PATT_CNT];
+    uint8_t *correlation;
+    uint8_t *tmp_correlation;
+    uint8_t *position;
     /** @} */
 
     /** Correlator patterns */
-    uint8_t patterns[LRPT_CORRELATOR_PATT_SIZE][LRPT_CORRELATOR_PATT_SIZE];
+    uint8_t *patterns;
 
-    /* TODO may be optimize here and use functions/macros instead of LUTs */
-    /* TODO may be use allocs instead statics */
     /** @{ */
     /** Correlator tables */
-    uint8_t rotate_iq_tab[256];
-    uint8_t invert_iq_tab[256];
-    uint8_t corr_tab[256][256];
+    uint8_t *rotate_iq_tab;
+    uint8_t *invert_iq_tab;
+    uint8_t *corr_tab;
     /** @} */
 } lrpt_decoder_correlator_t;
 
