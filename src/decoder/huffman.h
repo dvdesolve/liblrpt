@@ -19,35 +19,47 @@
 
 /** \file
  *
- * Public internal API for decoder routines.
+ * Public internal API for Huffman decoder routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DECODER_DECODER_H
-#define LRPT_DECODER_DECODER_H
+#ifndef LRPT_DECODER_HUFFMAN_H
+#define LRPT_DECODER_HUFFMAN_H
 
 /*************************************************************************************************/
-
-#include "correlator.h"
-#include "huffman.h"
-#include "viterbi.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
 /*************************************************************************************************/
 
-/** Decoder object */
-struct lrpt_decoder__ {
-    lrpt_decoder_correlator_t *corr; /**< Correlator */
-    lrpt_decoder_viterbi_t *vit; /**< Viterbi decoder */
-    lrpt_decoder_huffman_t *huff; /**< Huffman decoder */
-//
-//    /** @{ */
-//    /** Position information */
-//    size_t pos, prev_pos;
-//    /** @} */
-};
+/** Decoder AC table data */
+typedef struct lrpt_decoder_huffman_acdata__ {
+    uint16_t run, size;
+    size_t len;
+    uint32_t mask, code;
+} lrpt_decoder_huffman_acdata_t;
+
+/** Huffman decoder object */
+typedef struct lrpt_decoder_huffman__ {
+    size_t ac_tbl_len; /**< AC table length */
+    lrpt_decoder_huffman_acdata_t *ac_tbl; /**< AC table */
+} lrpt_decoder_huffman_t;
+
+/*************************************************************************************************/
+
+/** Allocate and initialize Huffman decoder object.
+ *
+ * \return Pointer to the allocated Huffman decoder object or \c NULL in case of error.
+ */
+lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void);
+
+/** Free previously allocated Huffman decoder.
+ *
+ * \param huff Pointer to the Huffman decoder object.
+ */
+void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff);
 
 /*************************************************************************************************/
 

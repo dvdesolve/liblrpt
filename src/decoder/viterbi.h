@@ -33,27 +33,21 @@
 
 /*************************************************************************************************/
 
-#define LRPT_VITERBI_STATES_NUM 128 /**< Number of states of Viterbi decoder */
-
-/*************************************************************************************************/
-
 /** Viterbi decoder object */
 typedef struct lrpt_decoder_viterbi__ {
     uint16_t ber; /**< Bit error rate */
 
-    /* TODO may be use defines/const statics instead of hardcoded values 4 and 65536 */
-    /* TODO this is right for other named constants too */
     /** @{ */
     /** Distances stuff */
-    uint16_t dist_table[4][65536];
-    uint8_t table[LRPT_VITERBI_STATES_NUM];
+    uint16_t *dist_table;
+    uint8_t *table;
     /** @} */
 
     /** @{ */
     /** Needed for pairs lookup */
+    uint32_t *pair_outputs; /* 2 ^ (2 * rate), rate = 2 */
+    uint32_t *pair_keys; /* 2 ^ (order - 1), order = 7 */
     uint32_t *pair_distances;
-    uint32_t pair_outputs[16]; /* (1 << (2 * rate)) */
-    uint32_t pair_keys[64]; /* (1 << (order - 1)) */
     uint32_t pair_outputs_len;
     /** @} */
 } lrpt_decoder_viterbi_t;

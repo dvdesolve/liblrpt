@@ -129,10 +129,9 @@ static uint64_t rotate_iq_qw(
         uint64_t data,
         size_t shift) {
     uint64_t result = 0;
-    uint8_t bdata;
 
     for (size_t i = 0; i < CORR_PATTERN_COUNT; i++) {
-        bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
+        uint8_t bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
 
         result <<= 8;
         result |= rotate_iq(corr, bdata, shift);
@@ -148,10 +147,9 @@ static uint64_t flip_iq_qw(
         const lrpt_decoder_correlator_t *corr,
         uint64_t data) {
     uint64_t result = 0;
-    uint8_t bdata;
 
     for (size_t i = 0; i < CORR_PATTERN_COUNT; i++) {
-        bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
+        uint8_t bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
 
         result <<= 8;
         result |= corr->invert_iq_tab[bdata];

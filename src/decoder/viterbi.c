@@ -36,6 +36,7 @@
 
 /*************************************************************************************************/
 
+static const size_t VITERBI_STATES_NUM = 128; /**< Number of states of Viterbi decoder */
 static const uint8_t VITERBI_POLYA = 79; /**< Viterbi's polynomial A, 01001111 */
 static const uint8_t VITERBI_POLYB = 109; /**< Viterbi's polynomial B, 01101101 */
 
@@ -115,10 +116,29 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
 
     vit->ber = 0;
 
+    /* NULL-init internals for safe deallocation */
+    vit->dist_table = NULL;
+    vit->table = NULL;
+    vit->pair_outputs = NULL;
+    vit->pair_keys = NULL;
+
+    /* Allocate internals */
+    vit->dist_table = calloc(4 * 65536, sizeof(uint16_t));
+    vit->table = calloc(VITERBI_STATES_NUM, sizeof(uint8_t));
+    vit->pair_outputs = calloc(16, sizeof(uint32_t));
+    vit->pair_keys = calloc(64, sizeof(uint32_t));
+
+    /* Check for allocation problems */
+    if (!vit->dist_table || !vit->table || !vit->pair_outputs || !vit->pair_keys) {
+        lrpt_decoder_viterbi_deinit(vit);
+
+        return NULL;
+    }
+
     /* Init metric lookup table */
     for (size_t i = 0; i < 4; i++)
         for (size_t j = 0; j < 65536; j++)
-            vit->dist_table[i][j] =
+            vit->dist_table[i * 4 + j] =
                 metric_soft_distance((uint8_t)i, (uint8_t)(j & 0xFF), (uint8_t)(j >> 8));
 
     /* Polynomial table */
@@ -148,14 +168,14 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
             oc++;
         }
 
-        vit->pair_keys[i] = (uint32_t)( inv_outputs[o] );
+        vit->pair_keys[i] = (uint32_t)(inv_outputs[o]);
     }
 
     vit->pair_outputs_len = oc;
-    vit->pair_distances = calloc(vit->pair_outputs_len, sizeof(uint32_t));
+    vit->pair_distances = calloc(oc, sizeof(uint32_t));
 
     if (!vit->pair_distances) {
-        free(vit);
+        lrpt_decoder_viterbi_deinit(vit);
 
         return NULL;
     }
@@ -171,6 +191,10 @@ void lrpt_decoder_viterbi_deinit(lrpt_decoder_viterbi_t *vit) {
         return;
 
     free(vit->pair_distances);
+    free(vit->pair_keys);
+    free(vit->pair_outputs);
+    free(vit->table);
+    free(vit->dist_table);
     free(vit);
 }
 

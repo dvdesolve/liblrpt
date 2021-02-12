@@ -30,6 +30,8 @@
 
 #include "../../include/lrpt.h"
 #include "correlator.h"
+#include "huffman.h"
+#include "viterbi.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -63,6 +65,15 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     decoder->vit = lrpt_decoder_viterbi_init();
 
     if (!decoder->vit) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
+    /* Initialize Huffman decoder */
+    decoder->huff = lrpt_decoder_huffman_init();
+
+    if (!decoder->huff) {
         lrpt_decoder_deinit(decoder);
 
         return NULL;

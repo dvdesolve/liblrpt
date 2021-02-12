@@ -19,6 +19,7 @@ set(lrpt_SOURCES
     decoder/bitop.c
     decoder/correlator.c
     decoder/decoder.c
+    decoder/huffman.c
     decoder/viterbi.c
     demodulator/agc.c
     demodulator/dediffcoder.c
@@ -37,6 +38,7 @@ set(lrpt_HEADERS
     decoder/bitop.h
     decoder/correlator.h
     decoder/decoder.h
+    decoder/huffman.h
     decoder/viterbi.h
     demodulator/agc.h
     demodulator/dediffcoder.h
