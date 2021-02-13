@@ -30,6 +30,7 @@
 
 #include "../../include/lrpt.h"
 #include "correlator.h"
+#include "jpeg.h"
 #include "huffman.h"
 #include "viterbi.h"
 
@@ -51,6 +52,12 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     /* NULL-init internal objects for safe deallocation */
     decoder->corr = NULL;
     decoder->vit = NULL;
+    decoder->huff = NULL;
+    decoder->jpeg = NULL;
+
+    /* TODO may be use macro/static const */
+    for (size_t i = 0; i < 3; i++)
+        decoder->channel_image[i] = NULL;
 
     /* Initialize correlator */
     decoder->corr = lrpt_decoder_correlator_init();
@@ -79,18 +86,28 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
         return NULL;
     }
 
-//    Mj_Init();
-//    Mtd_Init( &mtd_record );
-//
-//    /* Channel_image[idx] is free'd and set to NULL if
-//     * already allocated, otherwise it is only set to NULL */
-//    for( idx = 0; idx < CHANNEL_IMAGE_NUM; idx++ )
-//        free_ptr( (void **)&channel_image[idx] );
-//    channel_image_size = 0;
-//    channel_image_width = METEOR_IMAGE_WIDTH;
-//
-//    ok_cnt    = 0;
-//    total_cnt = 1; /* LIBLRPT handle accurately, mb have a flag for rist packet */
+    /* Initialize JPEG decoder */
+    decoder->jpeg = lrpt_decoder_jpeg_init();
+
+    if (!decoder->jpeg) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
+    /* Initialize internal state variables */
+    decoder->pos = 0;
+    decoder->cpos = 0;
+    decoder->word = 0;
+    decoder->corrv = 64;
+
+    /* TODO use static const */
+    /** Set initial image dimensions */
+    decoder->channel_image_size = 0;
+    decoder->channel_image_width = 1568;
+
+    decoder->ok_cnt = 0;
+    decoder->total_cnt = 0;
 
     return decoder;
 }
@@ -103,6 +120,8 @@ void lrpt_decoder_deinit(
     if (!decoder)
         return;
 
+    lrpt_decoder_jpeg_deinit(decoder->jpeg);
+    lrpt_decoder_huffman_deinit(decoder->huff);
     lrpt_decoder_viterbi_deinit(decoder->vit);
     lrpt_decoder_correlator_deinit(decoder->corr);
     free(decoder);

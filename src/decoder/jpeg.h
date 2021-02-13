@@ -19,54 +19,51 @@
 
 /** \file
  *
- * Public internal API for decoder routines.
+ * Public internal API for JPEG decoder routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DECODER_DECODER_H
-#define LRPT_DECODER_DECODER_H
+#ifndef LRPT_DECODER_JPEG_H
+#define LRPT_DECODER_JPEG_H
 
 /*************************************************************************************************/
 
-#include "correlator.h"
-#include "jpeg.h"
-#include "huffman.h"
-#include "viterbi.h"
+#include <stddef.h>
 
 /*************************************************************************************************/
 
-/** Decoder object */
-struct lrpt_decoder__ {
-    lrpt_decoder_correlator_t *corr; /**< Correlator */
-    lrpt_decoder_viterbi_t *vit; /**< Viterbi decoder */
-    lrpt_decoder_huffman_t *huff; /**< Huffman decoder */
-    lrpt_decoder_jpeg_t *jpeg; /**< JPEG decoder */
+/** JPEG decoder object */
+typedef struct lrpt_decoder_jpeg__ {
+    /* TODO add flag for checking in source code (-1) */
+    size_t last_mcu; /**< Last MCU number */
 
-    /* TODO recheck types */
+    /* TODO recheck, both were assigned to -1 */
     /** @{ */
-    /** Position information */
-    size_t pos, prev_pos;
+    /** Need for tracking row number in transmitted image */
+    size_t cur_y, last_y;
     /** @} */
 
+    /* TODO recheck, may be type should be different */
     /** @{ */
-    /** Needed for correlator calls */
-    uint32_t cpos, word, corrv;
+    /** Packet indices */
+    int first_pck, prev_pck;
     /** @} */
+} lrpt_decoder_jpeg_t;
 
-    /* TODO may be use macro/static const */
-    uint8_t *channel_image[3]; /**< Per-channel image representation */
+/*************************************************************************************************/
 
-    /** @{ */
-    /** Channel image dimensions */
-    size_t channel_image_size, channel_image_width;
-    /** @} */
+/** Allocate and initialize JPEG decoder object.
+ *
+ * \return Pointer to the allocated JPEG decoder object or \c NULL in case of error.
+ */
+lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void);
 
-    /** @{ */
-    /** Packet counter */
-    size_t ok_cnt, total_cnt;
-    /** @} */
-};
+/** Free previously allocated JPEG decoder.
+ *
+ * \param jpeg Pointer to the JPEG decoder object.
+ */
+void lrpt_decoder_jpeg_deinit(lrpt_decoder_jpeg_t *jpeg);
 
 /*************************************************************************************************/
 

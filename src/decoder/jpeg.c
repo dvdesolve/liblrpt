@@ -19,58 +19,47 @@
 
 /** \file
  *
- * Public internal API for decoder routines.
+ * JPEG decoder routines.
+ *
+ * This source file contains routines for performing JPEG decoding.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DECODER_DECODER_H
-#define LRPT_DECODER_DECODER_H
-
-/*************************************************************************************************/
-
-#include "correlator.h"
 #include "jpeg.h"
-#include "huffman.h"
-#include "viterbi.h"
+
+#include <stddef.h>
+#include <stdlib.h>
 
 /*************************************************************************************************/
 
-/** Decoder object */
-struct lrpt_decoder__ {
-    lrpt_decoder_correlator_t *corr; /**< Correlator */
-    lrpt_decoder_viterbi_t *vit; /**< Viterbi decoder */
-    lrpt_decoder_huffman_t *huff; /**< Huffman decoder */
-    lrpt_decoder_jpeg_t *jpeg; /**< JPEG decoder */
+/* lrpt_decoder_jpeg_init() */
+lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void) {
+    /* Allocate JPEG decoder object */
+    lrpt_decoder_jpeg_t *jpeg = malloc(sizeof(lrpt_decoder_jpeg_t));
 
-    /* TODO recheck types */
-    /** @{ */
-    /** Position information */
-    size_t pos, prev_pos;
-    /** @} */
+    if (!jpeg)
+        return NULL;
 
-    /** @{ */
-    /** Needed for correlator calls */
-    uint32_t cpos, word, corrv;
-    /** @} */
+    /* Set internal state variables */
+    jpeg->last_mcu = 0;
+    jpeg->cur_y = 0;
+    jpeg->last_y = 0;
+    jpeg->first_pck = 0;
+    jpeg->prev_pck = 0;
 
-    /* TODO may be use macro/static const */
-    uint8_t *channel_image[3]; /**< Per-channel image representation */
-
-    /** @{ */
-    /** Channel image dimensions */
-    size_t channel_image_size, channel_image_width;
-    /** @} */
-
-    /** @{ */
-    /** Packet counter */
-    size_t ok_cnt, total_cnt;
-    /** @} */
-};
+    return jpeg;
+}
 
 /*************************************************************************************************/
 
-#endif
+/* lrpt_decoder_jpeg_deinit() */
+void lrpt_decoder_jpeg_deinit(lrpt_decoder_jpeg_t *jpeg) {
+    if (!jpeg)
+        return;
+
+    free(jpeg);
+}
 
 /*************************************************************************************************/
 
