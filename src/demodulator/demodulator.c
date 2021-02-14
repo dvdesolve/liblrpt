@@ -74,7 +74,7 @@ static inline int8_t clamp_int8(
  * \param fdata I/Q sample.
  * \param[out] sym Pointer to the output symbol.
  *
- * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
+ * \return \c true on successfull demodulation and \c false otherwise.
  */
 static bool demod_qpsk(
         lrpt_demodulator_t *demod,
@@ -87,7 +87,7 @@ static bool demod_qpsk(
  * \param fdata I/Q sample.
  * \param[out] sym Pointer to the output symbol.
  *
- * \return \c true when #LRPT_SOFT_FRAME_LEN QPSK symbols were demodulated and \c false otherwise.
+ * \return \c true on successfull demodulation and \c false otherwise.
  */
 static bool demod_oqpsk(
         lrpt_demodulator_t *demod,

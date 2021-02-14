@@ -30,14 +30,22 @@
 
 #include "../../include/lrpt.h"
 #include "correlator.h"
+#include "data.h"
 #include "jpeg.h"
 #include "huffman.h"
 #include "viterbi.h"
 
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+/*************************************************************************************************/
+
+/** Length of soft frame */
+const size_t LRPT_DECODER_SOFT_FRAME_LEN = 16384;
+
+/** Length of hard frame */
+const size_t LRPT_DECODER_HARD_FRAME_LEN = 1024;
 
 /*************************************************************************************************/
 
@@ -54,6 +62,8 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     decoder->vit = NULL;
     decoder->huff = NULL;
     decoder->jpeg = NULL;
+    decoder->aligned = NULL;
+    decoder->decoded = NULL;
 
     /* TODO may be use macro/static const */
     for (size_t i = 0; i < 3; i++)
@@ -95,6 +105,24 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
         return NULL;
     }
 
+    /* Allocate aligned data array */
+    decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(uint8_t));
+
+    if (!decoder->aligned) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
+    /* Allocate decoded data array */
+    decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t));
+
+    if (!decoder->decoded) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
     /* Initialize internal state variables */
     decoder->pos = 0;
     decoder->cpos = 0;
@@ -120,6 +148,8 @@ void lrpt_decoder_deinit(
     if (!decoder)
         return;
 
+    free(decoder->decoded);
+    free(decoder->aligned);
     lrpt_decoder_jpeg_deinit(decoder->jpeg);
     lrpt_decoder_huffman_deinit(decoder->huff);
     lrpt_decoder_viterbi_deinit(decoder->vit);
@@ -129,36 +159,34 @@ void lrpt_decoder_deinit(
 
 /*************************************************************************************************/
 
-//void lrpt_decoder_exec(
-//        lrpt_decoder_t *decoder,
-//        uint8_t *in_buffer,
-//        size_t buf_len) {
-//    /* Go through data given */
-//    while (decoder->pos < buf_len) {
-//        bool ok = Mtd_One_Frame(decoder, in_buffer);
-//
-//        if (ok) {
-//            Parse_Cvcdu(decoder->ecced_data, HARD_FRAME_LEN - 132);
-//
-//            /* TODO increase total number of successfully decoded packets */
-//            //ok_cnt++;
-//
-//            /* TODO we can report Framing OK here */
-//        }
-//        else {
-//            /* TODO we can report Framing non-OK here */
-//        }
-//
-//        /* TODO increase total number of received packets */
-//        //tal_cnt++;
-//    }
-//
-//    /* TODO we can report here:
-//     * signal quality (sig_q)
-//     * total number of received packets (tot_cnt)
-//     * percent of successfully decoded packets (ok_cnt / tot_cnt * 100)
-//     */
-//}
+void lrpt_decoder_exec(
+        lrpt_decoder_t *decoder,
+        uint8_t *in_buffer,
+        size_t buf_len) {
+    /* Go through data given */
+    while (decoder->pos < buf_len) {
+        if (lrpt_decoder_data_process_frame(decoder, in_buffer)) {
+            Parse_Cvcdu(decoder->ecced_data, HARD_FRAME_LEN - 132);
+
+            /* TODO increase total number of successfully decoded packets */
+            //ok_cnt++;
+
+            /* TODO we can report Framing OK here */
+        }
+        else {
+            /* TODO we can report Framing non-OK here */
+        }
+
+        /* TODO increase total number of received packets */
+        //tal_cnt++;
+    }
+
+    /* TODO we can report here:
+     * signal quality (sig_q)
+     * total number of received packets (tot_cnt)
+     * percent of successfully decoded packets (ok_cnt / tot_cnt * 100)
+     */
+}
 
 /*************************************************************************************************/
 

@@ -18,6 +18,7 @@
 set(lrpt_SOURCES
     decoder/bitop.c
     decoder/correlator.c
+    decoder/data.c
     decoder/decoder.c
     decoder/jpeg.c
     decoder/huffman.c
@@ -38,6 +39,7 @@ set(lrpt_HEADERS
     ../include/lrpt.h
     decoder/bitop.h
     decoder/correlator.h
+    decoder/data.h
     decoder/decoder.h
     decoder/jpeg.h
     decoder/huffman.h
