@@ -29,16 +29,41 @@
 
 /*************************************************************************************************/
 
+#include "bitop.h"
+#include "correlator.h"
+
+#include <stddef.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
 /** Viterbi decoder object */
 typedef struct lrpt_decoder_viterbi__ {
+    lrpt_decoder_bitop_t *bit_writer; /**< Bit writer object */
+
+    /** @{ */
+    /** Used by history buffer */
+    uint8_t *history;
+    uint8_t *fetched;
+    size_t len;
+    size_t hist_index;
+    size_t renormalize_counter;
+    /** @} */
+
+    /** @{ */
+    /** Used by error buffer */
+    uint16_t *errors[2];
+    size_t err_index;
+    uint16_t *read_errors;
+    uint16_t *write_errors;
+    /** @} */
+
+    uint8_t *corrected; /**< Needed for BER estimation */
     uint16_t ber; /**< Bit error rate */
 
     /** @{ */
     /** Distances stuff */
+    uint16_t distances[4];
     uint16_t *dist_table;
     uint8_t *table;
     /** @} */
@@ -46,9 +71,9 @@ typedef struct lrpt_decoder_viterbi__ {
     /** @{ */
     /** Needed for pairs lookup */
     uint32_t *pair_outputs; /* 2 ^ (2 * rate), rate = 2 */
-    uint32_t *pair_keys; /* 2 ^ (order - 1), order = 7 */
+    size_t *pair_keys; /* 2 ^ (order - 1), order = 7 */
     uint32_t *pair_distances;
-    uint32_t pair_outputs_len;
+    size_t pair_outputs_len;
     /** @} */
 } lrpt_decoder_viterbi_t;
 
@@ -65,6 +90,27 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void);
  * \param vit Pointer to the Viterbi decoder object.
  */
 void lrpt_decoder_viterbi_deinit(lrpt_decoder_viterbi_t *vit);
+
+/** Perform Viterbi decoding.
+ *
+ * \param vit Pointer to the Viterbi decoder object.
+ * \param input Input data array.
+ * \param output Output data array.
+ */
+void lrpt_decoder_viterbi_decode(
+        lrpt_decoder_viterbi_t *vit,
+        const lrpt_decoder_correlator_t *corr,
+        uint8_t *input,
+        uint8_t *output);
+
+/** Return BER as a percentage.
+ *
+ * \param vit Pointer to the Viterbi object.
+ *
+ * \return Bit error rate expressed as a percentage.
+ */
+uint8_t lrpt_decoder_viterbi_ber_percent(
+        const lrpt_decoder_viterbi_t *vit);
 
 /*************************************************************************************************/
 

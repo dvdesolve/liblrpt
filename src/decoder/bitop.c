@@ -70,6 +70,28 @@ static const uint8_t BITOP_BITCNT_TBL[256] = {
 
 /*************************************************************************************************/
 
+/** Return N-th byte in data array.
+ *
+ * \param l Bytes array.
+ * \param n Index.
+ *
+ * \return Byte in position \p n inside array \p l.
+ */
+static inline uint8_t nth_byte(
+        const uint8_t *l,
+        size_t n);
+
+/*************************************************************************************************/
+
+/* nth_byte() */
+static inline uint8_t nth_byte(
+        const uint8_t *l,
+        size_t n) {
+    return *(l + n);
+}
+
+/*************************************************************************************************/
+
 /* lrpt_decoder_bitop_count() */
 uint8_t lrpt_decoder_bitop_count(
         uint32_t n) {
@@ -77,6 +99,120 @@ uint8_t lrpt_decoder_bitop_count(
             BITOP_BITCNT_TBL[(n >> 8) & 0xFF] +
             BITOP_BITCNT_TBL[(n >> 16) & 0xFF] +
             BITOP_BITCNT_TBL[(n >> 24) & 0xFF]);
+}
+
+/*************************************************************************************************/
+
+/* TODO use correct types (uchar) */
+/* lrpt_decoder_bitop_writer_set() */
+void lrpt_decoder_bitop_writer_set(
+        lrpt_decoder_bitop_t *w,
+        uint8_t *bytes) {
+    w->p = bytes;
+
+    w->pos = 0;
+    w->cur = 0;
+    w->cur_len = 0;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_bitop_writer_reverse() */
+void lrpt_decoder_bitop_writer_reverse(
+        lrpt_decoder_bitop_t *w,
+        uint8_t *l,
+        size_t len) {
+    uint8_t *bytes = w->p;
+    size_t byte_index = w->pos;
+    uint8_t b;
+
+    l = l + len - 1;
+
+    if (w->cur_len != 0) {
+        size_t close_len = 8 - w->cur_len; /* TODO recheck carefully for underflow errors */
+
+        if (close_len >= len)
+            close_len = len;
+
+        b = w->cur; /* TODO recheck carefully here, was uint16_t */
+
+        for (size_t i = 0; i < close_len; i++) {
+            b |= l[0];
+            b <<= 1;
+            l -= 1;
+        }
+
+        len -= close_len;
+
+        if ((w->cur_len + close_len) == 8) {
+            b >>= 1;
+            bytes[byte_index] = b; /* TODO recheck here, was explicit (uint8_t) */
+            byte_index++;
+        }
+        else {
+            w->cur = b; /* TODO recheck here, was explicit (uint8_t) */
+            w->cur_len += close_len;
+
+            return;
+        }
+    }
+
+    const size_t full_bytes = len / 8;
+
+    for (size_t i = 0; i < full_bytes; i++) {
+        bytes[byte_index] = (uint8_t)(
+                (nth_byte(l, 0) << 7) | (nth_byte(l, -1) << 6) |
+                (nth_byte(l, -2) << 5) | (nth_byte(l, -3) << 4) |
+                (nth_byte(l, -4) << 3) | (nth_byte(l, -5) << 2) |
+                (nth_byte(l, -6) << 1) | nth_byte(l, -7));
+
+        byte_index++;
+        l -= 8;
+    }
+
+    len -= 8 * full_bytes;
+
+    b = 0;
+
+    for (size_t i = 0; i < len; i++) {
+        b |= l[0];
+        b <<= 1;
+        l--;
+    }
+
+    w->cur = b; /* TODO recheck here, was explicit (uint8_t) */
+    w->pos = byte_index;
+    w->cur_len = len;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_bitop_peek_n_bits() */
+uint32_t lrpt_decoder_bitop_peek_n_bits(
+        lrpt_decoder_bitop_t *b,
+        size_t n) {
+    uint32_t result = 0;
+
+    for (size_t i = 0; i < n; i++) {
+        const size_t p = b->pos + i;
+        const uint8_t bit = (b->p[p >> 3] >> (7 - (p & 0x07))) & 0x01;
+
+        result = (result << 1) | (uint32_t)bit;
+    }
+
+    return result;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_bitop_fetch_n_bits() */
+uint32_t lrpt_decoder_bitop_fetch_n_bits(
+        lrpt_decoder_bitop_t *b,
+        size_t n) {
+    uint32_t result = lrpt_decoder_bitop_peek_n_bits(b, n);
+    b->pos += n;
+
+    return result;
 }
 
 /*************************************************************************************************/

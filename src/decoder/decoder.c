@@ -129,7 +129,7 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     decoder->word = 0;
     decoder->corrv = 64;
 
-    /* TODO use static const */
+    /* TODO use static const if possible */
     /** Set initial image dimensions */
     decoder->channel_image_size = 0;
     decoder->channel_image_width = 1568;

@@ -29,7 +29,30 @@
 
 /*************************************************************************************************/
 
+#include <stddef.h>
 #include <stdint.h>
+
+/*************************************************************************************************/
+
+/* TODO use correct types (uchar) */
+/** Bit I/O object */
+typedef struct lrpt_decoder_bitop__ {
+    uint8_t *p; /**< Data */
+
+    size_t pos; /**< Position */
+    uint8_t cur; /**< Data at current position */
+    size_t cur_len; /**< Current length */
+} lrpt_decoder_bitop_t;
+
+/*************************************************************************************************/
+
+/* TODO may be remove */
+/* lrpt_decoder_bitop_advance_n_bits() */
+static inline void lrpt_decoder_bitop_advance_n_bits(
+        lrpt_decoder_bitop_t *b,
+        size_t n) {
+    b->pos += n;
+}
 
 /*************************************************************************************************/
 
@@ -41,6 +64,48 @@
  */
 uint8_t lrpt_decoder_bitop_count(
         uint32_t n);
+
+/** Set initial state for bit writer.
+ *
+ * \param w Pointer to the bit I/O object.
+ * \param bytes Pointer to the data array.
+ */
+void lrpt_decoder_bitop_writer_set(
+        lrpt_decoder_bitop_t *w,
+        uint8_t *bytes);
+
+/** Reverse bit list order.
+ *
+ * \param w Pointer to the bit writer object.
+ * \param l Array of bytes to reverse bits in.
+ * \param len Length of given bytes array.
+ */
+void lrpt_decoder_bitop_writer_reverse(
+        lrpt_decoder_bitop_t *w,
+        uint8_t *l,
+        size_t len);
+
+/** Peek \p n bits from bit I/O object.
+ *
+ * \param b Pointer to the bit I/O object.
+ * \param n Number of bits to peek.
+ *
+ * \return Specified bits number as 4-byte integer.
+ */
+uint32_t lrpt_decoder_bitop_peek_n_bits(
+        lrpt_decoder_bitop_t *b,
+        size_t n);
+
+/** Fetch \p n bits from bit I/O object.
+ *
+ * \param b Pointer to the bit I/O object.
+ * \param n Number of bits to fetch.
+ *
+ * \return Specified bits number as 4-bytes integer.
+ */
+uint32_t lrpt_decoder_bitop_fetch_n_bits(
+        lrpt_decoder_bitop_t *b,
+        size_t n);
 
 /*************************************************************************************************/
 

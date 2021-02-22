@@ -74,6 +74,12 @@ struct lrpt_decoder__ {
 
     uint8_t *aligned; /**< Correlated data */
     uint8_t *decoded; /**< Decoded data */
+
+    /** @{ */
+    /** Needed for data processor */
+    uint32_t last_sync;
+    uint8_t sig_q;
+    /** @} */
 };
 
 /*************************************************************************************************/
