@@ -30,6 +30,7 @@
 
 #include "../../include/lrpt.h"
 #include "decoder.h"
+#include "ecc.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -71,6 +72,8 @@ static const uint8_t DECODER_PRAND_TBL[255] = {
     0x4B, 0xBE, 0xE6, 0x19, 0x51, 0x5F, 0x9F, 0x05,
     0x08, 0x78, 0xC4, 0x4A, 0x66, 0xF5, 0x58
 };
+
+static const uint32_t DECODER_CORRELATION_MIN = 45; /**< Threshold for correlation */ /* TODO recheck type */
 
 /*************************************************************************************************/
 
@@ -166,6 +169,35 @@ static void do_next_correlate(
 
 /*************************************************************************************************/
 
+/* do_full_correlate() */
+static void do_full_correlate(
+        lrpt_decoder_t *decoder,
+        uint8_t *raw) {
+    decoder->word =
+        (uint16_t)(lrpt_decoder_correlator_correlate(decoder->corr, (raw + decoder->pos),
+                    LRPT_DECODER_SOFT_FRAME_LEN));
+    decoder->cpos = (uint16_t)(decoder->corr->position[decoder->word]);
+    decoder->corrv = (uint16_t)(decoder->corr->correlation[decoder->word]);
+
+    if (decoder->corrv < DECODER_CORRELATION_MIN) {
+        decoder->prev_pos = decoder->pos;
+        memmove(decoder->aligned, (raw + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
+        decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN / 4;
+    }
+    else {
+        decoder->prev_pos = decoder->pos + (int)decoder->cpos;
+        memmove(decoder->aligned, (raw + decoder->pos + decoder->cpos),
+                (LRPT_DECODER_SOFT_FRAME_LEN - decoder->cpos));
+        memmove((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->cpos),
+                (raw + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN), decoder->cpos);
+        decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN + decoder->cpos;
+
+        fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->word);
+    }
+}
+
+/*************************************************************************************************/
+
 static bool decode_frame(
         lrpt_decoder_t *decoder) {
     lrpt_decoder_viterbi_decode(decoder->vit, decoder->corr, decoder->aligned, decoder->decoded);
@@ -201,9 +233,9 @@ static bool decode_frame(
     uint8_t ecc_buf[256]; /* TODO review if it's ok to use static array here */
 
     for (size_t j = 0; j < 4; j++) {
-        Ecc_Deinterleave( &(decoder->decoded[4]), ecc_buf, j, 4 );
-        decoder->r[j] = Ecc_Decode( ecc_buf, 0 );
-        Ecc_Interleave( ecc_buf, decoder->ecced_data, j, 4 );
+        lrpt_decoder_ecc_deinterleave((decoder->decoded + 4), ecc_buf, j, 4);
+        decoder->r[j] = lrpt_decoder_ecc_decode(ecc_buf, 0);
+        lrpt_decoder_ecc_interleave(ecc_buf, decoder->ecced_data, j, 4);
     }
 
     return (decoder->r[0] && decoder->r[1] && decoder->r[2] && decoder->r[3]);

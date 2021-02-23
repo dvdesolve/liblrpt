@@ -20,6 +20,7 @@ set(lrpt_SOURCES
     decoder/correlator.c
     decoder/data.c
     decoder/decoder.c
+    decoder/ecc.c
     decoder/jpeg.c
     decoder/huffman.c
     decoder/viterbi.c
@@ -41,6 +42,7 @@ set(lrpt_HEADERS
     decoder/correlator.h
     decoder/data.h
     decoder/decoder.h
+    decoder/ecc.h
     decoder/jpeg.h
     decoder/huffman.h
     decoder/viterbi.h

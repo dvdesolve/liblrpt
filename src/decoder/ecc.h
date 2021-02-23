@@ -19,68 +19,58 @@
 
 /** \file
  *
- * Public internal API for correlator routines.
+ * Public internal API for error correction coding routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_DECODER_CORRELATOR_H
-#define LRPT_DECODER_CORRELATOR_H
+#ifndef LRPT_DECODER_ECC_H
+#define LRPT_DECODER_ECC_H
 
 /*************************************************************************************************/
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
-/** Correlator object */
-typedef struct lrpt_decoder_correlator__ {
-    /** @{ */
-    /** Correlator internal state arrays */
-    uint8_t *correlation;
-    uint8_t *tmp_correlation;
-    uint8_t *position;
-    /** @} */
-
-    /** Correlator patterns */
-    uint8_t *patterns;
-
-    /** @{ */
-    /** Correlator tables */
-    uint8_t *rotate_iq_tab;
-    uint8_t *invert_iq_tab;
-    uint8_t *corr_tab;
-    /** @} */
-} lrpt_decoder_correlator_t;
-
-/*************************************************************************************************/
-
-/** Allocate and initialize correlator object.
+/** Perform ECC interleaving.
  *
- * \return Correlator object or \c NULL in case of error.
+ * \param data Input bytes array.
+ * \param output Resulting array.
+ * \param pos Starting position.
+ * \param n The length of data to be interleaved.
  */
-lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(void);
+void lrpt_decoder_ecc_interleave(
+        const uint8_t *data,
+        uint8_t *output,
+        size_t pos,
+        size_t n);
 
-/** Free correlator object.
+/** Perform ECC deinterleaving.
  *
- * \param corr Pointer to the correlator object.
+ * \param data Input bytes array.
+ * \param output Resulting array.
+ * \param pos Starting position.
+ * \param n The length of data to be deinterleaved.
  */
-void lrpt_decoder_correlator_deinit(
-        lrpt_decoder_correlator_t *corr);
+void lrpt_decoder_ecc_deinterleave(
+        const uint8_t *data,
+        uint8_t *output,
+        size_t pos,
+        size_t n);
 
-/** Calculate correlation.
+/** Perform ECC decoding.
  *
- * \param corr Pointer to the correlator object.
- * \param data Input data array.
- * \param len Length of data array.
+ * \param data Input bytes array.
+ * \param pad Padding.
  *
- * \return Correlation value.
+ * \return \c true on successfull decoding and \c false otherwise.
  */
-int lrpt_decoder_correlator_correlate(
-        lrpt_decoder_correlator_t *corr,
+bool lrpt_decoder_ecc_decode(
         uint8_t *data,
-        size_t len);
+        size_t pad);
 
 /*************************************************************************************************/
 

@@ -94,6 +94,7 @@ void lrpt_decoder_viterbi_deinit(lrpt_decoder_viterbi_t *vit);
 /** Perform Viterbi decoding.
  *
  * \param vit Pointer to the Viterbi decoder object.
+ * \param corr Pointer to the correlator object.
  * \param input Input data array.
  * \param output Output data array.
  */

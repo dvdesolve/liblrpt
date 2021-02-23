@@ -34,6 +34,10 @@
 #include "huffman.h"
 #include "viterbi.h"
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 /*************************************************************************************************/
 
 extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
@@ -79,6 +83,8 @@ struct lrpt_decoder__ {
     /** Needed for data processor */
     uint32_t last_sync;
     uint8_t sig_q;
+    bool r[4];
+    uint8_t *ecced_data;
     /** @} */
 };
 

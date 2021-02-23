@@ -64,11 +64,13 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     decoder->jpeg = NULL;
     decoder->aligned = NULL;
     decoder->decoded = NULL;
+    decoder->ecced_data = NULL;
 
     /* TODO may be use macro/static const */
     for (size_t i = 0; i < 3; i++)
         decoder->channel_image[i] = NULL;
 
+    /* TODO may be use batch check as in DSP, Viterbi... */
     /* Initialize correlator */
     decoder->corr = lrpt_decoder_correlator_init();
 
@@ -123,6 +125,15 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
         return NULL;
     }
 
+    /* Allocate array for ECCed data */
+    decoder->ecced_data = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t));
+
+    if (!decoder->ecced_data) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
     /* Initialize internal state variables */
     decoder->pos = 0;
     decoder->cpos = 0;
@@ -148,6 +159,7 @@ void lrpt_decoder_deinit(
     if (!decoder)
         return;
 
+    free(decoder->ecced_data);
     free(decoder->decoded);
     free(decoder->aligned);
     lrpt_decoder_jpeg_deinit(decoder->jpeg);
@@ -166,7 +178,7 @@ void lrpt_decoder_exec(
     /* Go through data given */
     while (decoder->pos < buf_len) {
         if (lrpt_decoder_data_process_frame(decoder, in_buffer)) {
-            Parse_Cvcdu(decoder->ecced_data, HARD_FRAME_LEN - 132);
+            Parse_Cvcdu(decoder->ecced_data, (LRPT_DECODER_HARD_FRAME_LEN - 132));
 
             /* TODO increase total number of successfully decoded packets */
             //ok_cnt++;

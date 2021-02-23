@@ -39,6 +39,7 @@ static const size_t CORR_PATTERN_SIZE = 64; /**< Pattern size for correlator */
 static const size_t CORR_PATTERN_COUNT = 8; /**< Number of patterns */
 /** CCSDS synchronization word (0x1ACFFC1D) in Viterbi-encoded form */
 static const uint64_t CORR_SYNC_WORD_ENC = 0xFCA2B63DB00D9794;
+static const uint32_t CORR_LIMIT = 55; /**< Correlation limit */
 
 /*************************************************************************************************/
 
@@ -230,6 +231,62 @@ void lrpt_decoder_correlator_deinit(
     free(corr->rotate_iq_tab);
     free(corr->patterns);
     free(corr);
+}
+
+/*************************************************************************************************/
+
+/* TODO recheck, especially for -1 result. May be use boolean flag */
+/* lrpt_decoder_correlator_correlate() */
+int lrpt_decoder_correlator_correlate(
+        lrpt_decoder_correlator_t *corr,
+        uint8_t *data,
+        size_t len) {
+    /* Reset correlator arrays */
+    memset(corr->correlation, 0, CORR_PATTERN_COUNT);
+    memset(corr->position, 0, CORR_PATTERN_COUNT);
+    memset(corr->tmp_correlation, 0, CORR_PATTERN_COUNT);
+
+    for (size_t i = 0; i < (len - CORR_PATTERN_SIZE); i++) {
+        for (size_t j = 0; j < CORR_PATTERN_COUNT; j++)
+            corr->tmp_correlation[j] = 0;
+
+        for (size_t j = 0; j < CORR_PATTERN_SIZE; j++) {
+            uint8_t *d = (corr->corr_tab + data[i + j] * 256);
+            uint8_t *p = (corr->patterns + j * CORR_PATTERN_SIZE);
+
+            /* TODO review */
+            /* For some reason it's unrolled to CORR_PATTERN_COUNT times */
+            corr->tmp_correlation[0] += d[p[0]];
+            corr->tmp_correlation[1] += d[p[1]];
+            corr->tmp_correlation[2] += d[p[2]];
+            corr->tmp_correlation[3] += d[p[3]];
+            corr->tmp_correlation[4] += d[p[4]];
+            corr->tmp_correlation[5] += d[p[5]];
+            corr->tmp_correlation[6] += d[p[6]];
+            corr->tmp_correlation[7] += d[p[7]];
+        }
+
+        for (size_t j = 0; j < CORR_PATTERN_COUNT; j++)
+            if (corr->tmp_correlation[j] > corr->correlation[j]) {
+                corr->correlation[j] = corr->tmp_correlation[j];
+                corr->position[j] = i;
+                corr->tmp_correlation[j] = 0;
+
+                if (corr->correlation[j] > CORR_LIMIT)
+                    return j;
+            }
+    }
+
+    uint8_t k = 0;
+    int result = -1; /* TODO recheck, see above */
+
+    for (size_t i = 0; i < CORR_PATTERN_COUNT; i++)
+        if (corr->correlation[i] > k) {
+            result = i;
+            k = corr->correlation[i];
+        }
+
+    return result;
 }
 
 /*************************************************************************************************/
