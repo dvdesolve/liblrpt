@@ -58,6 +58,7 @@ static const uint8_t HUFF_AC_Y_TBL[178] = {
     242, 243, 244, 245, 246, 247, 248, 249, 250
 };
 
+/* TODO recheck for population routine. That should be inside Huffman decoder object */
 /* Lookup tables for AC and DC */
 static size_t HUFF_AC_LUT[65536];
 static size_t HUFF_DC_LUT[65536];
@@ -249,6 +250,7 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
 
     huff->ac_tbl_len = n;
 
+    /* TODO review that */
     /* Fill AC and DC tables */
     for (size_t i = 0; i < 65536; i++) {
         HUFF_AC_LUT[i] = get_ac_real(huff, (uint16_t)i);
@@ -270,6 +272,37 @@ void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff) {
 
     free(huff->ac_tbl);
     free(huff);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_huffman_get_ac() */
+size_t lrpt_decoder_huffman_get_ac(
+        uint16_t w) {
+    return HUFF_AC_LUT[w];
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_huffman_get_dc() */
+size_t lrpt_decoder_huffman_get_dc(
+        uint16_t w) {
+    return HUFF_DC_LUT[w];
+}
+
+/*************************************************************************************************/
+
+/* TODO review types */
+/* lrpt_decoder_huffman_map_range() */
+int lrpt_decoder_huffman_map_range(
+        int cat,
+        uint32_t vl) {
+    int maxval = (1 << cat) - 1;
+
+    if ((vl >> (cat - 1)) != 0)
+        return vl;
+    else
+        return (vl - maxval);
 }
 
 /*************************************************************************************************/

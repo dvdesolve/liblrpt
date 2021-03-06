@@ -29,6 +29,9 @@
 
 /*************************************************************************************************/
 
+#include "../../include/lrpt.h"
+
+#include <stdbool.h>
 #include <stddef.h>
 
 /*************************************************************************************************/
@@ -49,6 +52,12 @@ typedef struct lrpt_decoder_jpeg__ {
     /** Packet indices */
     int first_pck, prev_pck;
     /** @} */
+
+    /** @{ */
+    /** Needed for discrete cosine transform */
+    double cosine[8][8];
+    double alpha[8];
+    /** @} */
 } lrpt_decoder_jpeg_t;
 
 /*************************************************************************************************/
@@ -64,6 +73,25 @@ lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void);
  * \param jpeg Pointer to the JPEG decoder object.
  */
 void lrpt_decoder_jpeg_deinit(lrpt_decoder_jpeg_t *jpeg);
+
+/** Perform decoding of input MCUs.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param p Input data.
+ * \param apid APID number.
+ * \param pck_cnt Number of packets.
+ * \param mcu_id ID of current MCU.
+ * \param q Quality.
+ *
+ * \return \c true on successfull decoding and \c false otherwise.
+ */
+bool lrpt_decoder_jpeg_decode_mcus(
+        lrpt_decoder_t *decoder,
+        uint8_t *p,
+        uint32_t apid,
+        uint16_t pck_cnt,
+        uint8_t mcu_id,
+        uint8_t q);
 
 /*************************************************************************************************/
 

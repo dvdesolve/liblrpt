@@ -33,6 +33,7 @@
 #include "data.h"
 #include "jpeg.h"
 #include "huffman.h"
+#include "packet.h"
 #include "viterbi.h"
 
 #include <stddef.h>
@@ -65,6 +66,7 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
     decoder->aligned = NULL;
     decoder->decoded = NULL;
     decoder->ecced_data = NULL;
+    decoder->packet_buf = NULL;
 
     /* TODO may be use macro/static const */
     for (size_t i = 0; i < 3; i++)
@@ -134,19 +136,31 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
         return NULL;
     }
 
+    /* Allocate packet buffer */
+    decoder->packet_buf = calloc(2048, sizeof(uint8_t));
+
+    if (!decoder->packet_buf) {
+        lrpt_decoder_deinit(decoder);
+
+        return NULL;
+    }
+
     /* Initialize internal state variables */
     decoder->pos = 0;
     decoder->cpos = 0;
     decoder->word = 0;
     decoder->corrv = 64;
+    decoder->packet_off = 0;
+    decoder->last_frame = 0;
+    decoder->packet_part = false;
+    decoder->ok_cnt = 0;
+    decoder->total_cnt = 0;
 
     /* TODO use static const if possible */
     /** Set initial image dimensions */
     decoder->channel_image_size = 0;
-    decoder->channel_image_width = 1568;
-
-    decoder->ok_cnt = 0;
-    decoder->total_cnt = 0;
+    decoder->channel_image_width = 1568; /* TODO use named constant here. METEOR_IMAGE_WIDTH = MCU_PER_LINE * 8; MCU_PER_LINE = 196; may depend on satellite capabilities */
+    decoder->prev_len = 0;
 
     return decoder;
 }
@@ -159,6 +173,7 @@ void lrpt_decoder_deinit(
     if (!decoder)
         return;
 
+    free(decoder->packet_buf);
     free(decoder->ecced_data);
     free(decoder->decoded);
     free(decoder->aligned);
@@ -171,6 +186,8 @@ void lrpt_decoder_deinit(
 
 /*************************************************************************************************/
 
+/* TODO return bool, report framing, write to given data buffer(s) */
+/* lrpt_decoder_exec() */
 void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
         uint8_t *in_buffer,
@@ -178,7 +195,7 @@ void lrpt_decoder_exec(
     /* Go through data given */
     while (decoder->pos < buf_len) {
         if (lrpt_decoder_data_process_frame(decoder, in_buffer)) {
-            Parse_Cvcdu(decoder->ecced_data, (LRPT_DECODER_HARD_FRAME_LEN - 132));
+            lrpt_decoder_packet_parse_cvcdu(decoder, (LRPT_DECODER_HARD_FRAME_LEN - 132));
 
             /* TODO increase total number of successfully decoded packets */
             //ok_cnt++;

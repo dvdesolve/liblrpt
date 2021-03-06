@@ -46,16 +46,6 @@ typedef struct lrpt_decoder_bitop__ {
 
 /*************************************************************************************************/
 
-/* TODO may be remove */
-/* lrpt_decoder_bitop_advance_n_bits() */
-static inline void lrpt_decoder_bitop_advance_n_bits(
-        lrpt_decoder_bitop_t *b,
-        size_t n) {
-    b->pos += n;
-}
-
-/*************************************************************************************************/
-
 /** Get number of bits in number.
  *
  * \param n Number to count bits for.

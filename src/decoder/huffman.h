@@ -61,6 +61,35 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void);
  */
 void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff);
 
+/** Get AC Huffman code.
+ *
+ * \param w Index.
+ *
+ * \return AC Huffman code.
+ */
+size_t lrpt_decoder_huffman_get_ac(
+        uint16_t w);
+
+/** Get DC Huffman code.
+ *
+ * \param w Index.
+ *
+ * \return DC Huffman code.
+ */
+size_t lrpt_decoder_huffman_get_dc(
+        uint16_t w);
+
+/** Perform mapping.
+ *
+ * \param cat Category.
+ * \param vl Value.
+ *
+ * \return Mapped range value.
+ */
+int lrpt_decoder_huffman_map_range(
+        int cat,
+        uint32_t vl);
+
 /*************************************************************************************************/
 
 #endif

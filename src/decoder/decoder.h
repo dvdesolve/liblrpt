@@ -37,6 +37,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <time.h>
 
 /*************************************************************************************************/
 
@@ -67,8 +68,9 @@ struct lrpt_decoder__ {
     uint8_t *channel_image[3]; /**< Per-channel image representation */
 
     /** @{ */
-    /** Channel image dimensions */
+    /** Channel image dimensions ang length tracker */
     size_t channel_image_size, channel_image_width;
+    size_t prev_len;
     /** @} */
 
     /** @{ */
@@ -86,6 +88,13 @@ struct lrpt_decoder__ {
     bool r[4];
     uint8_t *ecced_data;
     /** @} */
+
+    uint8_t *packet_buf; /**< Packet buffer */
+    size_t packet_off; /**< Packet offset */
+    uint32_t last_frame; /**< Last frame number */
+    bool packet_part; /**< Is packet partial? */
+
+    struct tm onboard_time;
 };
 
 /*************************************************************************************************/

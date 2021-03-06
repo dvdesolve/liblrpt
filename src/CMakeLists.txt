@@ -23,6 +23,7 @@ set(lrpt_SOURCES
     decoder/ecc.c
     decoder/jpeg.c
     decoder/huffman.c
+    decoder/packet.c
     decoder/viterbi.c
     demodulator/agc.c
     demodulator/dediffcoder.c
@@ -45,6 +46,7 @@ set(lrpt_HEADERS
     decoder/ecc.h
     decoder/jpeg.h
     decoder/huffman.h
+    decoder/packet.h
     decoder/viterbi.h
     demodulator/agc.h
     demodulator/dediffcoder.h
