@@ -38,6 +38,7 @@
 
 /*************************************************************************************************/
 
+/* TODO randomization polynomial */
 static const uint8_t DECODER_PRAND_TBL[255] = {
     0xFF, 0x48, 0x0E, 0xC0, 0x9A, 0x0D, 0x70, 0xBC,
     0x8E, 0x2C, 0x93, 0xAD, 0xA7, 0xB7, 0x46, 0xCE,
@@ -73,7 +74,7 @@ static const uint8_t DECODER_PRAND_TBL[255] = {
     0x08, 0x78, 0xC4, 0x4A, 0x66, 0xF5, 0x58
 };
 
-static const uint32_t DECODER_CORRELATION_MIN = 45; /**< Threshold for correlation */ /* TODO recheck type */
+static const uint16_t DECODER_CORRELATION_MIN = 45; /**< Threshold for correlation */
 
 /*************************************************************************************************/
 
@@ -94,6 +95,15 @@ static void fix_packet(
  * \param raw Raw data array.
  */
 static void do_next_correlate(
+        lrpt_decoder_t *decoder,
+        uint8_t *raw);
+
+/** Perform full correlation.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param raw Raw data array.
+ */
+static void do_full_correlate(
         lrpt_decoder_t *decoder,
         uint8_t *raw);
 
@@ -121,6 +131,7 @@ static void fix_packet(
     switch (shift) {
         case 4:
             for (size_t i = 0; i < (len / 2); i++) { /* TODO optimize here by len = len/2 */
+                /* Swap adjacent elements */
                 b = d[i * 2 + 0];
                 d[i * 2 + 0] = d[i * 2 + 1];
                 d[i * 2 + 1] = b;
@@ -130,12 +141,14 @@ static void fix_packet(
 
         case 5:
             for (size_t i = 0; i < (len / 2); i++)
+                /* Invert odd elements */
                 d[i * 2 + 0] = -d[i * 2 + 0];
 
             break;
 
         case 6:
             for (size_t i = 0; i < (len / 2); i++) {
+                /* Swap and invert adjacent elements */
                 b = d[i * 2 + 0];
                 d[i * 2 + 0] = -d[i * 2 + 1];
                 d[i * 2 + 1] = -b;
@@ -144,7 +157,8 @@ static void fix_packet(
             break;
 
         case 7:
-            for (size_t i = 0; i < len / 2; i++)
+            for (size_t i = 0; i < (len / 2); i++)
+                /* Invert even elements */
                 d[i * 2 + 1] = -d[i * 2 + 1];
 
             break;
@@ -156,15 +170,15 @@ static void fix_packet(
 /* do_next_correlate() */
 static void do_next_correlate(
         lrpt_decoder_t *decoder,
-        uint8_t *raw) {
-    decoder->cpos = 0;
+        uint8_t *data) {
+    /* Just copy new part of data to the aligned buffer */
+    memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
 
-    /* TODO use memcpy in all places instead */
-    memmove(decoder->aligned, &(raw[decoder->pos]), LRPT_DECODER_SOFT_FRAME_LEN);
+    /* Advance decoder position */
     decoder->prev_pos = decoder->pos;
     decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN;
 
-    fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->word);
+    fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->corr_word);
 }
 
 /*************************************************************************************************/
@@ -172,27 +186,31 @@ static void do_next_correlate(
 /* do_full_correlate() */
 static void do_full_correlate(
         lrpt_decoder_t *decoder,
-        uint8_t *raw) {
-    decoder->word =
-        (uint16_t)(lrpt_decoder_correlator_correlate(decoder->corr, (raw + decoder->pos),
-                    LRPT_DECODER_SOFT_FRAME_LEN));
-    decoder->cpos = (uint16_t)(decoder->corr->position[decoder->word]);
-    decoder->corrv = (uint16_t)(decoder->corr->correlation[decoder->word]);
+        uint8_t *data) {
+    decoder->corr_word = lrpt_decoder_correlator_correlate(
+            decoder->corr, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
+    decoder->corr_pos = decoder->corr->position[decoder->corr_word];
+    decoder->corr_val = (uint16_t)(decoder->corr->correlation[decoder->corr_word]);
 
-    if (decoder->corrv < DECODER_CORRELATION_MIN) {
+    /* If low correlation observed just copy new part of data to the aligned buffer */
+    if (decoder->corr_val < DECODER_CORRELATION_MIN) {
+        memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
+
+        /* Advance decoder position by a quarter of soft frame length */
         decoder->prev_pos = decoder->pos;
-        memmove(decoder->aligned, (raw + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
-        decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN / 4;
+        decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN / 4);
     }
-    else {
-        decoder->prev_pos = decoder->pos + (int)decoder->cpos;
-        memmove(decoder->aligned, (raw + decoder->pos + decoder->cpos),
-                (LRPT_DECODER_SOFT_FRAME_LEN - decoder->cpos));
-        memmove((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->cpos),
-                (raw + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN), decoder->cpos);
-        decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN + decoder->cpos;
+    else { /* Otherwise we just combine data from two sections into aligned array */
+        memcpy(decoder->aligned, (data + decoder->pos + decoder->corr_pos),
+                (LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
+        memcpy((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos),
+                (data + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN), decoder->corr_pos);
 
-        fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->word);
+        /* Advace decoder position */
+        decoder->prev_pos = (decoder->pos + decoder->corr_pos);
+        decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN + decoder->corr_pos);
+
+        fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->corr_word);
     }
 }
 
@@ -202,12 +220,12 @@ static bool decode_frame(
         lrpt_decoder_t *decoder) {
     lrpt_decoder_viterbi_decode(decoder->vit, decoder->corr, decoder->aligned, decoder->decoded);
 
-    uint32_t temp =
+    uint32_t tmp =
         ((uint32_t)decoder->decoded[3] << 24) +
         ((uint32_t)decoder->decoded[2] << 16) +
         ((uint32_t)decoder->decoded[1] << 8) +
         (uint32_t)decoder->decoded[0];
-    decoder->last_sync = temp;
+    decoder->last_sync = tmp;
 
     /* Estimate signal quality */
     decoder->sig_q = 100 - lrpt_decoder_viterbi_ber_percent(decoder->vit);
@@ -216,26 +234,27 @@ static bool decode_frame(
     /* You can flip all bits in a packet and get a correct ECC anyway. Check for that case */
     if (lrpt_decoder_bitop_count(decoder->last_sync ^ 0xE20330E5) <
             lrpt_decoder_bitop_count(decoder->last_sync ^ 0x1DFCCF1A)) {
-        for (size_t j = 0; j < LRPT_DECODER_HARD_FRAME_LEN; j++)
-            decoder->decoded[j] ^= 0xFF;
+        for (size_t i = 0; i < LRPT_DECODER_HARD_FRAME_LEN; i++)
+            decoder->decoded[i] ^= 0xFF;
 
-        temp =
+        tmp =
             ((uint32_t)decoder->decoded[3] << 24) +
             ((uint32_t)decoder->decoded[2] << 16) +
             ((uint32_t)decoder->decoded[1] << 8) +
             (uint32_t)decoder->decoded[0];
-        decoder->last_sync = temp;
+        decoder->last_sync = tmp;
     }
 
-    for (size_t j = 0; j < (LRPT_DECODER_HARD_FRAME_LEN - 4); j++)
-        decoder->decoded[4 + j] ^= DECODER_PRAND_TBL[j % 255];
+    /* 4 is an offset because of sync word */
+    for (size_t i = 0; i < (LRPT_DECODER_HARD_FRAME_LEN - 4); i++)
+        decoder->decoded[4 + i] ^= DECODER_PRAND_TBL[i % 255];
 
     uint8_t ecc_buf[256]; /* TODO review if it's ok to use static array here */
 
-    for (size_t j = 0; j < 4; j++) {
-        lrpt_decoder_ecc_deinterleave((decoder->decoded + 4), ecc_buf, j, 4);
-        decoder->r[j] = lrpt_decoder_ecc_decode(ecc_buf, 0);
-        lrpt_decoder_ecc_interleave(ecc_buf, decoder->ecced_data, j, 4);
+    for (uint8_t i = 0; i < 4; i++) {
+        lrpt_decoder_ecc_deinterleave((decoder->decoded + 4), ecc_buf, i, 4);
+        decoder->r[i] = lrpt_decoder_ecc_decode(ecc_buf, 0);
+        lrpt_decoder_ecc_interleave(ecc_buf, decoder->ecced, i, 4);
     }
 
     return (decoder->r[0] && decoder->r[1] && decoder->r[2] && decoder->r[3]);
@@ -249,10 +268,12 @@ bool lrpt_decoder_data_process_frame(
         uint8_t *data) {
     bool ok = false;
 
-    if (decoder->cpos == 0) {
+    /* Try to correlate next block */
+    if (decoder->corr_pos == 0) {
         do_next_correlate(decoder, data);
         ok = decode_frame(decoder);
 
+        /* In case of failed decoding attempt jump one frame back in data buffer */
         if (!ok)
             decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
     }

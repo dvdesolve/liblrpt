@@ -109,26 +109,26 @@ static const uint8_t ECC_IDX_TBL[256] = {
 
 /* lrpt_decoder_ecc_interleave() */
 void lrpt_decoder_ecc_interleave(
-        const uint8_t *data,
+        const uint8_t *input,
         uint8_t *output,
-        size_t pos,
-        size_t n) {
+        uint8_t pos,
+        uint8_t n) {
     /* TODO recheck if we should use 256 instead of 255 */
     for (size_t i = 0; i < 255; i++)
-        output[i * n + pos] = data[i];
+        output[i * n + pos] = input[i];
 }
 
 /*************************************************************************************************/
 
 /* lrpt_decoder_ecc_deinterleave() */
 void lrpt_decoder_ecc_deinterleave(
-        const uint8_t *data,
+        const uint8_t *input,
         uint8_t *output,
-        size_t pos,
-        size_t n) {
+        uint8_t pos,
+        uint8_t n) {
     /* TODO recheck if we should use 256 instead of 255 */
-    for (size_t i = 0; i < 255; i++)
-        output[i] = data[i * n + pos];
+    for (uint8_t i = 0; i < 255; i++)
+        output[i] = input[i * n + pos];
 }
 
 /*************************************************************************************************/
@@ -136,22 +136,22 @@ void lrpt_decoder_ecc_deinterleave(
 /* lrpt_decoder_ecc_decode() */
 bool lrpt_decoder_ecc_decode(
         uint8_t *data,
-        size_t pad) {
+        uint8_t pad) {
     uint8_t s[32];
 
-    for (size_t i = 0; i < 32; i++)
+    for (uint8_t i = 0; i < 32; i++)
         s[i] = data[0];
 
-    for (size_t j = 1; j < (255 - pad); j++)
-        for (size_t i = 0; i < 32; i++)
-            if (s[i] == 0)
-                s[i] = data[j];
+    for (uint8_t i = 1; i < (255 - pad); i++)
+        for (uint8_t j = 0; j < 32; j++)
+            if (s[j] == 0)
+                s[j] = data[i];
             else
-                s[i] = data[j] ^ ECC_ALPHA_TBL[(ECC_IDX_TBL[s[i]] + (112 + i) * 11) % 255];
+                s[j] = data[i] ^ ECC_ALPHA_TBL[(ECC_IDX_TBL[s[j]] + (112 + j) * 11) % 255];
 
     uint8_t syn_error = 0;
 
-    for (size_t i = 0; i < 32; i++) {
+    for (uint8_t i = 0; i < 32; i++) {
         syn_error |= s[i];
         s[i] = ECC_IDX_TBL[s[i]];
     }
@@ -166,30 +166,28 @@ bool lrpt_decoder_ecc_decode(
 
     uint8_t b[33], t[33];
 
-    for (size_t i = 0; i < 33; i++)
+    for (uint8_t i = 0; i < 33; i++)
         b[i] = ECC_IDX_TBL[lambda[i]];
 
-    uint8_t r = 1;
     uint8_t el = 0;
 
-    /* TODO may be use for loop (the same is true for other whiles) */
-    while (r <= 32) {
+    for (uint8_t r = 1; r <= 32; r++) {
         uint8_t discr_r = 0;
 
-        for (size_t i = 0; i < r; i++)
+        for (uint8_t i = 0; i < r; i++)
             if ((lambda[i] != 0) && (s[r - i - 1] != 255))
                 discr_r ^= ECC_ALPHA_TBL[(ECC_IDX_TBL[lambda[i]] + s[r - i - 1]) % 255];
 
         discr_r = ECC_IDX_TBL[discr_r];
 
-        if (discr_r == 255) {
+        if (discr_r == 255) { /* Append 255 to b array and shift it */
             memmove((b + 1), b, 32);
             b[0] = 255;
         }
         else {
             t[0] = lambda[0];
 
-            for (size_t i = 0; i < 32; i++) {
+            for (uint8_t i = 0; i < 32; i++) {
                 if (b[i] != 255)
                     t[i + 1] = lambda[i + 1] ^ ECC_ALPHA_TBL[(discr_r + b[i]) % 255];
                 else
@@ -197,29 +195,27 @@ bool lrpt_decoder_ecc_decode(
             }
 
             if ((2 * el) <= (r - 1)) {
-                el = r - el;
+                el = (r - el);
 
-                for (size_t i = 0; i < 32; i++) {
+                for (uint8_t i = 0; i < 32; i++) {
                     if (lambda[i] == 0)
                         b[i] = 255;
-                    else /* TODO suspicious part here, may be overflow */
+                    else /* TODO suspicious part here, may be overflow and cast is needed */
                         b[i] = (ECC_IDX_TBL[lambda[i]] - discr_r + 255) % 255;
                 }
             }
-            else {
-                memmove((b +1), b, 32);
+            else { /* Append 255 to b array and shift it */
+                memmove((b + 1), b, 32);
                 b[0] = 255;
             }
 
-            memmove(lambda, t, 33);
+            memcpy(lambda, t, 33);
         }
-
-        r++;
     }
 
-    size_t deg_lambda = 0;
+    uint8_t deg_lambda = 0;
 
-    for (size_t i = 0; i < 33; i++) {
+    for (uint8_t i = 0; i < 33; i++) {
         lambda[i] = ECC_IDX_TBL[lambda[i]];
 
         if (lambda[i] != 255)
@@ -227,20 +223,16 @@ bool lrpt_decoder_ecc_decode(
     }
 
     uint8_t reg[33];
-    memmove((reg + 1), (lambda + 1), 32);
+    memcpy((reg + 1), (lambda + 1), 32);
 
     uint8_t root[32], loc[32];
-    size_t result = 0; /* Holds amount of errors fixed */
-    size_t n = 1;
-    size_t k = 115;
+    uint8_t num_fixed = 0;
+    uint16_t k = 115;
 
-    while (true) {
-        if (n > 255)
-            break;
-
+    for (uint8_t n = 1; n <= 255; n++) {
         uint8_t q = 1;
 
-        for (size_t i = deg_lambda; i >= 1; i--) {
+        for (uint8_t i = deg_lambda; i >= 1; i--) {
             if (reg[i] != 255) {
                 reg[i] = (reg[i] + i) % 255; /* TODO suspicious cast to uint8_t was here */
                 q ^= ECC_ALPHA_TBL[reg[i]];
@@ -248,52 +240,49 @@ bool lrpt_decoder_ecc_decode(
         }
 
         if (q != 0) {
-            n++;
             k = (k + 116) % 255;
 
             continue;
         }
 
         /* TODO do we need that casts? */
-        root[result] = (uint8_t)n;
-        loc[result] = (uint8_t)k;
-        result++;
+        root[num_fixed] = n;
+        loc[num_fixed] = k;
+        num_fixed++;
 
-        if (result == deg_lambda)
+        if (num_fixed == deg_lambda)
             break;
 
-        n++;
         k = (k + 116) % 255;
     }
 
-    if (deg_lambda != result)
+    if (deg_lambda != num_fixed)
         return false;
 
     uint8_t omega[33];
+    uint8_t deg_omega = (deg_lambda - 1);
 
-    size_t deg_omega = deg_lambda - 1;
-
-    for (size_t i = 0; i <= deg_omega; i++) {
+    for (uint8_t i = 0; i <= deg_omega; i++) {
         uint8_t tmp = 0;
 
-        for (size_t j = i; j >= 0; j--)
+        for (uint8_t j = i; j >= 0; j--)
             if ((s[i - j] != 255) && (lambda[j] != 255))
                 tmp ^= ECC_ALPHA_TBL[(s[i - j] + lambda[j]) % 255];
 
         omega[i] = ECC_IDX_TBL[tmp];
     }
 
-    for (size_t i = result - 1; i >= 0; i--) {
+    for (uint8_t i = num_fixed - 1; i >= 0; i--) {
         uint8_t num1 = 0;
 
-        for (size_t j = deg_omega; j >= 0; j--)
+        for (uint8_t j = deg_omega; j >= 0; j--)
             if (omega[j] != 255)
                 num1 ^= ECC_ALPHA_TBL[(omega[j] + j * root[i]) % 255];
 
         uint8_t num2 = ECC_ALPHA_TBL[(root[i] * 111 + 255) % 255];
         uint8_t den = 0;
 
-        size_t l;
+        uint8_t l;
 
         if (deg_lambda < 31)
             l = deg_lambda;
@@ -302,14 +291,9 @@ bool lrpt_decoder_ecc_decode(
 
         l &= ~1;
 
-        while (true) {
-            if (!(l >= 0))
-                break;
-
+        for (; l >= 0; l -= 2) {
             if (lambda[l + 1] != 255)
                 den ^= ECC_ALPHA_TBL[(lambda[l + 1] + l * root[i]) % 255];
-
-            l -= 2;
         }
 
         if ((num1 != 0) && (loc[i] >= pad))

@@ -37,40 +37,40 @@
 
 /** Perform ECC interleaving.
  *
- * \param data Input bytes array.
- * \param output Resulting array.
+ * \param input Input data.
+ * \param output Resulting data.
  * \param pos Starting position.
  * \param n The length of data to be interleaved.
  */
 void lrpt_decoder_ecc_interleave(
-        const uint8_t *data,
+        const uint8_t *input,
         uint8_t *output,
-        size_t pos,
-        size_t n);
+        uint8_t pos,
+        uint8_t n);
 
 /** Perform ECC deinterleaving.
  *
- * \param data Input bytes array.
- * \param output Resulting array.
+ * \param input Input data.
+ * \param output Resulting data.
  * \param pos Starting position.
  * \param n The length of data to be deinterleaved.
  */
 void lrpt_decoder_ecc_deinterleave(
-        const uint8_t *data,
+        const uint8_t *input,
         uint8_t *output,
-        size_t pos,
-        size_t n);
+        uint8_t pos,
+        uint8_t n);
 
 /** Perform ECC decoding.
  *
- * \param data Input bytes array.
+ * \param data Data to be decoded.
  * \param pad Padding.
  *
  * \return \c true on successfull decoding and \c false otherwise.
  */
 bool lrpt_decoder_ecc_decode(
         uint8_t *data,
-        size_t pad);
+        uint8_t pad);
 
 /*************************************************************************************************/
 

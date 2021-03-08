@@ -99,7 +99,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
     /* Allocate storage for device name only if it's presented in I/Q file */
     if (name_l > 0) {
-        name = calloc(name_l + 1, 1);
+        name = calloc(name_l + 1, sizeof(char));
 
         if (!name || (fread(name, 1, name_l, fh) != name_l)) {
             free(name);
@@ -142,7 +142,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     }
 
     /* Try to allocate temporary I/O buffer */
-    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, 1);
+    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, sizeof(unsigned char));
 
     if (!iobuf) {
         free(name);
@@ -366,7 +366,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     char *name = NULL;
 
     if (name_l > 0) {
-        name = calloc(name_l + 1, 1);
+        name = calloc(name_l + 1, sizeof(char));
 
         if (!name || (fwrite(device_name, 1, name_l, fh) != name_l)) {
             free(name);
@@ -394,7 +394,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     /* File position = 20 + name_l */
 
     /* Try to allocate temporary I/O buffer */
-    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, 1);
+    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, sizeof(unsigned char));
 
     if (!iobuf) {
         free(name);

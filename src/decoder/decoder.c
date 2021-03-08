@@ -42,104 +42,54 @@
 
 /*************************************************************************************************/
 
-/** Length of soft frame */
+/* Library defaults */
+
+/** Length of soft frame in bits (produced by convolutional encoder) */
 const size_t LRPT_DECODER_SOFT_FRAME_LEN = 16384;
 
-/** Length of hard frame */
+/** Length of hard frame in bytes (produced after Viterbi decoding, r = 1/2) */
 const size_t LRPT_DECODER_HARD_FRAME_LEN = 1024;
 
 /*************************************************************************************************/
 
 /* lrpt_decoder_init() */
-lrpt_decoder_t *lrpt_decoder_init(void) {
+lrpt_decoder_t *lrpt_decoder_init(
+        uint16_t mcus_per_line) {
     /* Allocate our working decoder */
     lrpt_decoder_t *decoder = malloc(sizeof(lrpt_decoder_t));
 
     if (!decoder)
         return NULL;
 
-    /* NULL-init internal objects for safe deallocation */
+    /* NULL-init internal objects and arrays for safe deallocation */
     decoder->corr = NULL;
     decoder->vit = NULL;
     decoder->huff = NULL;
     decoder->jpeg = NULL;
+
     decoder->aligned = NULL;
     decoder->decoded = NULL;
-    decoder->ecced_data = NULL;
+    decoder->ecced = NULL;
     decoder->packet_buf = NULL;
 
-    /* TODO may be use macro/static const */
-    for (size_t i = 0; i < 3; i++)
-        decoder->channel_image[i] = NULL;
+    for (uint8_t i = 0; i < 6; i++)
+        decoder->channel_image[i] = NULL; /* (Re)allocation will happen during progressing */
 
-    /* TODO may be use batch check as in DSP, Viterbi... */
-    /* Initialize correlator */
-    decoder->corr = lrpt_decoder_correlator_init();
+    /* Initialize internal objects */
+    decoder->corr = lrpt_decoder_correlator_init(); /* Correlator */
+    decoder->vit = lrpt_decoder_viterbi_init(); /* Viterbi decoder */
+    decoder->huff = lrpt_decoder_huffman_init(); /* Huffman decoder */
+    decoder->jpeg = lrpt_decoder_jpeg_init(); /* JPEG decoder */
 
-    if (!decoder->corr) {
-        lrpt_decoder_deinit(decoder);
+    /* Allocate internal data arrays */
+    decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(uint8_t)); /* Aligned data */
+    decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
+    decoder->ecced = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
+    decoder->packet_buf = calloc(2048, sizeof(uint8_t)); /* Packet buffer */
 
-        return NULL;
-    }
-
-    /* Initialize Viterbi decoder */
-    decoder->vit = lrpt_decoder_viterbi_init();
-
-    if (!decoder->vit) {
-        lrpt_decoder_deinit(decoder);
-
-        return NULL;
-    }
-
-    /* Initialize Huffman decoder */
-    decoder->huff = lrpt_decoder_huffman_init();
-
-    if (!decoder->huff) {
-        lrpt_decoder_deinit(decoder);
-
-        return NULL;
-    }
-
-    /* Initialize JPEG decoder */
-    decoder->jpeg = lrpt_decoder_jpeg_init();
-
-    if (!decoder->jpeg) {
-        lrpt_decoder_deinit(decoder);
-
-        return NULL;
-    }
-
-    /* Allocate aligned data array */
-    decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(uint8_t));
-
-    if (!decoder->aligned) {
-        lrpt_decoder_deinit(decoder);
-
-        return NULL;
-    }
-
-    /* Allocate decoded data array */
-    decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t));
-
-    if (!decoder->decoded) {
-        lrpt_decoder_deinit(decoder);
-
-        return NULL;
-    }
-
-    /* Allocate array for ECCed data */
-    decoder->ecced_data = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t));
-
-    if (!decoder->ecced_data) {
-        lrpt_decoder_deinit(decoder);
-
-        return NULL;
-    }
-
-    /* Allocate packet buffer */
-    decoder->packet_buf = calloc(2048, sizeof(uint8_t));
-
-    if (!decoder->packet_buf) {
+    /* Check for allocation problems */
+    if (!decoder->corr || !decoder->vit || !decoder->huff || !decoder->jpeg ||
+            !decoder->aligned || !decoder->decoded || !decoder->ecced || !decoder->packet_buf) {
         lrpt_decoder_deinit(decoder);
 
         return NULL;
@@ -147,20 +97,24 @@ lrpt_decoder_t *lrpt_decoder_init(void) {
 
     /* Initialize internal state variables */
     decoder->pos = 0;
+    decoder->prev_pos = 0;
+
     decoder->cpos = 0;
     decoder->word = 0;
     decoder->corrv = 64;
+
+    decoder->channel_image_size = 0;
+    decoder->channel_image_width = mcus_per_line * 8; /* Each MCU is 8x8 block */
+    decoder->prev_len = 0;
+
+    decoder->ok_cnt = 0;
+    decoder->tot_cnt = 0;
+
+    decoder->sig_q = 0;
+
     decoder->packet_off = 0;
     decoder->last_frame = 0;
     decoder->packet_part = false;
-    decoder->ok_cnt = 0;
-    decoder->total_cnt = 0;
-
-    /* TODO use static const if possible */
-    /** Set initial image dimensions */
-    decoder->channel_image_size = 0;
-    decoder->channel_image_width = 1568; /* TODO use named constant here. METEOR_IMAGE_WIDTH = MCU_PER_LINE * 8; MCU_PER_LINE = 196; may depend on satellite capabilities */
-    decoder->prev_len = 0;
 
     return decoder;
 }
@@ -173,14 +127,19 @@ void lrpt_decoder_deinit(
     if (!decoder)
         return;
 
+    for (uint8_t i = 0; i < 6; i++)
+        free(decoder->channel_image[i]);
+
     free(decoder->packet_buf);
-    free(decoder->ecced_data);
+    free(decoder->ecced);
     free(decoder->decoded);
     free(decoder->aligned);
+
     lrpt_decoder_jpeg_deinit(decoder->jpeg);
     lrpt_decoder_huffman_deinit(decoder->huff);
     lrpt_decoder_viterbi_deinit(decoder->vit);
     lrpt_decoder_correlator_deinit(decoder->corr);
+
     free(decoder);
 }
 
@@ -190,15 +149,18 @@ void lrpt_decoder_deinit(
 /* lrpt_decoder_exec() */
 void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        uint8_t *in_buffer,
+        uint8_t *input, /* TODO may be use explicit cast instead or symbols rescale */
         size_t buf_len) {
+    /* Return immediately if no valid input was given */
+    if (!input)
+        return;
+
     /* Go through data given */
     while (decoder->pos < buf_len) {
-        if (lrpt_decoder_data_process_frame(decoder, in_buffer)) {
-            lrpt_decoder_packet_parse_cvcdu(decoder, (LRPT_DECODER_HARD_FRAME_LEN - 132));
+        if (lrpt_decoder_data_process_frame(decoder, input)) {
+            lrpt_decoder_packet_parse_cvcdu(decoder, LRPT_DECODER_HARD_FRAME_LEN - 132);
 
-            /* TODO increase total number of successfully decoded packets */
-            //ok_cnt++;
+            decoder->ok_cnt++;
 
             /* TODO we can report Framing OK here */
         }
@@ -206,14 +168,13 @@ void lrpt_decoder_exec(
             /* TODO we can report Framing non-OK here */
         }
 
-        /* TODO increase total number of received packets */
-        //tal_cnt++;
+        decoder->tot_cnt++; /* TODO this relies upon 16384-long blocks, should be changed */
     }
 
     /* TODO we can report here:
      * signal quality (sig_q)
      * total number of received packets (tot_cnt)
-     * percent of successfully decoded packets (ok_cnt / tot_cnt * 100)
+     * percent of successfully decoded packets (ok_cnt / tot_cnt * 100), but flag for handling 0/0 is needed
      */
 }
 

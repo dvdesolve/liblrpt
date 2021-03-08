@@ -239,7 +239,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
     data->len = length;
 
     if (length > 0) {
-        data->qpsk = calloc(length, 1);
+        data->qpsk = calloc(length, sizeof(int8_t));
 
         /* Return NULL only if allocation attempt has failed */
         if (!data->qpsk) {

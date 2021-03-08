@@ -38,6 +38,7 @@
 
 /*************************************************************************************************/
 
+/* TODO it's related to the M_PDU header pointer */
 static const uint16_t PACKET_FULL_MARK = 2047; /**< Needed for discrimination of partial packets */
 
 /*************************************************************************************************/
@@ -171,24 +172,28 @@ static size_t parse_partial(
 void lrpt_decoder_packet_parse_cvcdu(
         lrpt_decoder_t *decoder,
         size_t len) {
-    uint8_t *p = decoder->ecced_data;
+    uint8_t *p = decoder->ecced;
 
     /* TODO do we need that explicit casts? */
-    uint32_t frame_cnt = (uint32_t)((p[2] << 16) | (p[3] << 8) | p[4]);
+    /* TODO deal with VCDU primary header */
+    uint32_t frame_cnt = (uint32_t)((p[2] << 16) | (p[3] << 8) | p[4]); /* TODO that should be VCDU counter */
     uint16_t w = (uint16_t)((p[0] << 8) | p[1]);
     uint8_t ver = w >> 14;
-    uint8_t fid = w & 0x3F;
+    uint8_t fid = w & 0x3F; /* TODO that should be VCDU-id */
 
+    /* TODO deal with VCDU data unit zone */
     w = (uint16_t)((p[8] << 8) | p[9]);
-    size_t hdr_off = w & 0x07FF;
+    size_t hdr_off = w & 0x07FF; /* TODO M_PDU header first pointer */
 
     /* Deal with empty packets */
+    /* TODO review that and process only AVHRR LR packets for now */
     if ((ver == 0) || (fid == 0))
         return;
 
+    /* TODO we're subtracting 10 octets because of CVCDU structure */
     size_t data_len = len - 10;
 
-    if (frame_cnt == (decoder->last_frame + 1)) {
+    if (frame_cnt == (decoder->last_frame + 1)) { /* TODO process consecutive frame */
         if (decoder->packet_part) {
             if (hdr_off == PACKET_FULL_MARK) { /* For packets which are larger than one frame */
                 hdr_off = (uint16_t)(len - 10);
@@ -209,6 +214,7 @@ void lrpt_decoder_packet_parse_cvcdu(
         decoder->packet_off = 0;
     }
 
+    /* Store index of last frame */
     decoder->last_frame = frame_cnt;
 
     data_len -= hdr_off;

@@ -41,11 +41,12 @@
 /*************************************************************************************************/
 
 /* Library defaults */
+/* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
 static const size_t INTLV_BRANCHES = 36;
 static const size_t INTLV_DELAY = 2048;
 static const size_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
-static const size_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols (usually 72 for Meteor) */
-static const size_t INTLV_SYNC_LEN = 8; /* The length of sync word (usually 8 for Meteor) */
+static const size_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols */
+static const size_t INTLV_SYNC_LEN = 8; /* The length of sync word */
 static const size_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
 
 static const size_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
@@ -65,7 +66,7 @@ static const size_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
  *
  * \return Byte representation for given QPSK data.
  */
-static unsigned char qpsk_to_byte(
+static uint8_t qpsk_to_byte(
         const int8_t *data);
 
 /** Find sync in the data stream.
@@ -90,7 +91,7 @@ static bool find_sync(
         size_t step,
         size_t depth,
         size_t *offset,
-        unsigned char *sync);
+        uint8_t *sync);
 
 /** Perform stream resyncing.
  *
@@ -109,12 +110,12 @@ static bool resync_stream(
 /*************************************************************************************************/
 
 /* qpsk_to_byte() */
-static unsigned char qpsk_to_byte(
+static uint8_t qpsk_to_byte(
         const int8_t *data) {
-    unsigned char b = 0;
+    uint8_t b = 0;
 
     for (uint8_t i = 0; i < 8; i++) {
-        unsigned char bit = (data[i] < 0) ? 0 : 1;
+        uint8_t bit = (data[i] < 0) ? 0 : 1;
 
         b |= bit << i;
     }
@@ -131,9 +132,9 @@ static bool find_sync(
         size_t step,
         size_t depth,
         size_t *offset,
-        unsigned char *sync) {
+        uint8_t *sync) {
     int limit;
-    unsigned char test;
+    uint8_t test;
     bool result;
 
     *offset = 0;
@@ -183,7 +184,7 @@ static bool resync_stream(
         return false;
 
     /* Allocate temporary buffer for resyncing */
-    int8_t *tmp_buf = calloc(data->len, 1);
+    int8_t *tmp_buf = calloc(data->len, sizeof(int8_t));
 
     if (!tmp_buf)
         return false;
@@ -201,7 +202,8 @@ static bool resync_stream(
      * sync candidates
      */
     while (posn < limit1) {
-        unsigned char sync;
+        uint8_t sync;
+
         /* Only search for sync if look-forward below fails to find a sync train */
         if (!find_sync(
                     &tmp_buf[posn],
@@ -225,7 +227,7 @@ static bool resync_stream(
                 size_t tmp = posn + i * INTLV_SYNCDATA;
 
                 if (tmp < limit2) {
-                    unsigned char test = qpsk_to_byte(&tmp_buf[tmp]);
+                    uint8_t test = qpsk_to_byte(&tmp_buf[tmp]);
 
                     if (sync == test) {
                         ok = true;
@@ -273,7 +275,7 @@ bool lrpt_deinterleaver_exec(
 
     /* Allocate resulting buffer */
     if ((data->len > 0) && (data->len < old_size)) {
-        res_buf = calloc(data->len, 1);
+        res_buf = calloc(data->len, sizeof(int8_t));
 
         if (!res_buf)
             return false;

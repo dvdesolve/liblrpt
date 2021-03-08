@@ -45,20 +45,22 @@ typedef struct lrpt_decoder_viterbi__ {
     /** Used by history buffer */
     uint8_t *history;
     uint8_t *fetched;
+
     size_t len;
-    size_t hist_index;
+    uint8_t hist_index;
     size_t renormalize_counter;
     /** @} */
 
     /** @{ */
     /** Used by error buffer */
     uint16_t *errors[2];
-    size_t err_index;
+
     uint16_t *read_errors;
     uint16_t *write_errors;
+    uint8_t err_index;
     /** @} */
 
-    uint8_t *corrected; /**< Needed for BER estimation */
+    uint8_t *encoded; /**< Needed for BER estimation */
     uint16_t ber; /**< Bit error rate */
 
     /** @{ */
@@ -70,10 +72,10 @@ typedef struct lrpt_decoder_viterbi__ {
 
     /** @{ */
     /** Needed for pairs lookup */
-    uint32_t *pair_outputs; /* 2 ^ (2 * rate), rate = 2 */
-    size_t *pair_keys; /* 2 ^ (order - 1), order = 7 */
+    uint16_t *pair_outputs;
+    uint8_t *pair_keys;
     uint32_t *pair_distances;
-    size_t pair_outputs_len;
+    uint8_t pair_outputs_len;
     /** @} */
 } lrpt_decoder_viterbi_t;
 
@@ -101,7 +103,7 @@ void lrpt_decoder_viterbi_deinit(lrpt_decoder_viterbi_t *vit);
 void lrpt_decoder_viterbi_decode(
         lrpt_decoder_viterbi_t *vit,
         const lrpt_decoder_correlator_t *corr,
-        uint8_t *input,
+        const uint8_t *input,
         uint8_t *output);
 
 /** Return BER as a percentage.

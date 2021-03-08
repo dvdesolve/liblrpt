@@ -53,48 +53,50 @@ struct lrpt_decoder__ {
     lrpt_decoder_huffman_t *huff; /**< Huffman decoder */
     lrpt_decoder_jpeg_t *jpeg; /**< JPEG decoder */
 
-    /* TODO recheck types */
+    /* TODO review types here */
+    uint8_t *aligned; /**< Aligned data after correlation */
+    uint8_t *decoded; /**< Decoded data */
+    uint8_t *ecced; /**< ECCed data */
+
     /** @{ */
     /** Position information */
     size_t pos, prev_pos;
     /** @} */
 
     /** @{ */
-    /** Needed for correlator calls */
-    uint32_t cpos, word, corrv;
+    /** Correlator state variables (for shortcut) */
+    uint16_t corr_val;
+    size_t corr_pos;
+    uint8_t corr_word;
     /** @} */
 
-    /* TODO may be use macro/static const */
-    uint8_t *channel_image[3]; /**< Per-channel image representation */
+    uint8_t *channel_image[6]; /**< Per-channel image representation for all six APIDs (64-69) */
 
     /** @{ */
-    /** Channel image dimensions ang length tracker */
+    /** Image dimensions */
     size_t channel_image_size, channel_image_width;
     size_t prev_len;
     /** @} */
 
     /** @{ */
-    /** Packet counter */
-    size_t ok_cnt, total_cnt;
+    /** Packet counters (only for stats) */
+    size_t ok_cnt, tot_cnt;
     /** @} */
 
-    uint8_t *aligned; /**< Correlated data */
-    uint8_t *decoded; /**< Decoded data */
-
     /** @{ */
-    /** Needed for data processor */
+    /** Used by data link layer processor */
     uint32_t last_sync;
     uint8_t sig_q;
     bool r[4];
-    uint8_t *ecced_data;
     /** @} */
 
-    uint8_t *packet_buf; /**< Packet buffer */
-    size_t packet_off; /**< Packet offset */
-    uint32_t last_frame; /**< Last frame number */
-    bool packet_part; /**< Is packet partial? */
-
-    struct tm onboard_time;
+    /** @{ */
+    /** Used by packet link layer processor */
+    uint8_t *packet_buf;
+    size_t packet_off;
+    uint32_t last_frame;
+    bool packet_part;
+    /** @} */
 };
 
 /*************************************************************************************************/

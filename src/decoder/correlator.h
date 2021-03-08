@@ -38,9 +38,9 @@
 typedef struct lrpt_decoder_correlator__ {
     /** @{ */
     /** Correlator internal state arrays */
-    uint8_t *correlation;
-    uint8_t *tmp_correlation;
-    uint8_t *position;
+    uint16_t *correlation;
+    uint16_t *tmp_correlation;
+    size_t *position;
     /** @} */
 
     /** Correlator patterns */
@@ -77,7 +77,7 @@ void lrpt_decoder_correlator_deinit(
  *
  * \return Correlation value.
  */
-int lrpt_decoder_correlator_correlate(
+uint8_t lrpt_decoder_correlator_correlate(
         lrpt_decoder_correlator_t *corr,
         uint8_t *data,
         size_t len);
