@@ -72,7 +72,7 @@ static const int JPEG_DC_CAT_OFFSET[12] = { 2, 3, 3, 3, 3, 3, 4, 5, 6, 7, 8, 9 }
 
 /*************************************************************************************************/
 
-/** Perform fast lappet discrete cosine transform for 8x8 block.
+/** Perform fast lapped discrete cosine transform for 8x8 block.
  *
  * \param jpeg Pointer to the JPEG decoder object.
  * \param res Resulting array.
@@ -83,10 +83,10 @@ static void flt_idct_8x8(
         double *res,
         const double *in);
 
-/** Fill quality table.
+/** Fill quantization table.
  *
  * \param dqt Pointer to the dqt table.
- * \param q Quality value.
+ * \param q Quality factor value.
  */
 static void fill_dqt_by_q(
         uint16_t *dqt,
@@ -103,7 +103,7 @@ static void fill_dqt_by_q(
  */
 static bool progress_image(
         lrpt_decoder_t *decoder,
-        uint32_t apid,
+        uint16_t apid,
         uint8_t mcu_id,
         uint16_t pck_cnt);
 
@@ -118,12 +118,13 @@ static bool progress_image(
 static void fill_pix(
         lrpt_decoder_t *decoder,
         double *img_dct,
-        uint32_t apid,
+        uint16_t apid,
         uint8_t mcu_id,
         uint8_t m);
 
 /*************************************************************************************************/
 
+/* flt_idct_8x8() */
 static void flt_idct_8x8(
         lrpt_decoder_jpeg_t *jpeg,
         double *res,
@@ -135,6 +136,7 @@ static void flt_idct_8x8(
             for (uint8_t u = 0; u < 8; u++) {
                 double cxu = jpeg->alpha[u] * jpeg->cosine[x][u];
 
+                /* TODO make loop */
                 /* Unrolled to 8 */
                 s += cxu * (
                         in[0 * 8 + u] * jpeg->alpha[0] * jpeg->cosine[y][0] +
@@ -164,7 +166,7 @@ static void fill_dqt_by_q(
     else
         f = 200.0 - 2.0 * (double)q;
 
-    for (size_t i = 0; i < 64; i++) {
+    for (uint8_t i = 0; i < 64; i++) {
         dqt[i] = (uint16_t)(round(f / 100.0 * (double)JPEG_STD_QUANT_TBL[i]));
 
         if (dqt[i] < 1)
@@ -177,7 +179,7 @@ static void fill_dqt_by_q(
 /* progress_image() */
 static bool progress_image(
         lrpt_decoder_t *decoder,
-        uint32_t apid,
+        uint16_t apid,
         uint8_t mcu_id,
         uint16_t pck_cnt) {
     if ((apid == 0) || (apid == 70))
@@ -185,7 +187,7 @@ static bool progress_image(
 
     lrpt_decoder_jpeg_t *jpeg = decoder->jpeg;
 
-    if (jpeg->last_mcu == -1) { /* TODO need flag for handling -1 case */
+    if (jpeg->last_mcu == -1) { /* TODO need flag instead for handling -1 case */
         if (mcu_id != 0)
             return false;
 
@@ -215,9 +217,8 @@ static bool progress_image(
 
         decoder->channel_image_size = decoder->channel_image_width * channel_image_height;
 
-        /* TODO we're using 3 channels, but could that change in a future? */
         /* TODO realloc is costly. May be pre-alloc big enough array is a better idea? */
-        for (size_t i = 0; i < 3; i++)
+        for (uint8_t i = 0; i < 6; i++)
             decoder->channel_image[i] = /* TODO add error checking */
                 reallocarray(decoder->channel_image[i], decoder->channel_image_size, 1);
 
@@ -225,7 +226,7 @@ static bool progress_image(
         /* TODO may be use more advanced method like in our IO utility funcs... */
         size_t delta_len = decoder->channel_image_size - decoder->prev_len;
 
-        for (size_t i = 0; i < 3; i++)
+        for (uint8_t i = 0; i < 6; i++)
             for (size_t j = 0; j < delta_len; j++)
                 decoder->channel_image[i][j + decoder->prev_len] = 0;
 
@@ -243,7 +244,7 @@ static bool progress_image(
 static void fill_pix(
         lrpt_decoder_t *decoder,
         double *img_dct,
-        uint32_t apid,
+        uint16_t apid,
         uint8_t mcu_id,
         uint8_t m) {
     int x, y, off = 0;
@@ -261,9 +262,8 @@ static void fill_pix(
         y = decoder->jpeg->cur_y + i / 8;
         off = x + y * 1568; /* TODO should use named constant here */
 
-        bool inv = false;
-
         /* TODO that should be done in psotprocessor later or a list of invertable APIDs should be given */
+//        bool inv = false;
 //        /* Invert image palette if APID matches */
 //        for (size_t j = 0; j < 3; j++)
 //            if (apid == rc_data.invert_palette[j])
@@ -278,12 +278,7 @@ static void fill_pix(
 //                channel_image[BLUE][off]  = 255 - (uint8_t)t;
 //        }
 //        else /* Normal palette */
-        if (apid == rc_data.apid[RED]) /* TODO should compare with given list of APIDs */
-            decoder->channel_image[0][off] = (uint8_t)t; /* Red channel */
-        else if (apid == rc_data.apid[GREEN])
-            decoder->channel_image[1][off] = (uint8_t)t; /* Green channel */
-        else if (apid == rc_data.apid[BLUE])
-            decoder->channel_image[2][off] = (uint8_t)t; /* Blue channel */
+        decoder->channel_image[apid - 64][off] = (uint8_t)t;
     }
 }
 
@@ -334,7 +329,7 @@ void lrpt_decoder_jpeg_deinit(lrpt_decoder_jpeg_t *jpeg) {
 bool lrpt_decoder_jpeg_decode_mcus(
         lrpt_decoder_t *decoder,
         uint8_t *p,
-        uint32_t apid,
+        uint16_t apid,
         uint16_t pck_cnt,
         uint8_t mcu_id,
         uint8_t q) {
@@ -356,13 +351,13 @@ bool lrpt_decoder_jpeg_decode_mcus(
     double img_dct[64];
 
     while (m < JPEG_MCU_PER_PACKET) {
-        int dc_cat = lrpt_decoder_huffman_get_dc((uint16_t)(lrpt_decoder_bitop_peek_n_bits(&b, 16)));
+        int dc_cat = lrpt_decoder_huffman_get_dc(lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
         if (dc_cat == -1) /* TODO recheck for -1 case */
             return false; /* TODO need error reporting */
 
         b.pos += JPEG_DC_CAT_OFFSET[dc_cat];
-        uint32_t n = (uint16_t)(lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat));
+        uint32_t n = lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat);
 
         zdct[0] = lrpt_decoder_huffman_map_range(dc_cat, n) + prev_dc;
         prev_dc = zdct[0];
@@ -381,29 +376,28 @@ bool lrpt_decoder_jpeg_decode_mcus(
             b.pos += ac_len;
 
             if ((ac_run == 0) && (ac_size == 0)) {
-                for (size_t i = k; i <= 63; i++)
+                for (uint8_t i = k; i < 64; i++)
                     zdct[i] = 0;
 
                 break;
             }
 
-            for (size_t i = 0; i < ac_run; i++) {
+            for (uint16_t i = 0; i < ac_run; i++) {
                 zdct[k] = 0;
                 k++;
             }
 
             if (ac_size != 0) {
-                n = (uint16_t)(lrpt_decoder_bitop_fetch_n_bits(&b, ac_size));
+                n = lrpt_decoder_bitop_fetch_n_bits(&b, ac_size);
                 zdct[k] = lrpt_decoder_huffman_map_range(ac_size, n);
-                k++;
             }
-            else if (ac_run == 15) {
+            else if (ac_run == 15)
                 zdct[k] = 0;
-                k++;
-            }
+
+            k++;
         }
 
-        for (size_t i = 0; i <= 63; i++)
+        for (uint8_t i = 0; i < 64; i++)
             dct[i] = zdct[JPEG_ZZ_TBL[i]] * dqt[i];
 
         flt_idct_8x8(decoder->jpeg, img_dct, dct);
@@ -412,6 +406,8 @@ bool lrpt_decoder_jpeg_decode_mcus(
     }
 
     /* TODO at this step image can be updated in realtime. State vars: channel_image, apid, cur_y */
+
+    return true;
 }
 
 /*************************************************************************************************/

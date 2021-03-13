@@ -34,7 +34,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 
 /*************************************************************************************************/
 
@@ -62,7 +61,7 @@ static void parse_70(
 static void act_apd(
         lrpt_decoder_t *decoder,
         uint8_t *p,
-        uint32_t apid,
+        uint16_t apid,
         uint16_t pck_cnt);
 
 /** Parse APIDs.
@@ -93,11 +92,11 @@ static size_t parse_partial(
 static void parse_70(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
-    decoder->onboard_time.tm_hour = p[8];
-    decoder->onboard_time.tm_min = p[9];
-    decoder->onboard_time.tm_sec = p[10];
-
-    /* Milliseconds are coded as p[11] * 4 */
+    /* hour = p[8];
+     * min = p[9];
+     * sec = p[10];
+     * msec = p[11] * 4
+     */
 }
 
 /*************************************************************************************************/
@@ -106,10 +105,10 @@ static void parse_70(
 static void act_apd(
         lrpt_decoder_t *decoder,
         uint8_t *p,
-        uint32_t apid,
+        uint16_t apid,
         uint16_t pck_cnt) {
-    uint8_t mcu_id = p[0];
-    uint8_t q = p[5];
+    const uint8_t mcu_id = p[0];
+    const uint8_t q = p[5];
 
     lrpt_decoder_jpeg_decode_mcus(decoder, p + 6, apid, pck_cnt, mcu_id, q);
 }
@@ -120,17 +119,11 @@ static void act_apd(
 static void parse_apd(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
-    /* TODO do we need that explicit casts? */
-    uint16_t w = (uint16_t)p[0];
-    w <<= 8;
-    w |= (uint16_t)p[1];
+    /* TODO recheck cast */
+    uint16_t w = (uint16_t)((p[0] << 8) | p[1]);
+    uint16_t apid = (w & 0x07FF); /* TODO consult with LRPT documentation for limit values */
 
-    uint16_t apid = w & 0x07FF; /* TODO consult with LRPT documentation for limit values */
-
-    uint16_t pck_cnt = p[2];
-    pck_cnt <<= 8;
-    pck_cnt |= p[3];
-    pck_cnt &= 0x3FFF;
+    uint16_t pck_cnt = (uint16_t)((p[2] << 8) | p[3]) & 0x3FFF;
 
     if (apid == 70) /* Parse onboard time data */
         parse_70(decoder, p + 14);
@@ -183,7 +176,7 @@ void lrpt_decoder_packet_parse_cvcdu(
 
     /* TODO deal with VCDU data unit zone */
     w = (uint16_t)((p[8] << 8) | p[9]);
-    size_t hdr_off = w & 0x07FF; /* TODO M_PDU header first pointer */
+    size_t hdr_off = (w & 0x07FF); /* TODO M_PDU header first pointer */
 
     /* Deal with empty packets */
     /* TODO review that and process only AVHRR LR packets for now */
@@ -196,12 +189,12 @@ void lrpt_decoder_packet_parse_cvcdu(
     if (frame_cnt == (decoder->last_frame + 1)) { /* TODO process consecutive frame */
         if (decoder->packet_part) {
             if (hdr_off == PACKET_FULL_MARK) { /* For packets which are larger than one frame */
-                hdr_off = (uint16_t)(len - 10);
-                memmove(decoder->packet_buf + decoder->packet_off, p + 10, hdr_off);
+                hdr_off = (len - 10);
+                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, hdr_off);
                 decoder->packet_off += hdr_off;
             }
             else {
-                memmove(decoder->packet_buf + decoder->packet_off, p + 10, hdr_off);
+                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, hdr_off);
                 parse_partial(decoder, decoder->packet_buf, decoder->packet_off + hdr_off);
             }
         }
@@ -225,7 +218,7 @@ void lrpt_decoder_packet_parse_cvcdu(
 
         if (decoder->packet_part) {
             decoder->packet_off = data_len;
-            memmove(decoder->packet_buf, p + 10 + off, decoder->packet_off);
+            memcpy(decoder->packet_buf, p + 10 + off, decoder->packet_off);
 
             break;
         }

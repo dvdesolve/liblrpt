@@ -99,9 +99,9 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->pos = 0;
     decoder->prev_pos = 0;
 
-    decoder->cpos = 0;
-    decoder->word = 0;
-    decoder->corrv = 64;
+    decoder->corr_pos = 0;
+    decoder->corr_word = 0;
+    decoder->corr_val = 64;
 
     decoder->channel_image_size = 0;
     decoder->channel_image_width = mcus_per_line * 8; /* Each MCU is 8x8 block */
@@ -168,7 +168,7 @@ void lrpt_decoder_exec(
             /* TODO we can report Framing non-OK here */
         }
 
-        decoder->tot_cnt++; /* TODO this relies upon 16384-long blocks, should be changed */
+        decoder->tot_cnt++; /* TODO this relies upon 16384-long blocks in input, should be changed */
     }
 
     /* TODO we can report here:

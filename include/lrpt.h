@@ -886,6 +886,19 @@ LRPT_API lrpt_decoder_t *lrpt_decoder_init(
 LRPT_API void lrpt_decoder_deinit(
         lrpt_decoder_t *decoder);
 
+/** Perform LRPT decoding for given data block.
+ *
+ * Performs full decoding for given soft-symbols data chunk.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param input Input soft-symbols data.
+ * \param buf_len Length of given data chunk.
+ */
+LRPT_API void lrpt_decoder_exec(
+        lrpt_decoder_t *decoder,
+        uint8_t *input,
+        size_t buf_len);
+
 /** @} */
 
 /*************************************************************************************************/

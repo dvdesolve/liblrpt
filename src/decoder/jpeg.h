@@ -88,7 +88,7 @@ void lrpt_decoder_jpeg_deinit(lrpt_decoder_jpeg_t *jpeg);
 bool lrpt_decoder_jpeg_decode_mcus(
         lrpt_decoder_t *decoder,
         uint8_t *p,
-        uint32_t apid,
+        uint16_t apid,
         uint16_t pck_cnt,
         uint8_t mcu_id,
         uint8_t q);
