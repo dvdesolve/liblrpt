@@ -229,7 +229,7 @@ bool lrpt_decoder_ecc_decode(
     uint8_t num_fixed = 0;
     uint16_t k = 115;
 
-    for (uint8_t n = 1; n <= 255; n++) {
+    for (uint8_t n = 0; n < 255; n++) {
         uint8_t q = 1;
 
         for (uint8_t i = deg_lambda; i >= 1; i--) {
@@ -246,7 +246,7 @@ bool lrpt_decoder_ecc_decode(
         }
 
         /* TODO do we need that casts? */
-        root[num_fixed] = n;
+        root[num_fixed] = (n + 1);
         loc[num_fixed] = k;
         num_fixed++;
 

@@ -29,6 +29,7 @@
 #include "decoder.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/lrpt.h"
 #include "correlator.h"
 #include "data.h"
 #include "jpeg.h"
@@ -149,7 +150,7 @@ void lrpt_decoder_deinit(
 /* lrpt_decoder_exec() */
 void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        uint8_t *input, /* TODO may be use explicit cast instead or symbols rescale */
+        lrpt_qpsk_data_t *input,
         size_t buf_len) {
     /* Return immediately if no valid input was given */
     if (!input)
@@ -157,7 +158,7 @@ void lrpt_decoder_exec(
 
     /* Go through data given */
     while (decoder->pos < buf_len) {
-        if (lrpt_decoder_data_process_frame(decoder, input)) {
+        if (lrpt_decoder_data_process_frame(decoder, (uint8_t *)input->qpsk)) { /* TODO may be don't use explicit cast or use symbols rescale instead */
             lrpt_decoder_packet_parse_cvcdu(decoder, LRPT_DECODER_HARD_FRAME_LEN - 132);
 
             decoder->ok_cnt++;

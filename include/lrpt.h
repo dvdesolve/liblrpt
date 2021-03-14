@@ -896,7 +896,7 @@ LRPT_API void lrpt_decoder_deinit(
  */
 LRPT_API void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        uint8_t *input,
+        lrpt_qpsk_data_t *input,
         size_t buf_len);
 
 /** @} */

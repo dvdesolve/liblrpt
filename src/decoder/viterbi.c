@@ -42,7 +42,7 @@
 static const uint8_t VITERBI_STATES_NUM = 128; /**< Number of states of Viterbi decoder */
 static const uint8_t VITERBI_PAIR_OUTPUTS_NUM = 16; /**< 2 ^ (2 * rate), rate = 2 */
 static const uint8_t VITERBI_PAIR_KEYS_NUM = 64; /**< 2 ^ (order - 1), order = 7 */
-static const uint8_t VITERBI_TRACEBACK_MIN = 25; /**< Minimal traceback (5 * 7) */
+static const uint8_t VITERBI_TRACEBACK_MIN = 35; /**< Minimal traceback (5 * 7) */
 static const uint8_t VITERBI_TRACEBACK_LENGTH = 105; /**< Length of traceback (15 * 7) */
 static const uint8_t VITERBI_POLYA = 0x4F; /**< Viterbi polynomial A, 01001111 */
 static const uint8_t VITERBI_POLYB = 0x6D; /**< Viterbi polynomial B, 01101101 */
@@ -269,7 +269,7 @@ static void history_buffer_traceback(
             index--;
 
         const uint8_t history =
-            vit->history[index * (VITERBI_TRACEBACK_MIN + VITERBI_TRACEBACK_LENGTH) + bestpath];
+            vit->history[index * VITERBI_STATES_NUM + bestpath];
 
         uint8_t pathbit;
 
@@ -299,7 +299,7 @@ static void history_buffer_traceback(
             prefetch_index--;
 
         const uint8_t history =
-            vit->history[index * (VITERBI_TRACEBACK_MIN + VITERBI_TRACEBACK_LENGTH) + bestpath];
+            vit->history[index * VITERBI_STATES_NUM + bestpath];
 
         uint8_t pathbit;
 
@@ -376,8 +376,7 @@ static void viterbi_inner(
             vit->distances[j] = vit->dist_table[j * 65536 + idx];
         }
 
-        uint8_t *history =
-            vit->history + vit->hist_index * (VITERBI_TRACEBACK_MIN + VITERBI_TRACEBACK_LENGTH);
+        uint8_t *history = vit->history + vit->hist_index * VITERBI_STATES_NUM;
 
         fill_pair_lookup_dists(vit);
 
@@ -467,8 +466,7 @@ static void viterbi_tail(
             vit->distances[j] = vit->dist_table[j * 65536 + idx];
         }
 
-        uint8_t *history =
-            vit->history + vit->hist_index * (VITERBI_TRACEBACK_MIN + VITERBI_TRACEBACK_LENGTH);
+        uint8_t *history = vit->history + vit->hist_index * VITERBI_STATES_NUM;
 
         const uint8_t skip = 1 << (7 - (VITERBI_FRAME_BITS - i));
         const uint8_t base_skip = skip >> 1;
@@ -637,7 +635,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Init metric lookup table */
     for (size_t i = 0; i < 4; i++)
         for (size_t j = 0; j < 65536; j++)
-            vit->dist_table[i * 4 + j] =
+            vit->dist_table[i * 65536 + j] =
                 metric_soft_distance((uint8_t)i, (uint8_t)(j & 0xFF), (uint8_t)(j >> 8));
 
     /* Polynomial table */

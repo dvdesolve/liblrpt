@@ -201,6 +201,7 @@ static void do_full_correlate(
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN / 4);
     }
     else { /* Otherwise we just combine data from two sections into aligned array */
+        /* TODO should be careful when no consequent data is present; otherwise we'll be accessing memory areas which are not ours */
         memcpy(decoder->aligned, (data + decoder->pos + decoder->corr_pos),
                 (LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
         memcpy((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos),
