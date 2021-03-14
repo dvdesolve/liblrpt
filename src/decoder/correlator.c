@@ -232,7 +232,6 @@ void lrpt_decoder_correlator_deinit(
     free(corr->corr_tab);
     free(corr->invert_iq_tab);
     free(corr->rotate_iq_tab);
-    free(corr->patterns);
     free(corr);
 }
 

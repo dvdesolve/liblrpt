@@ -248,6 +248,7 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     if (n > huff->ac_tbl_len)
         memset(new_ac_tbl + huff->ac_tbl_len, 0, n - huff->ac_tbl_len);
 
+    huff->ac_tbl = new_ac_tbl;
     huff->ac_tbl_len = n;
 
     /* TODO review that */
