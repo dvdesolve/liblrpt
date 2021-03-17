@@ -88,7 +88,7 @@ static void fill_pair_lookup_dists(
  * \return The best found path.
  */
 static uint8_t history_buffer_search(
-        lrpt_decoder_viterbi_t *vit,
+        const lrpt_decoder_viterbi_t *vit,
         uint8_t search_every);
 
 /** Perform history buffer renormalization.
@@ -127,7 +127,7 @@ static void history_buffer_process_skip(
  */
 static void viterbi_inner(
         lrpt_decoder_viterbi_t *vit,
-        const uint8_t *input);
+        const int8_t *input);
 
 /** Viterbi tail code.
  *
@@ -136,7 +136,7 @@ static void viterbi_inner(
  */
 static void viterbi_tail(
         lrpt_decoder_viterbi_t *vit,
-        const uint8_t *input);
+        const int8_t *input);
 
 /** Perform convolutional Viterbi decoding.
  *
@@ -146,7 +146,7 @@ static void viterbi_tail(
  */
 static void convolutional_decode(
         lrpt_decoder_viterbi_t *vit,
-        const uint8_t *input,
+        const int8_t *input,
         uint8_t *output);
 
 /*************************************************************************************************/
@@ -218,8 +218,7 @@ static void fill_pair_lookup_dists(
         const uint16_t i0 = (c & 0x03);
         const uint16_t i1 = (c >> 2);
 
-        /* TODO review casts */
-        vit->pair_distances[i] = (uint32_t)((vit->distances[i1] << 16) | vit->distances[i0]);
+        vit->pair_distances[i] = ((vit->distances[i1] << 16) | vit->distances[i0]);
     }
 }
 
@@ -227,7 +226,7 @@ static void fill_pair_lookup_dists(
 
 /* history_buffer_search() */
 static uint8_t history_buffer_search(
-        lrpt_decoder_viterbi_t *vit,
+        const lrpt_decoder_viterbi_t *vit,
         uint8_t search_every) {
     uint16_t least = 0xFFFF;
     uint8_t bestpath = 0;
@@ -249,7 +248,7 @@ static void history_buffer_renormalize(
         uint8_t bestpath) {
     const uint16_t min_distance = vit->write_errors[bestpath];
 
-    for (size_t i = 0; i < (VITERBI_STATES_NUM / 2); i++)
+    for (uint8_t i = 0; i < (VITERBI_STATES_NUM / 2); i++)
         vit->write_errors[i] -= min_distance;
 }
 
@@ -357,10 +356,10 @@ static void history_buffer_process_skip(
 /* viterbi_inner() */
 static void viterbi_inner(
         lrpt_decoder_viterbi_t *vit,
-        const uint8_t *input) {
+        const int8_t *input) {
     for (uint8_t i = 0; i < 6; i++) {
         for (uint8_t j = 0; j < (1 << (i + 1)); j++) {
-            size_t idx = (input[i * 2 + 1] << 8) + input[i * 2]; /* TODO may be we can do explicit cast to uint8_t here and pass int8_t in all previous places */
+            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2];
 
             vit->write_errors[j] =
                 vit->dist_table[vit->table[j] * 65536 + idx] + vit->read_errors[j >> 1];
@@ -371,7 +370,7 @@ static void viterbi_inner(
 
     for (uint16_t i = 6; i < (VITERBI_FRAME_BITS - 6); i++) {
         for (uint8_t j = 0; j < 4; j++) {
-            size_t idx = (input[i * 2 + 1] << 8) + input[i * 2]; /* TODO may be we can do explicit cast to uint8_t here and pass int8_t in all previous places */
+            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2];
 
             vit->distances[j] = vit->dist_table[j * 65536 + idx];
         }
@@ -458,10 +457,10 @@ static void viterbi_inner(
 /* viterbi_tail() */
 static void viterbi_tail(
         lrpt_decoder_viterbi_t *vit,
-        const uint8_t *input) {
+        const int8_t *input) {
     for (uint16_t i = (VITERBI_FRAME_BITS - 6); i < VITERBI_FRAME_BITS; i++) {
         for (uint8_t j = 0; j < 4; j++) {
-            size_t idx = (input[i * 2 + 1] << 8) + input[i * 2]; /* TODO may be we can do explicit cast to uint8_t here and pass int8_t in all previous places */
+            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2];
 
             vit->distances[j] = vit->dist_table[j * 65536 + idx];
         }
@@ -520,7 +519,7 @@ static void viterbi_tail(
 /* convolutional_decode() */
 static void convolutional_decode(
         lrpt_decoder_viterbi_t *vit,
-        const uint8_t *input,
+        const int8_t *input,
         uint8_t *output) {
     /* (Re)init bit writer */
     lrpt_decoder_bitop_writer_set(vit->bit_writer, output);
@@ -531,8 +530,8 @@ static void convolutional_decode(
     vit->renormalize_counter = 0;
 
     /* (Re)set error buffer */
-    memset(vit->errors[0], 0, VITERBI_STATES_NUM);
-    memset(vit->errors[1], 0, VITERBI_STATES_NUM);
+    memset(vit->errors[0], 0, VITERBI_STATES_NUM * sizeof(uint16_t));
+    memset(vit->errors[1], 0, VITERBI_STATES_NUM * sizeof(uint16_t));
 
     vit->read_errors = vit->errors[0];
     vit->write_errors = vit->errors[1];
@@ -541,6 +540,7 @@ static void convolutional_decode(
     /* Do Viterbi decoding */
     viterbi_inner(vit, input);
     viterbi_tail(vit, input);
+
     history_buffer_traceback(vit, 0, 0);
 }
 
@@ -649,6 +649,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     }
 
     /* Initialize inverted outputs */
+    /* TODO do smth with this warning */
     uint8_t inv_outputs[VITERBI_PAIR_OUTPUTS_NUM];
     memset(inv_outputs, 0, VITERBI_PAIR_OUTPUTS_NUM);
 
@@ -666,6 +667,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
         vit->pair_keys[i] = inv_outputs[o];
     }
 
+    /* TODO should use explicit values */
     vit->pair_outputs_len = oc;
     vit->pair_distances = calloc(oc, sizeof(uint32_t));
 
@@ -709,10 +711,10 @@ void lrpt_decoder_viterbi_deinit(
 /*************************************************************************************************/
 
 /* lrpt_decoder_viterbi_decode() */
-void lrpt_decoder_viterbi_decode(
+void lrpt_decoder_viterbi_decode( /* TODO may be rename to lrpt_decoder_viterbi_exec() or smth similar */
         lrpt_decoder_viterbi_t *vit,
         const lrpt_decoder_correlator_t *corr,
-        const uint8_t *input,
+        const int8_t *input,
         uint8_t *output) {
     /* Perform convolutional decoding */
     convolutional_decode(vit, input, output);
@@ -724,7 +726,7 @@ void lrpt_decoder_viterbi_decode(
     vit->ber = 0;
 
     for (uint16_t i = 0; i < (VITERBI_FRAME_BITS * 2); i++)
-        vit->ber += corr->corr_tab[input[i] * 256 + (vit->encoded[i] ^ 0xFF)];
+        vit->ber += corr->corr_tab[(uint8_t)input[i] * 256 + (vit->encoded[i] ^ 0xFF)];
 }
 
 /*************************************************************************************************/

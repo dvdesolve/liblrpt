@@ -36,6 +36,10 @@
 #include <stdint.h>
 #include <string.h>
 
+/* DEBUG */
+#include <stdio.h>
+/* DEBUG */
+
 /*************************************************************************************************/
 
 /* TODO randomization polynomial */
@@ -85,9 +89,9 @@ static const uint16_t DECODER_CORRELATION_MIN = 45; /**< Threshold for correlati
  * \param shift Correlator word.
  */
 static void fix_packet(
-        void *data,
-        int len,
-        uint32_t shift);
+        int8_t *data,
+        size_t len,
+        uint8_t shift);
 
 /** Correlate next frame.
  *
@@ -96,7 +100,7 @@ static void fix_packet(
  */
 static void do_next_correlate(
         lrpt_decoder_t *decoder,
-        uint8_t *raw);
+        int8_t *data);
 
 /** Perform full correlation.
  *
@@ -105,7 +109,7 @@ static void do_next_correlate(
  */
 static void do_full_correlate(
         lrpt_decoder_t *decoder,
-        uint8_t *raw);
+        int8_t *data);
 
 /** Decode frame.
  *
@@ -120,46 +124,43 @@ static bool decode_frame(
 
 /* fix_packet() */
 static void fix_packet(
-        void *data, /* TODO use correct types */
-        int len,
-        uint32_t shift) {
-    int8_t *d;
-    int8_t b;
-
-    d = (int8_t *)data; /* TODO strange cast */
+        int8_t *data,
+        size_t len,
+        uint8_t shift) {
+    len /= 2; /* Useful while swapping elements */
 
     switch (shift) {
         case 4:
-            for (size_t i = 0; i < (len / 2); i++) { /* TODO optimize here by len = len/2 */
+            for (size_t i = 0; i < len; i++) {
                 /* Swap adjacent elements */
-                b = d[i * 2 + 0];
-                d[i * 2 + 0] = d[i * 2 + 1];
-                d[i * 2 + 1] = b;
+                int8_t b = data[i * 2 + 0];
+                data[i * 2 + 0] = data[i * 2 + 1];
+                data[i * 2 + 1] = b;
             }
 
             break;
 
         case 5:
-            for (size_t i = 0; i < (len / 2); i++)
+            for (size_t i = 0; i < len; i++)
                 /* Invert odd elements */
-                d[i * 2 + 0] = -d[i * 2 + 0];
+                data[i * 2 + 0] = -data[i * 2 + 0];
 
             break;
 
         case 6:
-            for (size_t i = 0; i < (len / 2); i++) {
+            for (size_t i = 0; i < len; i++) {
                 /* Swap and invert adjacent elements */
-                b = d[i * 2 + 0];
-                d[i * 2 + 0] = -d[i * 2 + 1];
-                d[i * 2 + 1] = -b;
+                int8_t b = data[i * 2 + 0];
+                data[i * 2 + 0] = -data[i * 2 + 1];
+                data[i * 2 + 1] = -b;
             }
 
             break;
 
         case 7:
-            for (size_t i = 0; i < (len / 2); i++)
+            for (size_t i = 0; i < len; i++)
                 /* Invert even elements */
-                d[i * 2 + 1] = -d[i * 2 + 1];
+                data[i * 2 + 1] = -data[i * 2 + 1];
 
             break;
     }
@@ -170,7 +171,7 @@ static void fix_packet(
 /* do_next_correlate() */
 static void do_next_correlate(
         lrpt_decoder_t *decoder,
-        uint8_t *data) {
+        int8_t *data) {
     /* Just copy new part of data to the aligned buffer */
     memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
 
@@ -186,11 +187,11 @@ static void do_next_correlate(
 /* do_full_correlate() */
 static void do_full_correlate(
         lrpt_decoder_t *decoder,
-        uint8_t *data) {
+        int8_t *data) {
     decoder->corr_word = lrpt_decoder_correlator_correlate(
             decoder->corr, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
     decoder->corr_pos = decoder->corr->position[decoder->corr_word];
-    decoder->corr_val = (uint16_t)(decoder->corr->correlation[decoder->corr_word]);
+    decoder->corr_val = decoder->corr->correlation[decoder->corr_word];
 
     /* If low correlation observed just copy new part of data to the aligned buffer */
     if (decoder->corr_val < DECODER_CORRELATION_MIN) {
@@ -220,6 +221,20 @@ static void do_full_correlate(
 static bool decode_frame(
         lrpt_decoder_t *decoder) {
     lrpt_decoder_viterbi_decode(decoder->vit, decoder->corr, decoder->aligned, decoder->decoded);
+
+    /* DEBUG */
+    static int num_write = 0;
+    num_write++;
+
+    if (num_write <= 4) {
+        char s[256];
+        sprintf(s, "decoded%d.dat", num_write);
+        fprintf(stderr, "decode_frame(): will write decoded output now\n");
+        FILE *ftst = fopen(s, "wb");
+        fwrite(decoder->decoded, sizeof(uint8_t), LRPT_DECODER_HARD_FRAME_LEN, ftst);
+        fclose(ftst);
+    }
+    /* DEBUG */
 
     uint32_t tmp =
         ((uint32_t)decoder->decoded[3] << 24) +
@@ -266,7 +281,7 @@ static bool decode_frame(
 /* lrpt_decoder_data_process_frame() */
 bool lrpt_decoder_data_process_frame(
         lrpt_decoder_t *decoder,
-        uint8_t *data) {
+        int8_t *data) {
     bool ok = false;
 
     /* Try to correlate next block */

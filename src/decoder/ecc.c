@@ -161,7 +161,7 @@ bool lrpt_decoder_ecc_decode(
 
     /* Prepare lambda array */
     uint8_t lambda[33];
-    memset(lambda, 0, 33);
+    memset(lambda, 0, 33 * sizeof(uint8_t));
     lambda[0] = 1;
 
     uint8_t b[33], t[33];

@@ -131,7 +131,7 @@ bool lrpt_iq_data_resize(
         else {
             /* Zero out newly allocated portion */
             if (new_length > data->len)
-                memset(new_iq + data->len, 0, new_length - data->len);
+                memset(new_iq + data->len, 0, (new_length - data->len) * sizeof(complex double));
 
             data->len = new_length;
             data->iq = new_iq;
@@ -303,7 +303,7 @@ bool lrpt_qpsk_data_resize(
         else {
             /* Zero out newly allocated portion */
             if (new_length > data->len)
-                memset(new_s + data->len, 0, new_length - data->len);
+                memset(new_s + data->len, 0, (new_length - data->len) * sizeof(int8_t));
 
             data->len = new_length;
             data->qpsk = new_s;

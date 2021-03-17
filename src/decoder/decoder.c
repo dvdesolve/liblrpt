@@ -83,7 +83,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->jpeg = lrpt_decoder_jpeg_init(); /* JPEG decoder */
 
     /* Allocate internal data arrays */
-    decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(uint8_t)); /* Aligned data */
+    decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
     decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
     decoder->ecced = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
     decoder->packet_buf = calloc(2048, sizeof(uint8_t)); /* Packet buffer */
@@ -158,7 +158,7 @@ void lrpt_decoder_exec(
 
     /* Go through data given */
     while (decoder->pos < buf_len) {
-        if (lrpt_decoder_data_process_frame(decoder, (uint8_t *)input->qpsk)) { /* TODO may be don't use explicit cast or use symbols rescale instead */
+        if (lrpt_decoder_data_process_frame(decoder, input->qpsk)) {
             lrpt_decoder_packet_parse_cvcdu(decoder, LRPT_DECODER_HARD_FRAME_LEN - 132);
 
             decoder->ok_cnt++;

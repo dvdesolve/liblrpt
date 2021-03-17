@@ -124,19 +124,19 @@ void lrpt_decoder_bitop_writer_reverse(
         size_t len) {
     uint8_t *bytes = w->p;
     size_t byte_index = w->pos;
-    uint8_t b;
+    uint16_t b;
 
     l = l + len - 1;
 
     if (w->cur_len != 0) {
-        size_t close_len = 8 - w->cur_len; /* TODO recheck carefully for underflow errors */
+        uint8_t close_len = 8 - w->cur_len;
 
         if (close_len >= len)
             close_len = len;
 
-        b = w->cur; /* TODO recheck carefully here, was uint16_t */
+        b = w->cur;
 
-        for (size_t i = 0; i < close_len; i++) {
+        for (uint8_t i = 0; i < close_len; i++) {
             b |= l[0];
             b <<= 1;
             l -= 1;
@@ -146,11 +146,12 @@ void lrpt_decoder_bitop_writer_reverse(
 
         if ((w->cur_len + close_len) == 8) {
             b >>= 1;
-            bytes[byte_index] = b; /* TODO recheck here, was explicit (uint8_t) */
+            bytes[byte_index] = (uint8_t)b;
+
             byte_index++;
         }
         else {
-            w->cur = b; /* TODO recheck here, was explicit (uint8_t) */
+            w->cur = (uint8_t)b;
             w->cur_len += close_len;
 
             return;
@@ -180,7 +181,7 @@ void lrpt_decoder_bitop_writer_reverse(
         l--;
     }
 
-    w->cur = b; /* TODO recheck here, was explicit (uint8_t) */
+    w->cur = (uint8_t)b;
     w->pos = byte_index;
     w->cur_len = len;
 }

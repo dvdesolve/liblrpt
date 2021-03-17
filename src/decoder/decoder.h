@@ -53,7 +53,7 @@ struct lrpt_decoder__ {
     lrpt_decoder_jpeg_t *jpeg; /**< JPEG decoder */
 
     /* TODO review types here */
-    uint8_t *aligned; /**< Aligned data after correlation */
+    int8_t *aligned; /**< Aligned data after correlation */
     uint8_t *decoded; /**< Decoded data */
     uint8_t *ecced; /**< ECCed data */
 

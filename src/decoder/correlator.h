@@ -79,7 +79,7 @@ void lrpt_decoder_correlator_deinit(
  */
 uint8_t lrpt_decoder_correlator_correlate(
         lrpt_decoder_correlator_t *corr,
-        uint8_t *data,
+        const int8_t *data,
         size_t len);
 
 /*************************************************************************************************/

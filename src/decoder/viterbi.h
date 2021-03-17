@@ -103,7 +103,7 @@ void lrpt_decoder_viterbi_deinit(lrpt_decoder_viterbi_t *vit);
 void lrpt_decoder_viterbi_decode(
         lrpt_decoder_viterbi_t *vit,
         const lrpt_decoder_correlator_t *corr,
-        const uint8_t *input,
+        const int8_t *input,
         uint8_t *output);
 
 /** Return BER as a percentage.

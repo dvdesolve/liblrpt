@@ -240,17 +240,17 @@ void lrpt_decoder_correlator_deinit(
 /* lrpt_decoder_correlator_correlate() */
 uint8_t lrpt_decoder_correlator_correlate(
         lrpt_decoder_correlator_t *corr,
-        uint8_t *data,
+        const int8_t *data,
         size_t len) {
     /* Reset correlator arrays */
-    memset(corr->correlation, 0, CORR_PATTERN_COUNT);
-    memset(corr->position, 0, CORR_PATTERN_COUNT);
+    memset(corr->correlation, 0, CORR_PATTERN_COUNT * sizeof(uint16_t));
+    memset(corr->position, 0, CORR_PATTERN_COUNT * sizeof(size_t));
 
     for (size_t i = 0; i < (len - CORR_PATTERN_SIZE); i++) {
-        memset(corr->tmp_correlation, 0, CORR_PATTERN_COUNT);
+        memset(corr->tmp_correlation, 0, CORR_PATTERN_COUNT * sizeof(uint16_t));
 
         for (uint8_t j = 0; j < CORR_PATTERN_SIZE; j++) {
-            uint8_t *d = (corr->corr_tab + data[i + j] * 256);
+            uint8_t *d = (corr->corr_tab + (uint8_t)data[i + j] * 256);
             uint8_t *p = (corr->patterns + j * CORR_PATTERN_SIZE);
 
             for (uint8_t k = 0; k < CORR_PATTERN_COUNT; k++)

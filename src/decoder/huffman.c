@@ -246,7 +246,8 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     /* TODO recheck this very carefully! */
     /* Zero out newly allocated portion (if any) */
     if (n > huff->ac_tbl_len)
-        memset(new_ac_tbl + huff->ac_tbl_len, 0, n - huff->ac_tbl_len);
+        memset(new_ac_tbl + huff->ac_tbl_len, 0,
+                (n - huff->ac_tbl_len) * sizeof(lrpt_decoder_huffman_acdata_t));
 
     huff->ac_tbl = new_ac_tbl;
     huff->ac_tbl_len = n;
