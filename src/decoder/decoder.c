@@ -157,7 +157,7 @@ void lrpt_decoder_exec(
         return;
 
     /* Go through data given */
-    while (decoder->pos < buf_len) {
+    while (decoder->pos < buf_len) { /* TODO this may be redundant if we'll require SFL-multiples only blocks of data; also see below */
         if (lrpt_decoder_data_process_frame(decoder, input->qpsk)) {
             lrpt_decoder_packet_parse_cvcdu(decoder, LRPT_DECODER_HARD_FRAME_LEN - 132);
 
@@ -171,6 +171,12 @@ void lrpt_decoder_exec(
 
         decoder->tot_cnt++; /* TODO this relies upon 16384-long blocks in input, should be changed */
     }
+
+    /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */
+    /* DEBUG */
+    decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
+    decoder->prev_pos -= LRPT_DECODER_SOFT_FRAME_LEN;
+    /* DEBUG */
 
     /* TODO we can report here:
      * signal quality (sig_q)

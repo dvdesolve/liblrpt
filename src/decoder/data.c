@@ -208,7 +208,7 @@ static void do_full_correlate(
         memcpy((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos),
                 (data + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN), decoder->corr_pos);
 
-        /* Advace decoder position */
+        /* Advance decoder position */
         decoder->prev_pos = (decoder->pos + decoder->corr_pos);
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN + decoder->corr_pos);
 
@@ -226,14 +226,12 @@ static bool decode_frame(
     static int num_write = 0;
     num_write++;
 
-    if (num_write <= 4) {
-        char s[256];
-        sprintf(s, "decoded%d.dat", num_write);
-        fprintf(stderr, "decode_frame(): will write decoded output now\n");
-        FILE *ftst = fopen(s, "wb");
-        fwrite(decoder->decoded, sizeof(uint8_t), LRPT_DECODER_HARD_FRAME_LEN, ftst);
-        fclose(ftst);
-    }
+    char s[256];
+    sprintf(s, "decoded%d.dat", num_write);
+    fprintf(stderr, "decode_frame(): will write decoded output now\n");
+    FILE *ftst = fopen(s, "wb");
+    fwrite(decoder->decoded, sizeof(uint8_t), LRPT_DECODER_HARD_FRAME_LEN, ftst);
+    fclose(ftst);
     /* DEBUG */
 
     uint32_t tmp =

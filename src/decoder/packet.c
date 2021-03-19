@@ -35,6 +35,11 @@
 #include <stdint.h>
 #include <string.h>
 
+/* DEBUG */
+#include <inttypes.h>
+#include <stdio.h>
+/* DEBUG */
+
 /*************************************************************************************************/
 
 /* TODO it's related to the M_PDU header pointer */
@@ -177,6 +182,10 @@ void lrpt_decoder_packet_parse_cvcdu(
     /* TODO deal with VCDU data unit zone */
     w = (uint16_t)((p[8] << 8) | p[9]);
     size_t hdr_off = (w & 0x07FF); /* TODO M_PDU header first pointer */
+
+    /* DEBUG */
+    fprintf(stderr, "lrpt_decoder_packet_parse_cvcdu(): frame_cnt = %" PRIu32 "; ver = %" PRIu8 "; fid = %" PRIu8 "; hdr_off = %zu\n", frame_cnt, ver, fid, hdr_off);
+    /* DEBUG */
 
     /* Deal with empty packets */
     /* TODO review that and process only AVHRR LR packets for now */

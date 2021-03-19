@@ -133,7 +133,7 @@ static bool find_sync(
         size_t depth,
         size_t *offset,
         uint8_t *sync) {
-    int limit;
+    int limit; /* TODO recheck typing */
     uint8_t test;
     bool result;
 

@@ -265,9 +265,13 @@ bool lrpt_decoder_ecc_decode(
     for (uint8_t i = 0; i <= deg_omega; i++) {
         uint8_t tmp = 0;
 
-        for (uint8_t j = i; j >= 0; j--)
+        for (uint8_t j = i; j >= 0; j--) {
             if ((s[i - j] != 255) && (lambda[j] != 255))
                 tmp ^= ECC_ALPHA_TBL[(s[i - j] + lambda[j]) % 255];
+
+            if (j == 0)
+                break;
+        }
 
         omega[i] = ECC_IDX_TBL[tmp];
     }
@@ -275,9 +279,13 @@ bool lrpt_decoder_ecc_decode(
     for (uint8_t i = num_fixed - 1; i >= 0; i--) {
         uint8_t num1 = 0;
 
-        for (uint8_t j = deg_omega; j >= 0; j--)
+        for (uint8_t j = deg_omega; j >= 0; j--) {
             if (omega[j] != 255)
                 num1 ^= ECC_ALPHA_TBL[(omega[j] + j * root[i]) % 255];
+
+            if (j == 0)
+                break;
+        }
 
         uint8_t num2 = ECC_ALPHA_TBL[(root[i] * 111 + 255) % 255];
         uint8_t den = 0;
@@ -294,12 +302,18 @@ bool lrpt_decoder_ecc_decode(
         for (; l >= 0; l -= 2) {
             if (lambda[l + 1] != 255)
                 den ^= ECC_ALPHA_TBL[(lambda[l + 1] + l * root[i]) % 255];
+
+            if (l == 0)
+                break;
         }
 
         if ((num1 != 0) && (loc[i] >= pad))
             data[loc[i] - pad] ^=
                 ECC_ALPHA_TBL[(ECC_IDX_TBL[num1] + ECC_IDX_TBL[num2] +
                         255 - ECC_IDX_TBL[den]) % 255];
+
+        if (i == 0)
+            break;
     }
 
     return true;
