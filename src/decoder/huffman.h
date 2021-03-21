@@ -45,6 +45,9 @@ typedef struct lrpt_decoder_huffman_acdata__ {
 typedef struct lrpt_decoder_huffman__ {
     size_t ac_tbl_len; /**< AC table length */
     lrpt_decoder_huffman_acdata_t *ac_tbl; /**< AC table */
+
+    size_t *ac_lut; /**< AC lookup table */
+    size_t *dc_lut; /**< DC lookup table */
 } lrpt_decoder_huffman_t;
 
 /*************************************************************************************************/
@@ -63,20 +66,24 @@ void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff);
 
 /** Get AC Huffman code.
  *
+ * \param huff Pointer to the Huffman decoder object.
  * \param w Index.
  *
  * \return AC Huffman code.
  */
 size_t lrpt_decoder_huffman_get_ac(
+        const lrpt_decoder_huffman_t *huff,
         uint16_t w);
 
 /** Get DC Huffman code.
  *
+ * \param huff Pointer to the Huffman decoder object.
  * \param w Index.
  *
  * \return DC Huffman code.
  */
 size_t lrpt_decoder_huffman_get_dc(
+        const lrpt_decoder_huffman_t *huff,
         uint16_t w);
 
 /** Perform mapping.

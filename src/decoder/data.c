@@ -36,10 +36,6 @@
 #include <stdint.h>
 #include <string.h>
 
-/* DEBUG */
-#include <stdio.h>
-/* DEBUG */
-
 /*************************************************************************************************/
 
 /* TODO randomization polynomial */
@@ -221,18 +217,6 @@ static void do_full_correlate(
 static bool decode_frame(
         lrpt_decoder_t *decoder) {
     lrpt_decoder_viterbi_decode(decoder->vit, decoder->corr, decoder->aligned, decoder->decoded);
-
-    /* DEBUG */
-    static int num_write = 0;
-    num_write++;
-
-    char s[256];
-    sprintf(s, "decoded%d.dat", num_write);
-    fprintf(stderr, "decode_frame(): will write decoded output now\n");
-    FILE *ftst = fopen(s, "wb");
-    fwrite(decoder->decoded, sizeof(uint8_t), LRPT_DECODER_HARD_FRAME_LEN, ftst);
-    fclose(ftst);
-    /* DEBUG */
 
     uint32_t tmp =
         ((uint32_t)decoder->decoded[3] << 24) +

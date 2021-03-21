@@ -38,10 +38,10 @@
 
 /** JPEG decoder object */
 typedef struct lrpt_decoder_jpeg__ {
-    /* TODO add flag for checking in source code (-1) */
     size_t last_mcu; /**< Last MCU number */
+    bool first; /**< Whether we had some data previously or not */
+    bool progressed; /**< Whether some progress were made on our image */
 
-    /* TODO recheck, both were assigned to -1 */
     /** @{ */
     /** Need for tracking row number in transmitted image */
     size_t cur_y, last_y;

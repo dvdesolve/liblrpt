@@ -58,11 +58,6 @@ static const uint8_t HUFF_AC_Y_TBL[178] = {
     242, 243, 244, 245, 246, 247, 248, 249, 250
 };
 
-/* TODO recheck for population routine. That should be inside Huffman decoder object */
-/* Lookup tables for AC and DC */
-static size_t HUFF_AC_LUT[65536];
-static size_t HUFF_DC_LUT[65536];
-
 /*****************************************************************************/
 
 /** Return AC Huffman code.
@@ -156,8 +151,10 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     if (!huff)
         return NULL;
 
-    /* NULL-init AC table for safe deallocation */
+    /* NULL-init internal tables for safe deallocation */
     huff->ac_tbl = NULL;
+    huff->ac_lut = NULL;
+    huff->dc_lut = NULL;
 
     /* Allocate helper vector */
     uint8_t *v = calloc(65536, sizeof(uint8_t));
@@ -169,10 +166,10 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     }
 
     /* Populate helper vector */
-    size_t p = 16;
+    uint8_t p = 16;
 
-    for (size_t i = 1; i <= 16; i++)
-        for (size_t j = 0; j < HUFF_AC_Y_TBL[i - 1]; i++) {
+    for (uint8_t i = 1; i <= 16; i++)
+        for (uint8_t j = 0; j < HUFF_AC_Y_TBL[i - 1]; j++) {
             v[(i << 8) + j] = HUFF_AC_Y_TBL[p];
             p++;
         }
@@ -200,7 +197,12 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     huff->ac_tbl_len = 256;
     huff->ac_tbl = calloc(huff->ac_tbl_len, sizeof(lrpt_decoder_huffman_acdata_t));
 
-    if (!huff->ac_tbl) {
+    /* TODO use named consts */
+    /* Allocate lookup tables */
+    huff->ac_lut = calloc(65536, sizeof(size_t));
+    huff->dc_lut = calloc(65536, sizeof(size_t));
+
+    if (!huff->ac_tbl || !huff->ac_lut || !huff->dc_lut) {
         free(v);
         lrpt_decoder_huffman_deinit(huff);
 
@@ -211,22 +213,26 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     size_t min_valn = 1;
     size_t max_valn = 1;
 
-    for (size_t k = 1; k <= 16; k++) {
+    for (uint8_t i = 1; i <= 16; i++) {
         uint16_t min_val = min_code[min_valn];
         uint16_t max_val = maj_code[max_valn];
 
-        for (size_t i = 0; i < (1 << k); i++)
-            if (((uint16_t)i <= max_val) && ((uint16_t)i >= min_val)) {
-                uint16_t size_val = v[(k << 8) + i - (int)min_val];
+        for (uint16_t j = 0; j < (1 << i); j++) {
+            if ((j <= max_val) && (j >= min_val)) {
+                uint16_t size_val = v[(i << 8) + j - (int)min_val];
 
                 huff->ac_tbl[n].run = (size_val >> 4);
                 huff->ac_tbl[n].size = (size_val & 0x0F);
-                huff->ac_tbl[n].len = k;
-                huff->ac_tbl[n].mask = (1 << k) - 1;
-                huff->ac_tbl[n].code = (uint32_t)i;
+                huff->ac_tbl[n].len = i;
+                huff->ac_tbl[n].mask = (1 << i) - 1;
+                huff->ac_tbl[n].code = (uint32_t)j;
 
                 n++;
             }
+
+            if (j == ((1 << i) - 1))
+                break;
+        }
 
         min_valn++;
         max_valn++;
@@ -255,8 +261,8 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     /* TODO review that */
     /* Fill AC and DC tables */
     for (size_t i = 0; i < 65536; i++) {
-        HUFF_AC_LUT[i] = get_ac_real(huff, (uint16_t)i);
-        HUFF_DC_LUT[i] = get_dc_real((uint16_t)i);
+        huff->ac_lut[i] = get_ac_real(huff, (uint16_t)i);
+        huff->dc_lut[i] = get_dc_real((uint16_t)i);
     }
 
     /* Free helper vector */
@@ -272,6 +278,8 @@ void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff) {
     if (!huff)
         return;
 
+    free(huff->dc_lut);
+    free(huff->ac_lut);
     free(huff->ac_tbl);
     free(huff);
 }
@@ -280,16 +288,18 @@ void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff) {
 
 /* lrpt_decoder_huffman_get_ac() */
 size_t lrpt_decoder_huffman_get_ac(
+        const lrpt_decoder_huffman_t *huff,
         uint16_t w) {
-    return HUFF_AC_LUT[w];
+    return huff->ac_lut[w];
 }
 
 /*************************************************************************************************/
 
 /* lrpt_decoder_huffman_get_dc() */
 size_t lrpt_decoder_huffman_get_dc(
+        const lrpt_decoder_huffman_t *huff,
         uint16_t w) {
-    return HUFF_DC_LUT[w];
+    return huff->dc_lut[w];
 }
 
 /*************************************************************************************************/

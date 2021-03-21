@@ -41,6 +41,7 @@
 
 /*************************************************************************************************/
 
+/* TODO review and recheck */
 static const uint8_t JPEG_MCU_PER_PACKET = 14; /**< How many MCUs are in single packet? */
 
 /** Standard quantization table */
@@ -187,9 +188,12 @@ static bool progress_image(
 
     lrpt_decoder_jpeg_t *jpeg = decoder->jpeg;
 
-    if (jpeg->last_mcu == -1) { /* TODO need flag instead for handling -1 case */
+    /* TODO a bit awkward construct here; recheck how it's implemented in original medet */
+    if (jpeg->first) {
         if (mcu_id != 0)
             return false;
+
+        jpeg->first = false;
 
         jpeg->prev_pck = pck_cnt;
         jpeg->first_pck = pck_cnt;
@@ -200,9 +204,6 @@ static bool progress_image(
 
         if ((apid == 66) || (apid == 68))
             jpeg->first_pck -= 28;
-
-        jpeg->last_mcu = 0;
-        decoder->prev_len = 0;
     }
 
     if (pck_cnt < jpeg->prev_pck)
@@ -210,9 +211,10 @@ static bool progress_image(
 
     jpeg->prev_pck = pck_cnt;
 
-    jpeg->cur_y = 8 * ((pck_cnt - jpeg->first_pck) / 43);
+    /* TODO 8 is MCU block size */
+    jpeg->cur_y = 8 * ((pck_cnt - jpeg->first_pck) / 43); /* TODO why 43? */
 
-    if (jpeg->cur_y > jpeg->last_y) {
+    if ((jpeg->cur_y > jpeg->last_y) || !jpeg->progressed) {
         size_t channel_image_height = jpeg->cur_y + 8;
 
         decoder->channel_image_size = decoder->channel_image_width * channel_image_height;
@@ -220,7 +222,9 @@ static bool progress_image(
         /* TODO realloc is costly. May be pre-alloc big enough array is a better idea? */
         for (uint8_t i = 0; i < 6; i++)
             decoder->channel_image[i] = /* TODO add error checking */
-                reallocarray(decoder->channel_image[i], decoder->channel_image_size, 1);
+                reallocarray(decoder->channel_image[i], decoder->channel_image_size, sizeof(uint8_t));
+
+        jpeg->progressed = true;
 
         /* Clear new allocation */
         /* TODO may be use more advanced method like in our IO utility funcs... */
@@ -262,7 +266,7 @@ static void fill_pix(
         y = decoder->jpeg->cur_y + i / 8;
         off = x + y * 1568; /* TODO should use named constant here */
 
-        /* TODO that should be done in psotprocessor later or a list of invertable APIDs should be given */
+        /* TODO that should be done in postprocessor later or a list of invertable APIDs should be given */
 //        bool inv = false;
 //        /* Invert image palette if APID matches */
 //        for (size_t j = 0; j < 3; j++)
@@ -278,7 +282,10 @@ static void fill_pix(
 //                channel_image[BLUE][off]  = 255 - (uint8_t)t;
 //        }
 //        else /* Normal palette */
+
+        /* TODO signal in some kind of APID counters so we can analyze it later */
         decoder->channel_image[apid - 64][off] = (uint8_t)t;
+        /* TODO stopped rechecking here; should be fine to dump images now */
     }
 }
 
@@ -304,6 +311,9 @@ lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void) {
         jpeg->alpha[x] = 1.0;
 
     /* Set internal state variables */
+    jpeg->first = true;
+    jpeg->progressed = false;
+
     jpeg->last_mcu = 0;
     jpeg->cur_y = 0;
     jpeg->last_y = 0;
@@ -351,7 +361,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
     double img_dct[64];
 
     while (m < JPEG_MCU_PER_PACKET) {
-        int dc_cat = lrpt_decoder_huffman_get_dc(lrpt_decoder_bitop_peek_n_bits(&b, 16));
+        int dc_cat = lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
         if (dc_cat == -1) /* TODO recheck for -1 case */
             return false; /* TODO need error reporting */
@@ -365,7 +375,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
         uint8_t k = 1;
 
         while (k < 64) {
-            int ac = lrpt_decoder_huffman_get_ac((uint16_t)(lrpt_decoder_bitop_peek_n_bits(&b, 16)));
+            int ac = lrpt_decoder_huffman_get_ac(decoder->huff, (uint16_t)(lrpt_decoder_bitop_peek_n_bits(&b, 16))); /* TODO recheck casts */
 
             if (ac == -1) /* TODO recheck for -1 case */
                 return false; /* TODO need error reporting */
@@ -373,6 +383,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
             size_t ac_len = decoder->huff->ac_tbl[ac].len;
             uint16_t ac_size = decoder->huff->ac_tbl[ac].size;
             uint16_t ac_run = decoder->huff->ac_tbl[ac].run;
+
             b.pos += ac_len;
 
             if ((ac_run == 0) && (ac_size == 0)) {
@@ -402,6 +413,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
 
         flt_idct_8x8(decoder->jpeg, img_dct, dct);
         fill_pix(decoder, img_dct, apid, mcu_id, m);
+
         m++;
     }
 

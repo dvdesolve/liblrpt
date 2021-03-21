@@ -49,6 +49,7 @@
 const size_t LRPT_DECODER_SOFT_FRAME_LEN = 16384;
 
 /** Length of hard frame in bytes (produced after Viterbi decoding, r = 1/2) */
+/* TODO use multipliers here */
 const size_t LRPT_DECODER_HARD_FRAME_LEN = 1024;
 
 /*************************************************************************************************/

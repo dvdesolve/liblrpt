@@ -57,6 +57,7 @@ struct lrpt_decoder__ {
     uint8_t *decoded; /**< Decoded data */
     uint8_t *ecced; /**< ECCed data */
 
+    /* TODO do we need prev_pos? */
     /** @{ */
     /** Position information */
     size_t pos, prev_pos;
@@ -69,6 +70,7 @@ struct lrpt_decoder__ {
     uint8_t corr_word;
     /** @} */
 
+    /* TODO we should use special data type here because of future image manipulation */
     uint8_t *channel_image[6]; /**< Per-channel image representation for all six APIDs (64-69) */
 
     /** @{ */

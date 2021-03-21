@@ -35,11 +35,6 @@
 #include <stdint.h>
 #include <string.h>
 
-/* DEBUG */
-#include <inttypes.h>
-#include <stdio.h>
-/* DEBUG */
-
 /*************************************************************************************************/
 
 /* TODO it's related to the M_PDU header pointer */
@@ -63,7 +58,7 @@ static void parse_70(
  * \param apid APID number.
  * \param pck_cnt Packet count.
  */
-static void act_apd(
+static void act_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p,
         uint16_t apid,
@@ -74,7 +69,7 @@ static void act_apd(
  * \param decoder Pointer to the decoder object.
  * \param p Data buffer.
  */
-static void parse_apd(
+static void parse_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p);
 
@@ -106,8 +101,8 @@ static void parse_70(
 
 /*************************************************************************************************/
 
-/* act_apd() */
-static void act_apd(
+/* act_apid() */
+static void act_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p,
         uint16_t apid,
@@ -120,8 +115,8 @@ static void act_apd(
 
 /*************************************************************************************************/
 
-/* parse_apd() */
-static void parse_apd(
+/* parse_apid() */
+static void parse_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
     /* TODO recheck cast */
@@ -133,7 +128,7 @@ static void parse_apd(
     if (apid == 70) /* Parse onboard time data */
         parse_70(decoder, p + 14);
     else
-        act_apd(decoder, p + 14, apid, pck_cnt);
+        act_apid(decoder, p + 14, apid, pck_cnt);
 }
 
 /*************************************************************************************************/
@@ -157,7 +152,7 @@ static size_t parse_partial(
         return 0;
     }
 
-    parse_apd(decoder, p);
+    parse_apid(decoder, p);
 
     decoder->packet_part = false;
 
@@ -182,10 +177,6 @@ void lrpt_decoder_packet_parse_cvcdu(
     /* TODO deal with VCDU data unit zone */
     w = (uint16_t)((p[8] << 8) | p[9]);
     size_t hdr_off = (w & 0x07FF); /* TODO M_PDU header first pointer */
-
-    /* DEBUG */
-    fprintf(stderr, "lrpt_decoder_packet_parse_cvcdu(): frame_cnt = %" PRIu32 "; ver = %" PRIu8 "; fid = %" PRIu8 "; hdr_off = %zu\n", frame_cnt, ver, fid, hdr_off);
-    /* DEBUG */
 
     /* Deal with empty packets */
     /* TODO review that and process only AVHRR LR packets for now */

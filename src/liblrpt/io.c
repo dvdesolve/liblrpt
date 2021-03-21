@@ -482,6 +482,7 @@ bool lrpt_iq_file_goto(
     if (!file || !file->fhandle || sample > file->data_length)
         return false;
 
+    file->current = sample;
     fseek(file->fhandle, file->header_length + sample * 10 * 2, SEEK_SET);
 
     return true;
@@ -852,6 +853,7 @@ bool lrpt_qpsk_file_goto(
     if (!file || !file->fhandle || symbol > file->data_length)
         return false;
 
+    file->current = symbol; /* TODO add code for hard symbols */
     fseek(file->fhandle, file->header_length + symbol, SEEK_SET); /* TODO add code for hard symbols */
 
     return true;
