@@ -80,7 +80,7 @@ static inline double clamp_double(
  * \return tanh() value.
  */
 static inline double lut_tanh(
-        const double lut[], /* TODO [] vs * */
+        const double lut[],
         double value);
 
 /** (Re)computes the alpha and beta coefficients of the Costas' PLL from damping and bandwidth
@@ -293,8 +293,6 @@ void lrpt_demodulator_pll_correct_phase(
 
         pll->avg_winsize = PLL_AVG_WINSIZE * PLL_LOCKED_WINSIZEX / (double)interp_factor;
         pll->avg_winsize_1 = pll->avg_winsize - 1.0;
-
-        /* TODO we can report PLL lock here */
     }
     else if (pll->locked && (pll->moving_average > pll->pll_unlocked)) {
         recompute_coeffs(
@@ -305,8 +303,6 @@ void lrpt_demodulator_pll_correct_phase(
 
         pll->avg_winsize = PLL_AVG_WINSIZE / (double)interp_factor;
         pll->avg_winsize_1 = pll->avg_winsize - 1.0;
-
-        /* TODO we can report PLL unlock, framing loss (may be not) and zero signal quality here */
     }
 
     /* Limit frequency to a sensible range */

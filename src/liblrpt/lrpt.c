@@ -156,8 +156,7 @@ bool lrpt_iq_data_from_samples(
         return false;
 
     /* Merge samples into I/Q data */
-    for (size_t k = 0; k < length; k++)
-        data->iq[k] = *(iq + k); /* TODO may be use memcpy here */
+    memcpy(data->iq, iq, sizeof(complex double) * length);
 
     return true;
 }
@@ -328,8 +327,7 @@ bool lrpt_qpsk_data_from_symbols(
         return false;
 
     /* Merge symbols into QPSK data */
-    for (size_t k = 0; k < length; k++)
-        data->qpsk[k] = *(qpsk + k); /* TODO may be use memcpy here */
+    memcpy(data->qpsk, qpsk, sizeof(int8_t) * length);
 
     return true;
 }
