@@ -172,7 +172,6 @@ static void do_next_correlate(
     memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
 
     /* Advance decoder position */
-    decoder->prev_pos = decoder->pos;
     decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN;
 
     fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->corr_word);
@@ -194,7 +193,6 @@ static void do_full_correlate(
         memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
 
         /* Advance decoder position by a quarter of soft frame length */
-        decoder->prev_pos = decoder->pos;
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN / 4);
     }
     else { /* Otherwise we just combine data from two sections into aligned array */
@@ -205,7 +203,6 @@ static void do_full_correlate(
                 (data + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN), decoder->corr_pos);
 
         /* Advance decoder position */
-        decoder->prev_pos = (decoder->pos + decoder->corr_pos);
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN + decoder->corr_pos);
 
         fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->corr_word);

@@ -88,6 +88,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
     decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
     decoder->ecced = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
+    /* TODO avoid magic numbers */
     decoder->ecc_buf = calloc(255, sizeof(uint8_t)); /* ECC buffer */
     decoder->packet_buf = calloc(2048, sizeof(uint8_t)); /* Packet buffer */
 
@@ -102,7 +103,6 @@ lrpt_decoder_t *lrpt_decoder_init(
 
     /* Initialize internal state variables */
     decoder->pos = 0;
-    decoder->prev_pos = 0;
 
     decoder->corr_pos = 0;
     decoder->corr_word = 0;
@@ -180,7 +180,6 @@ void lrpt_decoder_exec(
     /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */
     /* DEBUG */
     decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
-    decoder->prev_pos -= LRPT_DECODER_SOFT_FRAME_LEN;
     /* DEBUG */
 
     /* TODO we can report here:

@@ -57,11 +57,7 @@ struct lrpt_decoder__ {
     uint8_t *ecced; /**< ECCed data */
     uint8_t *ecc_buf; /**< Buffer for ECC processing */
 
-    /* TODO do we need prev_pos? */
-    /** @{ */
-    /** Position information */
-    size_t pos, prev_pos;
-    /** @} */
+    size_t pos; /**< Position information */
 
     /** @{ */
     /** Correlator state variables (for shortcut) */
