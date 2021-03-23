@@ -29,7 +29,6 @@
 
 /*************************************************************************************************/
 
-#include "../../include/lrpt.h"
 #include "agc.h"
 #include "pll.h"
 #include "rrc.h"
@@ -47,7 +46,7 @@ struct lrpt_demodulator__ {
     lrpt_demodulator_pll_t *pll; /**< PLL object */
     lrpt_demodulator_rrc_filter_t *rrc; /**< RRC filter object */
 
-    lrpt_demodulator_mode_t mode; /**< Demodulator mode (QPSK or OQPSK) */
+    bool offset; /**< Offset modulation */
 
     uint32_t sym_rate; /**< Symbol rate */
     double sym_period; /**< Symbol period */

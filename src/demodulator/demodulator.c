@@ -68,7 +68,7 @@ static const double DEMOD_AGC_TARGET = 180.0;
 static inline int8_t clamp_int8(
         double x);
 
-/** Performs plain QPSK demodulation.
+/** Perform QPSK demodulation.
  *
  * \param demod Demodulator object.
  * \param fdata I/Q sample.
@@ -77,19 +77,6 @@ static inline int8_t clamp_int8(
  * \return \c true on successfull demodulation and \c false otherwise.
  */
 static bool demod_qpsk(
-        lrpt_demodulator_t *demod,
-        complex double fdata,
-        qpsk_sym_t *sym);
-
-/** Performs offset QPSK demodulation.
- *
- * \param demod Demodulator object.
- * \param fdata I/Q sample.
- * \param[out] sym Pointer to the output symbol.
- *
- * \return \c true on successfull demodulation and \c false otherwise.
- */
-static bool demod_oqpsk(
         lrpt_demodulator_t *demod,
         complex double fdata,
         qpsk_sym_t *sym);
@@ -124,76 +111,49 @@ static bool demod_qpsk(
     const double sp2p1 = sp2 + 1.0;
 
     /* Symbol timing recovery (Gardner) */
-    if ((demod->resync_offset >= sp2) && (demod->resync_offset < sp2p1))
-        demod->middle = lrpt_demodulator_agc_apply(demod->agc, fdata);
-    else if (demod->resync_offset >= sym_period) {
-        complex double current = lrpt_demodulator_agc_apply(demod->agc, fdata);
-
-        demod->resync_offset -= sym_period;
-
-        const double resync_error =
-            (cimag(current) - cimag(demod->before)) * cimag(demod->middle);
-
-        demod->resync_offset += (resync_error * sym_period / DEMOD_RESYNC_SCALE_QPSK);
-        demod->before = current;
-
-        /* Costas' loop frequency/phase tuning */
-        current = lrpt_demodulator_pll_mix(demod->pll, current);
-
-        const double delta = lrpt_demodulator_pll_delta(demod->pll, current, current);
-
-        lrpt_demodulator_pll_correct_phase(demod->pll, delta, demod->interp_factor);
-        demod->resync_offset += 1.0;
-
-        /* Save result */
-        sym->f = clamp_int8(creal(current) / 2.0);
-        sym->s = clamp_int8(cimag(current) / 2.0);
-
-        return true;
-    }
-
-    demod->resync_offset += 1.0;
-
-    return false;
-}
-
-/*************************************************************************************************/
-
-/* demod_oqpsk() */
-static bool demod_oqpsk(
-        lrpt_demodulator_t *demod,
-        complex double fdata,
-        qpsk_sym_t *sym) {
-    /* Helper variables */
-    const double sym_period = demod->sym_period;
-    const double sp2 = sym_period / 2.0;
-    const double sp2p1 = sp2 + 1.0;
-
-    /* Symbol timing recovery (Gardner) */
     if ((demod->resync_offset >= sp2) && (demod->resync_offset < sp2p1)) {
-        complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
+        if (demod->offset) {
+            const complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
 
-        demod->inphase = lrpt_demodulator_pll_mix(demod->pll, agc);
-        demod->middle = demod->prev_I + cimag(demod->inphase) * I;
-        demod->prev_I = creal(demod->inphase);
+            demod->inphase = lrpt_demodulator_pll_mix(demod->pll, agc);
+            demod->middle = demod->prev_I + cimag(demod->inphase) * I;
+            demod->prev_I = creal(demod->inphase);
+        }
+        else
+            demod->middle = lrpt_demodulator_agc_apply(demod->agc, fdata);
     }
     else if (demod->resync_offset >= sym_period) {
-        /* Symbol timing recovery (Gardner) */
-        complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
-        complex double quadrature = lrpt_demodulator_pll_mix(demod->pll, agc);
-        complex double current = demod->prev_I + cimag(quadrature) * I;
+        complex double current = 0, quadrature = 0; /* Needed to suppress dumb warning */
 
-        demod->prev_I = creal(quadrature);
+        if (demod->offset) {
+            const complex double agc = lrpt_demodulator_agc_apply(demod->agc, fdata);
+
+            /* Costas' loop frequency/phase tuning */
+            quadrature = lrpt_demodulator_pll_mix(demod->pll, agc);
+
+            current = demod->prev_I + cimag(quadrature) * I;
+            demod->prev_I = creal(quadrature);
+        }
+        else
+            current = lrpt_demodulator_agc_apply(demod->agc, fdata);
+
         demod->resync_offset -= sym_period;
 
         const double resync_error =
-            (cimag(quadrature) - cimag(demod->before)) * cimag(demod->middle);
+            (cimag((demod->offset) ? quadrature : current) -
+             cimag(demod->before)) * cimag(demod->middle);
 
-        demod->resync_offset += resync_error * sym_period / DEMOD_RESYNC_SCALE_OQPSK;
+        demod->resync_offset += (resync_error * sym_period /
+                ((demod->offset) ? DEMOD_RESYNC_SCALE_OQPSK : DEMOD_RESYNC_SCALE_QPSK));
         demod->before = current;
+
+        if (!demod->offset) /* Costas' loop frequency/phase tuning */
+            current = lrpt_demodulator_pll_mix(demod->pll, current);
 
         /* Carrier tracking */
-        const double delta = lrpt_demodulator_pll_delta(demod->pll, demod->inphase, quadrature);
+        const double delta = lrpt_demodulator_pll_delta(demod->pll,
+                (demod->offset) ? demod->inphase : current,
+                (demod->offset) ? quadrature : current);
 
         lrpt_demodulator_pll_correct_phase(demod->pll, delta, demod->interp_factor);
         demod->resync_offset += 1.0;
@@ -214,7 +174,7 @@ static bool demod_oqpsk(
 
 /* lrpt_demodulator_init() */
 lrpt_demodulator_t *lrpt_demodulator_init(
-        lrpt_demodulator_mode_t mode,
+        bool offset,
         double costas_bandwidth,
         uint8_t interp_factor,
         double demod_samplerate,
@@ -233,14 +193,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->pll = NULL;
     demod->rrc = NULL;
 
-    /* Store correct demodulation mode */
-    if ((mode != LRPT_DEMODULATOR_MODE_QPSK) && (mode != LRPT_DEMODULATOR_MODE_OQPSK)) {
-        lrpt_demodulator_deinit(demod);
-
-        return NULL;
-    }
-
-    demod->mode = mode;
+    /* Set correct demodulation mode */
+    demod->offset = offset;
 
     /* Initialize demodulator parameters */
     demod->sym_rate = symbol_rate;
@@ -259,7 +213,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
     /* Initialize Costas' PLL object */
     const double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
-    demod->pll = lrpt_demodulator_pll_init(pll_bw, pll_threshold, mode);
+    demod->pll = lrpt_demodulator_pll_init(pll_bw, pll_threshold, offset);
 
     if (!demod->pll) {
         lrpt_demodulator_deinit(demod);
@@ -356,13 +310,6 @@ bool lrpt_demodulator_exec(
         if (!lrpt_qpsk_data_resize(output, 2 * input->len * demod->interp_factor))
             return false;
 
-    bool (*demod_func)(lrpt_demodulator_t *, complex double, qpsk_sym_t *);
-
-    if (demod->mode == LRPT_DEMODULATOR_MODE_QPSK)
-        demod_func = demod_qpsk;
-    else if (demod->mode == LRPT_DEMODULATOR_MODE_OQPSK)
-        demod_func = demod_oqpsk;
-
     /* Intermediate result storage */
     qpsk_sym_t sym;
     size_t out_len = 0;
@@ -377,8 +324,7 @@ bool lrpt_demodulator_exec(
             complex double fdata = lrpt_demodulator_rrc_filter_apply(demod->rrc, cdata);
 
             /* Demodulate using appropriate function */
-            /* TODO may be pass flag for offset modulation instead of making two different funcs */
-            if (demod_func(demod, fdata, &sym)) {
+            if (demod_qpsk(demod, fdata, &sym)) {
                 output->qpsk[out_len] = sym.f;
                 output->qpsk[out_len + 1] = sym.s;
 

@@ -145,7 +145,7 @@ static void recompute_coeffs(
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
         double threshold,
-        lrpt_demodulator_mode_t mode) {
+        bool offset) {
     /* Try to allocate our PLL */
     lrpt_demodulator_pll_t *pll = malloc(sizeof(lrpt_demodulator_pll_t));
 
@@ -190,25 +190,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     pll->moving_average = 1.0e6;
 
     /* Error scaling depends on modulation mode */
-    switch (mode) {
-        case LRPT_DEMODULATOR_MODE_QPSK:
-            pll->err_scale = PLL_ERR_SCALE_QPSK;
-
-            break;
-
-        case LRPT_DEMODULATOR_MODE_OQPSK:
-            pll->err_scale = PLL_ERR_SCALE_OQPSK;
-
-            break;
-
-        /* All other modes are unsupported */
-        default:
-            lrpt_demodulator_pll_deinit(pll);
-
-            return NULL;
-
-            break;
-    }
+    pll->err_scale = (offset) ? PLL_ERR_SCALE_OQPSK : PLL_ERR_SCALE_QPSK;
 
     /* Initialize internal variables for phase correction routine */
     pll->avg_winsize = PLL_AVG_WINSIZE;

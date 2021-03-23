@@ -29,8 +29,6 @@
 
 /*************************************************************************************************/
 
-#include "../../include/lrpt.h"
-
 #include <complex.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -77,14 +75,14 @@ typedef struct lrpt_demodulator_pll__ {
  *
  * \param bandwidth Costas' PLL bandwidth.
  * \param threshold Locking threshold.
- * \param mode QPSK demodulation mode.
+ * \param offset Offsetted QPSK modulation mode.
  *
  * \return PLL object or \c NULL in case of error.
  */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
         double threshold,
-        lrpt_demodulator_mode_t mode);
+        bool offset);
 
 /** Frees previously allocated PLL object.
  *

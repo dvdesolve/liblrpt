@@ -261,6 +261,7 @@ static bool resync_stream(
 
 /*************************************************************************************************/
 
+/* TODO reimplement this so we'll be able to use it on the fly */
 /* lrpt_deinterleaver_exec() */
 bool lrpt_deinterleaver_exec(
         lrpt_qpsk_data_t *data) {

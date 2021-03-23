@@ -148,12 +148,6 @@ typedef enum lrpt_dsp_filter_type__ {
 /** Demodulator object type */
 typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 
-/** Available QPSK demodulator modes */
-typedef enum lrpt_demodulator_mode__ {
-    LRPT_DEMODULATOR_MODE_QPSK,   /**< Plain QPSK */
-    LRPT_DEMODULATOR_MODE_OQPSK /**< Offset QPSK */
-} lrpt_demodulator_mode_t;
-
 /** Dediffcoder object type */
 typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
 
@@ -752,7 +746,7 @@ LRPT_API bool lrpt_dsp_filter_apply(
  * \return Pointer to the demodulator object or \c NULL in case of error.
  */
 LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
-        lrpt_demodulator_mode_t mode,
+        bool offset,
         double costas_bandwidth,
         uint8_t interp_factor,
         double demod_samplerate,
