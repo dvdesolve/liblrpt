@@ -118,7 +118,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->sig_q = 0;
 
     decoder->packet_off = 0;
-    decoder->last_frame = 0;
+    decoder->last_vcdu = 0;
     decoder->packet_part = false;
 
     return decoder;
@@ -164,6 +164,9 @@ void lrpt_decoder_exec(
     /* Go through data given */
     while (decoder->pos < buf_len) { /* TODO this may be redundant if we'll require SFL-multiples only blocks of data; also see below */
         if (lrpt_decoder_data_process_frame(decoder, input->qpsk)) {
+            /* We're subtracting 132 because of 4 bytes of Reed-Solomon coding with interleaving
+             * depth of 4 and 128 bytes of CVCDU check symbols inside CVCDU
+             */
             lrpt_decoder_packet_parse_cvcdu(decoder, LRPT_DECODER_HARD_FRAME_LEN - 132);
 
             decoder->ok_cnt++;

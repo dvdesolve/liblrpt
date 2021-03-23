@@ -37,8 +37,8 @@
 
 /*************************************************************************************************/
 
-/* TODO it's related to the M_PDU header pointer */
-static const uint16_t PACKET_FULL_MARK = 2047; /**< Needed for discrimination of partial packets */
+/* Limit value of M_PDU header pointer. Needed for discrimination of partial packets. */
+static const uint16_t PACKET_FULL_MARK = 2047;
 
 /*************************************************************************************************/
 
@@ -119,13 +119,12 @@ static void act_apid(
 static void parse_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
-    /* TODO recheck cast */
-    uint16_t w = (uint16_t)((p[0] << 8) | p[1]);
+    uint16_t w = ((p[0] << 8) | p[1]);
     uint16_t apid = (w & 0x07FF); /* TODO consult with LRPT documentation for limit values */
 
     uint16_t pck_cnt = (uint16_t)((p[2] << 8) | p[3]) & 0x3FFF;
 
-    if (apid == 70) /* Parse onboard time data */
+    if (apid == 70) /* TODO parse onboard time data */
         parse_70(decoder, p + 14);
     else
         act_apid(decoder, p + 14, apid, pck_cnt);
@@ -167,34 +166,39 @@ void lrpt_decoder_packet_parse_cvcdu(
         size_t len) {
     uint8_t *p = decoder->ecced;
 
-    /* TODO do we need that explicit casts? */
-    /* TODO deal with VCDU primary header */
-    uint32_t frame_cnt = (uint32_t)((p[2] << 16) | (p[3] << 8) | p[4]); /* TODO that should be VCDU counter */
-    uint16_t w = (uint16_t)((p[0] << 8) | p[1]);
-    uint8_t ver = w >> 14;
-    uint8_t fid = w & 0x3F; /* TODO that should be VCDU-id */
+    /* Parse VCDU primary header */
+    /* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
+    uint16_t w = ((p[0] << 8) | p[1]); /* Version + VCDU-ID */
+    uint8_t ver = (w >> 14); /* CCSDS structure version (should be 0x01 for version-2) */
+    uint8_t vch_id = (w & 0x3F); /* Virtual channel identifier (should be 5 for LRPT AVHRR) */
+    uint32_t vcdu_cnt = ((p[2] << 16) | (p[3] << 8) | p[4]); /* VCDU counter */
 
-    /* TODO deal with VCDU data unit zone */
-    w = (uint16_t)((p[8] << 8) | p[9]);
-    size_t hdr_off = (w & 0x07FF); /* TODO M_PDU header first pointer */
+    /* Parse VCDU data unit zone */
+    w = ((p[8] << 8) | p[9]);
+    uint16_t hdr_off = (w & 0x07FF); /* M_PDU header first pointer */
 
-    /* Deal with empty packets */
-    /* TODO review that and process only AVHRR LR packets for now */
-    if ((ver == 0) || (fid == 0))
+    /* TODO as of now we're dropping only empty packets. However it should be extended for
+     * other applications too.
+     */
+    if ((ver == 0) || (vch_id == 0))
         return;
 
-    /* TODO we're subtracting 10 octets because of CVCDU structure */
+    /* Subtract 10 octets because of CVCDU structure to get M_PDU pointer */
     size_t data_len = len - 10;
 
-    if (frame_cnt == (decoder->last_frame + 1)) { /* TODO process consecutive frame */
+    if (vcdu_cnt == (decoder->last_vcdu + 1)) { /* Process consecutive VCDUs */
         if (decoder->packet_part) {
             if (hdr_off == PACKET_FULL_MARK) { /* For packets which are larger than one frame */
                 hdr_off = (len - 10);
-                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, sizeof(uint8_t) * hdr_off);
+                memcpy(decoder->packet_buf + decoder->packet_off,
+                        p + 10,
+                        sizeof(uint8_t) * hdr_off);
                 decoder->packet_off += hdr_off;
             }
             else {
-                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, sizeof(uint8_t) * hdr_off);
+                memcpy(decoder->packet_buf + decoder->packet_off,
+                        p + 10,
+                        sizeof(uint8_t) * hdr_off);
                 parse_partial(decoder, decoder->packet_buf, decoder->packet_off + hdr_off);
             }
         }
@@ -207,8 +211,8 @@ void lrpt_decoder_packet_parse_cvcdu(
         decoder->packet_off = 0;
     }
 
-    /* Store index of last frame */
-    decoder->last_frame = frame_cnt;
+    /* Store index of last VCDU */
+    decoder->last_vcdu = vcdu_cnt;
 
     data_len -= hdr_off;
     size_t off = hdr_off;

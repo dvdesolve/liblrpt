@@ -91,7 +91,7 @@ struct lrpt_decoder__ {
     /** Used by packet link layer processor */
     uint8_t *packet_buf;
     size_t packet_off;
-    uint32_t last_frame;
+    uint32_t last_vcdu;
     bool packet_part;
     /** @} */
 };

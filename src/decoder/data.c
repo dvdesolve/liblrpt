@@ -38,7 +38,8 @@
 
 /*************************************************************************************************/
 
-/* TODO randomization polynomial */
+/* Randomization polynomial */
+/* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
 static const uint8_t DECODER_PRAND_TBL[255] = {
     0xFF, 0x48, 0x0E, 0xC0, 0x9A, 0x0D, 0x70, 0xBC,
     0x8E, 0x2C, 0x93, 0xAD, 0xA7, 0xB7, 0x46, 0xCE,
@@ -76,6 +77,9 @@ static const uint8_t DECODER_PRAND_TBL[255] = {
 
 static const uint16_t DECODER_CORRELATION_MIN = 45; /**< Threshold for correlation */
 
+static const uint32_t DECODER_SYNC_WORD = 0x1DFCCF1A; /**< Sync word */
+static const uint32_t DECODER_SYNC_WORD_FLIP = 0xE20330E5; /**< Sync word, bitflipped */
+
 /*************************************************************************************************/
 
 /** Fix packet.
@@ -101,7 +105,10 @@ static void do_next_correlate(
 /** Perform full correlation.
  *
  * \param decoder Pointer to the decoder object.
- * \param raw Raw data array.
+ * \param data Data array.
+ *
+ * \warn \p data should contain at least two extra #LRPT_DECODER_SOFT_FRAME_LENGTH blocks
+ * so correlator will be able to perform full correlation run without violating memory access!
  */
 static void do_full_correlate(
         lrpt_decoder_t *decoder,
@@ -198,7 +205,6 @@ static void do_full_correlate(
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN / 4);
     }
     else { /* Otherwise we just combine data from two sections into aligned array */
-        /* TODO should be careful when no consequent data is present; otherwise we'll be accessing memory areas which are not ours */
         memcpy(decoder->aligned,
                 (data + decoder->pos + decoder->corr_pos),
                 sizeof(int8_t) * (LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
@@ -229,10 +235,9 @@ static bool decode_frame(
     /* Estimate signal quality */
     decoder->sig_q = 100 - lrpt_decoder_viterbi_ber_percent(decoder->vit);
 
-    /* TODO use named consts */
     /* You can flip all bits in a packet and get a correct ECC anyway. Check for that case */
-    if (lrpt_decoder_bitop_count(decoder->last_sync ^ 0xE20330E5) <
-            lrpt_decoder_bitop_count(decoder->last_sync ^ 0x1DFCCF1A)) {
+    if (lrpt_decoder_bitop_count(decoder->last_sync ^ DECODER_SYNC_WORD_FLIP) <
+            lrpt_decoder_bitop_count(decoder->last_sync ^ DECODER_SYNC_WORD)) {
         for (size_t i = 0; i < LRPT_DECODER_HARD_FRAME_LEN; i++)
             decoder->decoded[i] ^= 0xFF;
 

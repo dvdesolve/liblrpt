@@ -648,11 +648,16 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
             vit->table[i] = vit->table[i] | 0x02;
     }
 
-    /* Initialize inverted outputs */
-    /* TODO do smth with this warning */
-    uint8_t inv_outputs[VITERBI_PAIR_OUTPUTS_NUM];
-    memset(inv_outputs, 0, sizeof(uint8_t) * VITERBI_PAIR_OUTPUTS_NUM);
+    /* Temporary allocate inverted outputs array */
+    uint8_t *inv_outputs = calloc(VITERBI_PAIR_OUTPUTS_NUM, sizeof(uint8_t));
 
+    if (!inv_outputs) {
+        lrpt_decoder_viterbi_deinit(vit);
+
+        return NULL;
+    }
+
+    /* Fill up pair keys table */
     uint8_t oc = 1;
 
     for (uint8_t i = 0; i < VITERBI_PAIR_KEYS_NUM; i++) { /* TODO review casts */
@@ -666,6 +671,9 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
 
         vit->pair_keys[i] = inv_outputs[o];
     }
+
+    /* Free inverted outputs array */
+    free(inv_outputs);
 
     /* TODO should use explicit values */
     vit->pair_outputs_len = oc;
