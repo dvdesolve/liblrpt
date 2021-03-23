@@ -345,8 +345,8 @@ bool lrpt_utils_s_double(
     lrpt_utils_s_int16_t((int16_t)e, ex);
     lrpt_utils_s_int64_t((int64_t)(c_2to53 * m), mant);
 
-    memcpy(v, ex, 2);
-    memcpy(v + 2, mant, 8);
+    memcpy(v, ex, sizeof(unsigned char) * 2);
+    memcpy(v + 2, mant, sizeof(unsigned char) * 8);
 
     return true;
 }
@@ -363,8 +363,8 @@ bool lrpt_utils_ds_double(
     unsigned char ex[2];
     unsigned char mant[8];
 
-    memcpy(ex, x, 2);
-    memcpy(mant, x + 2, 8);
+    memcpy(ex, x, sizeof(unsigned char) * 2);
+    memcpy(mant, x + 2, sizeof(unsigned char) * 8);
 
     int16_t e = lrpt_utils_ds_int16_t(ex);
     double m = (double)lrpt_utils_ds_int64_t(mant) / c_2to53;

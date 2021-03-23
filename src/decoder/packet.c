@@ -190,11 +190,11 @@ void lrpt_decoder_packet_parse_cvcdu(
         if (decoder->packet_part) {
             if (hdr_off == PACKET_FULL_MARK) { /* For packets which are larger than one frame */
                 hdr_off = (len - 10);
-                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, hdr_off);
+                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, sizeof(uint8_t) * hdr_off);
                 decoder->packet_off += hdr_off;
             }
             else {
-                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, hdr_off);
+                memcpy(decoder->packet_buf + decoder->packet_off, p + 10, sizeof(uint8_t) * hdr_off);
                 parse_partial(decoder, decoder->packet_buf, decoder->packet_off + hdr_off);
             }
         }
@@ -218,7 +218,7 @@ void lrpt_decoder_packet_parse_cvcdu(
 
         if (decoder->packet_part) {
             decoder->packet_off = data_len;
-            memcpy(decoder->packet_buf, p + 10 + off, decoder->packet_off);
+            memcpy(decoder->packet_buf, p + 10 + off, sizeof(uint8_t) * decoder->packet_off);
 
             break;
         }

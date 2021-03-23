@@ -651,7 +651,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Initialize inverted outputs */
     /* TODO do smth with this warning */
     uint8_t inv_outputs[VITERBI_PAIR_OUTPUTS_NUM];
-    memset(inv_outputs, 0, VITERBI_PAIR_OUTPUTS_NUM);
+    memset(inv_outputs, 0, sizeof(uint8_t) * VITERBI_PAIR_OUTPUTS_NUM);
 
     uint8_t oc = 1;
 

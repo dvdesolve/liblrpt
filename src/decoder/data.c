@@ -169,7 +169,7 @@ static void do_next_correlate(
         lrpt_decoder_t *decoder,
         int8_t *data) {
     /* Just copy new part of data to the aligned buffer */
-    memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
+    memcpy(decoder->aligned, (data + decoder->pos), sizeof(int8_t) * LRPT_DECODER_SOFT_FRAME_LEN);
 
     /* Advance decoder position */
     decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN;
@@ -190,17 +190,21 @@ static void do_full_correlate(
 
     /* If low correlation observed just copy new part of data to the aligned buffer */
     if (decoder->corr_val < DECODER_CORRELATION_MIN) {
-        memcpy(decoder->aligned, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
+        memcpy(decoder->aligned,
+                (data + decoder->pos),
+                sizeof(int8_t) * LRPT_DECODER_SOFT_FRAME_LEN);
 
         /* Advance decoder position by a quarter of soft frame length */
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN / 4);
     }
     else { /* Otherwise we just combine data from two sections into aligned array */
         /* TODO should be careful when no consequent data is present; otherwise we'll be accessing memory areas which are not ours */
-        memcpy(decoder->aligned, (data + decoder->pos + decoder->corr_pos),
-                (LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
+        memcpy(decoder->aligned,
+                (data + decoder->pos + decoder->corr_pos),
+                sizeof(int8_t) * (LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
         memcpy((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos),
-                (data + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN), decoder->corr_pos);
+                (data + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN),
+                sizeof(int8_t) * decoder->corr_pos);
 
         /* Advance decoder position */
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN + decoder->corr_pos);

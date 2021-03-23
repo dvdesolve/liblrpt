@@ -528,12 +528,12 @@ bool lrpt_iq_data_read_from_file(
             unsigned char v_s[10];
             double i_part, q_part;
 
-            memcpy(v_s, file->iobuf + 20 * j, 10); /* I sample */
+            memcpy(v_s, file->iobuf + 20 * j, sizeof(unsigned char) * 10); /* I sample */
 
             if (!lrpt_utils_ds_double(v_s, &i_part))
                 return false;
 
-            memcpy(v_s, file->iobuf + 20 * j + 10, 10); /* Q sample */
+            memcpy(v_s, file->iobuf + 20 * j + 10, sizeof(unsigned char) * 10); /* Q sample */
 
             if (!lrpt_utils_ds_double(v_s, &q_part))
                 return false;
@@ -578,12 +578,12 @@ bool lrpt_iq_data_write_to_file(
             if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s))
                 return false;
 
-            memcpy(file->iobuf + 20 * j, v_s, 10); /* I sample */
+            memcpy(file->iobuf + 20 * j, v_s, sizeof(unsigned char) * 10); /* I sample */
 
             if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s))
                 return false;
 
-            memcpy(file->iobuf + 20 * j + 10, v_s, 10); /* Q sample */
+            memcpy(file->iobuf + 20 * j + 10, v_s, sizeof(unsigned char) * 10); /* Q sample */
         }
 
         /* Write block */

@@ -31,7 +31,6 @@
 #include "../../include/lrpt.h"
 #include "../liblrpt/lrpt.h"
 
-#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -174,7 +173,7 @@ static bool resync_stream(
         return false;
 
     /* Do a copy of the original data */
-    memcpy(tmp_buf, data->qpsk, data->len);
+    memcpy(tmp_buf, data->qpsk, sizeof(int8_t) * data->len);
 
     size_t resync_siz = 0;
     size_t posn = 0;
@@ -223,7 +222,7 @@ static bool resync_stream(
             /* Copy the actual data after the sync train and update total number of
              * copied symbols
              */
-            memcpy(data->qpsk + resync_siz, &tmp_buf[posn + 8], INTLV_DATA_LEN);
+            memcpy(data->qpsk + resync_siz, &tmp_buf[posn + 8], sizeof(int8_t) * INTLV_DATA_LEN);
             resync_siz += INTLV_DATA_LEN;
 
             /* Move on to the next sync train position */

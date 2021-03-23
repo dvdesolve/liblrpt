@@ -159,7 +159,7 @@ bool lrpt_decoder_ecc_decode(
 
     /* Prepare lambda array */
     uint8_t lambda[33];
-    memset(lambda, 0, 33 * sizeof(uint8_t));
+    memset(lambda, 0, sizeof(uint8_t) * 33);
     lambda[0] = 1;
 
     uint8_t b[33], t[33];
@@ -179,7 +179,7 @@ bool lrpt_decoder_ecc_decode(
         discr_r = ECC_IDX_TBL[discr_r];
 
         if (discr_r == 255) { /* Append 255 to b array and shift it */
-            memmove((b + 1), b, 32);
+            memmove((b + 1), b, sizeof(uint8_t) * 32);
             b[0] = 255;
         }
         else {
@@ -203,11 +203,11 @@ bool lrpt_decoder_ecc_decode(
                 }
             }
             else { /* Append 255 to b array and shift it */
-                memmove((b + 1), b, 32);
+                memmove((b + 1), b, sizeof(uint8_t) * 32);
                 b[0] = 255;
             }
 
-            memcpy(lambda, t, 33);
+            memcpy(lambda, t, sizeof(uint8_t) * 33);
         }
     }
 
@@ -221,7 +221,7 @@ bool lrpt_decoder_ecc_decode(
     }
 
     uint8_t reg[33];
-    memcpy((reg + 1), (lambda + 1), 32);
+    memcpy((reg + 1), (lambda + 1), sizeof(uint8_t) * 32);
 
     uint8_t root[32], loc[32];
     uint8_t num_fixed = 0;
