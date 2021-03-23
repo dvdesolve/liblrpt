@@ -41,8 +41,7 @@
 
 /* Library defaults */
 static const double PLL_INIT_FREQ = 0.001; /* Initial Costas' PLL frequency */
-//static const double PLL_DAMPING = 1.0 / M_SQRT2; /* Damping factor */
-static const double PLL_DAMPING = 0.7071; /* TODO change after debug */
+static const double PLL_DAMPING = 1.0 / M_SQRT2; /* Damping factor */
 
 static const double PLL_ERR_SCALE_QPSK = 43.0; /* Scaling factors to control error magnitude */
 static const double PLL_ERR_SCALE_OQPSK = 80.0;
@@ -52,12 +51,14 @@ static const double PLL_LOCKED_ERR_SCALE = 10.0; /* Phase error scale on lock */
 static const double PLL_DELTA_WINSIZE = 100.0; /* Moving average window for phase errors */
 static const double PLL_DELTA_WINSIZE_1 = PLL_DELTA_WINSIZE - 1.0;
 
-static const double PLL_LOCKED_BW_REDUCE = 4.0; /* PLL bandwidth reduction (in lock) */
+static const double PLL_LOCKED_BW_REDUCE = 4.0; /* PLL bandwidth reduction (in locked state) */
 
 static const double PLL_AVG_WINSIZE = 20000.0; /* Interpolation factor is taken into account now */
 static const double PLL_LOCKED_WINSIZEX = 10.0; /* Error average window size multiplier (in lock) */
 
 static const double PLL_FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
+
+static const uint16_t PLL_TANH_LUT_SIZE = 256; /* Size of tanh() lookup table */
 
 /*************************************************************************************************/
 
@@ -144,7 +145,8 @@ static void recompute_coeffs(
 /* lrpt_demodulator_pll_init() */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
-        double threshold,
+        double locked_threshold,
+        double unlocked_threshold,
         bool offset) {
     /* Try to allocate our PLL */
     lrpt_demodulator_pll_t *pll = malloc(sizeof(lrpt_demodulator_pll_t));
@@ -156,8 +158,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     pll->lut_tanh = NULL;
 
     /* Allocate lookup table for tanh() */
-    /* TODO avoid magic number 256! */
-    pll->lut_tanh = calloc(256, sizeof(double));
+    pll->lut_tanh = calloc(PLL_TANH_LUT_SIZE, sizeof(double));
 
     if (!pll->lut_tanh) {
         lrpt_demodulator_pll_deinit(pll);
@@ -166,7 +167,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     }
 
     /* Populate lookup table for tanh() */
-    for (size_t i = 0; i < 256; i++)
+    for (uint16_t i = 0; i < PLL_TANH_LUT_SIZE; i++)
         pll->lut_tanh[i] = tanh((double)((int)i - 128));
 
     /* Set default parameters */
@@ -178,13 +179,16 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     pll->bw = bandwidth;
 
     /* Set up thresholds for PLL hysteresis feature */
-    /* TODO may be we should use more customizable way to provide hysteresis feature of PLL lock */
-    pll->pll_locked = threshold;
-    pll->pll_unlocked = 1.03 * threshold;
+    if (unlocked_threshold <= locked_threshold) {
+        lrpt_demodulator_pll_deinit(pll);
 
-    /* TODO previously it allowed to reset of avg_winsize in Costas_Resync()
-     * if receiving is stopped and restarted while PLL is locked. May be we need to use false instead */
-    pll->locked = true;
+        return NULL;
+    }
+
+    pll->pll_locked = locked_threshold;
+    pll->pll_unlocked = unlocked_threshold;
+
+    pll->locked = false;
 
     /* Needed to cut off stray locks at startup */
     pll->moving_average = 1.0e6;

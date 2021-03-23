@@ -740,8 +740,9 @@ LRPT_API bool lrpt_dsp_filter_apply(
  * \param symbol_rate PSK symbol rate in Sym/s.
  * \param rrc_order Costas' PLL root raised cosine filter order.
  * \param rrc_alpha Costas' PLL root raised cosine filter alpha factor.
- * \param pll_threshold Costas' PLL locked threshold. Unlocked threshold will be set 3% above
- * it.
+ * \param pll_locked_threshold Costas' PLL locked threshold.
+ * \param pll_unlocked_threshold Costas' PLL unlocked threshold. Should be strictly greater than
+ * \p pll_locked_threshold!.
  *
  * \return Pointer to the demodulator object or \c NULL in case of error.
  */
@@ -753,7 +754,8 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
         uint32_t symbol_rate,
         uint16_t rrc_order,
         double rrc_alpha,
-        double pll_threshold);
+        double pll_locked_threshold,
+        double pll_unlocked_threshold);
 
 /** Free previously allocated demodulator object.
  *

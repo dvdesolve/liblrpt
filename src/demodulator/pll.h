@@ -74,14 +74,18 @@ typedef struct lrpt_demodulator_pll__ {
 /** Allocates and initializes PLL object.
  *
  * \param bandwidth Costas' PLL bandwidth.
- * \param threshold Locking threshold.
+ * \param locked_threshold Locking threshold.
+ * \param unlocked_threshold Unlocking threshold.
  * \param offset Offsetted QPSK modulation mode.
+ *
+ * \warn \p locked_threshold should be strictly lesser than \p unlocked_threshold!
  *
  * \return PLL object or \c NULL in case of error.
  */
 lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
-        double threshold,
+        double locked_threshold,
+        double unlocked_threshold,
         bool offset);
 
 /** Frees previously allocated PLL object.

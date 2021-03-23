@@ -181,7 +181,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         uint32_t symbol_rate,
         uint16_t rrc_order,
         double rrc_alpha,
-        double pll_threshold) {
+        double pll_locked_threshold,
+        double pll_unlocked_threshold) {
     /* Allocate our working demodulator */
     lrpt_demodulator_t *demod = malloc(sizeof(lrpt_demodulator_t));
 
@@ -212,7 +213,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
     /* Initialize Costas' PLL object */
     const double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
-    demod->pll = lrpt_demodulator_pll_init(pll_bw, pll_threshold, offset);
+    demod->pll =
+        lrpt_demodulator_pll_init(pll_bw, pll_locked_threshold, pll_unlocked_threshold, offset);
 
     if (!demod->pll) {
         lrpt_demodulator_deinit(demod);
