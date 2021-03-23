@@ -113,8 +113,7 @@ void lrpt_decoder_ecc_interleave(
         uint8_t *output,
         uint8_t pos,
         uint8_t n) {
-    /* TODO recheck if we should use 256 instead of 255 */
-    for (size_t i = 0; i < 255; i++)
+    for (uint8_t i = 0; i < 255; i++)
         output[i * n + pos] = input[i];
 }
 
@@ -126,7 +125,6 @@ void lrpt_decoder_ecc_deinterleave(
         uint8_t *output,
         uint8_t pos,
         uint8_t n) {
-    /* TODO recheck if we should use 256 instead of 255 */
     for (uint8_t i = 0; i < 255; i++)
         output[i] = input[i * n + pos];
 }

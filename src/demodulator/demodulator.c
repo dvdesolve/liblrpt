@@ -202,7 +202,6 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->interp_factor = interp_factor;
 
     /* Initialize AGC object */
-    /* TODO may be move DEMOD_AGC_TARGET inside agc.c */
     demod->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET);
 
     if (!demod->agc) {

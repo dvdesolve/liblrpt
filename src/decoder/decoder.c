@@ -72,6 +72,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->aligned = NULL;
     decoder->decoded = NULL;
     decoder->ecced = NULL;
+    decoder->ecc_buf = NULL;
     decoder->packet_buf = NULL;
 
     for (uint8_t i = 0; i < 6; i++)
@@ -87,11 +88,13 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
     decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
     decoder->ecced = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
+    decoder->ecc_buf = calloc(255, sizeof(uint8_t)); /* ECC buffer */
     decoder->packet_buf = calloc(2048, sizeof(uint8_t)); /* Packet buffer */
 
     /* Check for allocation problems */
     if (!decoder->corr || !decoder->vit || !decoder->huff || !decoder->jpeg ||
-            !decoder->aligned || !decoder->decoded || !decoder->ecced || !decoder->packet_buf) {
+            !decoder->aligned || !decoder->decoded || !decoder->ecced || !decoder->ecc_buf ||
+            !decoder->packet_buf) {
         lrpt_decoder_deinit(decoder);
 
         return NULL;
@@ -133,6 +136,7 @@ void lrpt_decoder_deinit(
         free(decoder->channel_image[i]);
 
     free(decoder->packet_buf);
+    free(decoder->ecc_buf);
     free(decoder->ecced);
     free(decoder->decoded);
     free(decoder->aligned);

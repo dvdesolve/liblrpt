@@ -247,12 +247,10 @@ static bool decode_frame(
     for (size_t i = 0; i < (LRPT_DECODER_HARD_FRAME_LEN - 4); i++)
         decoder->decoded[4 + i] ^= DECODER_PRAND_TBL[i % 255];
 
-    uint8_t ecc_buf[256]; /* TODO review if it's ok to use static array here */
-
     for (uint8_t i = 0; i < 4; i++) {
-        lrpt_decoder_ecc_deinterleave((decoder->decoded + 4), ecc_buf, i, 4);
-        decoder->r[i] = lrpt_decoder_ecc_decode(ecc_buf, 0);
-        lrpt_decoder_ecc_interleave(ecc_buf, decoder->ecced, i, 4);
+        lrpt_decoder_ecc_deinterleave((decoder->decoded + 4), decoder->ecc_buf, i, 4);
+        decoder->r[i] = lrpt_decoder_ecc_decode(decoder->ecc_buf, 0);
+        lrpt_decoder_ecc_interleave(decoder->ecc_buf, decoder->ecced, i, 4);
     }
 
     return (decoder->r[0] && decoder->r[1] && decoder->r[2] && decoder->r[3]);

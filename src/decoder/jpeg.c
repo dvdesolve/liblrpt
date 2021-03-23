@@ -39,6 +39,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/* DEBUG */
+#include <inttypes.h>
+#include <stdio.h>
+/* DEBUG */
+
 /*************************************************************************************************/
 
 /* TODO review and recheck */
@@ -251,7 +256,7 @@ static void fill_pix(
         uint16_t apid,
         uint8_t mcu_id,
         uint8_t m) {
-    int x, y, off = 0;
+    int x, y, off = 0; /* TODO recheck typing */
 
     for (size_t i = 0; i < 64; i++) {
         int t = (int)(round(img_dct[i] + 128.0)); /* TODO recheck type */
@@ -285,6 +290,9 @@ static void fill_pix(
 
         /* TODO signal in some kind of APID counters so we can analyze it later */
         decoder->channel_image[apid - 64][off] = (uint8_t)t;
+        /* DEBUG */
+        fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %d; t = %d\n", apid, off, t);
+        /* DEBUG */
         /* TODO stopped rechecking here; should be fine to dump images now */
     }
 }

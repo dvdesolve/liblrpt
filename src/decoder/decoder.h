@@ -52,10 +52,10 @@ struct lrpt_decoder__ {
     lrpt_decoder_huffman_t *huff; /**< Huffman decoder */
     lrpt_decoder_jpeg_t *jpeg; /**< JPEG decoder */
 
-    /* TODO review types here */
     int8_t *aligned; /**< Aligned data after correlation */
     uint8_t *decoded; /**< Decoded data */
     uint8_t *ecced; /**< ECCed data */
+    uint8_t *ecc_buf; /**< Buffer for ECC processing */
 
     /* TODO do we need prev_pos? */
     /** @{ */
