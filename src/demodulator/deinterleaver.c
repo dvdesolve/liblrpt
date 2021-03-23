@@ -42,17 +42,17 @@
 
 /* Library defaults */
 /* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
-static const size_t INTLV_BRANCHES = 36;
-static const size_t INTLV_DELAY = 2048;
-static const size_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
-static const size_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols */
-static const size_t INTLV_SYNC_LEN = 8; /* The length of sync word */
-static const size_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
+static const uint8_t INTLV_BRANCHES = 36;
+static const uint16_t INTLV_DELAY = 2048;
+static const uint32_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
+static const uint8_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols */
+static const uint8_t INTLV_SYNC_LEN = 8; /* The length of sync word */
+static const uint8_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
 
-static const size_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
-static const size_t SYNCD_BUF_MARGIN = SYNCD_DEPTH * INTLV_SYNCDATA;
-static const size_t SYNCD_BLOCK_SIZ = (SYNCD_DEPTH + 1) * INTLV_SYNCDATA;
-static const size_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
+static const uint8_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
+static const uint16_t SYNCD_BUF_MARGIN = SYNCD_DEPTH * INTLV_SYNCDATA;
+static const uint16_t SYNCD_BLOCK_SIZ = (SYNCD_DEPTH + 1) * INTLV_SYNCDATA;
+static const uint16_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
 
 /*************************************************************************************************/
 
@@ -76,9 +76,6 @@ static uint8_t qpsk_to_byte(
  * repeating every 80 symbols in stream).
  *
  * \param data Pointer to the data stream to find sync in.
- * \param block_siz Synced block size.
- * \param step Step size to look for sync (usually equals to the sum of data and interleaver).
- * \param depth Determines how deep we should search for a sync word.
  * \param[out] offset Pointer to the final offset value. Contains valid value only of search
  * was successfull.
  * \param[out] sync Pointer to the final value of sync byte.
@@ -87,9 +84,6 @@ static uint8_t qpsk_to_byte(
  */
 static bool find_sync(
         const int8_t *data,
-        size_t block_siz,
-        size_t step,
-        size_t depth,
         size_t *offset,
         uint8_t *sync);
 
@@ -128,34 +122,24 @@ static uint8_t qpsk_to_byte(
 /* find_sync() */
 static bool find_sync(
         const int8_t *data,
-        size_t block_siz,
-        size_t step,
-        size_t depth,
         size_t *offset,
         uint8_t *sync) {
-    int limit; /* TODO recheck typing */
-    uint8_t test;
-    bool result;
-
     *offset = 0;
-    result  = false;
-
-    /* Leave room in buffer for look-forward */
-    limit = block_siz - step * depth;
+    bool result  = false;
 
     /* Search for a sync byte at the beginning of block */
-    for (size_t i = 0; i < limit; i++) {
+    for (uint8_t i = 0; i < (SYNCD_BLOCK_SIZ - INTLV_SYNCDATA * SYNCD_DEPTH); i++) {
         result = true;
 
         /* Assemble a sync byte candidate */
         *sync = qpsk_to_byte(&data[i]);
 
-        /* Search ahead depth times in buffer to see if there are exactly equal sync
+        /* Search ahead SYNCD_DEPTH times in buffer to see if there are exactly equal sync
          * byte candidates at intervals of (sync + data = 80 syms) blocks
          */
-        for (size_t j = 1; j <= depth; j++) {
+        for (size_t j = 1; j <= SYNCD_DEPTH; j++) {
             /* Break if there is a mismatch at any position */
-            test = qpsk_to_byte(&data[i + j * step]);
+            uint8_t test = qpsk_to_byte(&data[i + j * INTLV_SYNCDATA]);
 
             if (*sync != test) {
                 result = false;
@@ -207,9 +191,6 @@ static bool resync_stream(
         /* Only search for sync if look-forward below fails to find a sync train */
         if (!find_sync(
                     &tmp_buf[posn],
-                    SYNCD_BLOCK_SIZ,
-                    INTLV_SYNCDATA,
-                    SYNCD_DEPTH,
                     &offset,
                     &sync)) {
             posn += SYNCD_BUF_STEP;
@@ -261,7 +242,6 @@ static bool resync_stream(
 
 /*************************************************************************************************/
 
-/* TODO reimplement this so we'll be able to use it on the fly */
 /* lrpt_deinterleaver_exec() */
 bool lrpt_deinterleaver_exec(
         lrpt_qpsk_data_t *data) {
@@ -284,9 +264,8 @@ bool lrpt_deinterleaver_exec(
     else
         return false;
 
-    /* Perform convolutional deinterleaving. Please refer to the
-     * https://en.wikipedia.org/wiki/Burst_error-correcting_code#Convolutional_interleaver
-     */
+    /* Perform convolutional deinterleaving */
+    /* https://en.wikipedia.org/wiki/Burst_error-correcting_code#Convolutional_interleaver */
     for (size_t i = 0; i < data->len; i++) {
         /* Offset by half a message to include leading and trailing fuzz */
         int64_t pos =
@@ -302,16 +281,6 @@ bool lrpt_deinterleaver_exec(
     /* Reassign pointers */
     free(data->qpsk);
     data->qpsk = res_buf;
-
-    /* For some reason original code (above) was changed to the following, however it yields
-     * trimmed data. I'll keep it here for the history.
-     */
-    /*for (size_t resync_idx = 0; resync_idx < *resync_siz; resync_idx++) {
-        size_t raw_idx = resync_idx + (resync_idx % INTLV_BRANCHES) * INTLV_BASE_LEN;
-
-        if (raw_idx < *resync_siz)
-            (*resync)[resync_idx] = raw[raw_idx];
-    }*/
 
     return true;
 }
