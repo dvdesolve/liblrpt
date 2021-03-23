@@ -36,9 +36,11 @@
 
 /** Decoder AC table data */
 typedef struct lrpt_decoder_huffman_acdata__ {
-    uint16_t run, size;
-    size_t len;
-    uint32_t mask, code;
+    uint16_t run;
+    uint8_t size;
+    uint8_t len;
+    uint16_t mask;
+    uint32_t code;
 } lrpt_decoder_huffman_acdata_t;
 
 /** Huffman decoder object */
@@ -46,8 +48,8 @@ typedef struct lrpt_decoder_huffman__ {
     size_t ac_tbl_len; /**< AC table length */
     lrpt_decoder_huffman_acdata_t *ac_tbl; /**< AC table */
 
-    size_t *ac_lut; /**< AC lookup table */
-    size_t *dc_lut; /**< DC lookup table */
+    int32_t *ac_lut; /**< AC lookup table */
+    int32_t *dc_lut; /**< DC lookup table */
 } lrpt_decoder_huffman_t;
 
 /*************************************************************************************************/
@@ -71,7 +73,7 @@ void lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff);
  *
  * \return AC Huffman code.
  */
-size_t lrpt_decoder_huffman_get_ac(
+int32_t lrpt_decoder_huffman_get_ac(
         const lrpt_decoder_huffman_t *huff,
         uint16_t w);
 
@@ -82,7 +84,7 @@ size_t lrpt_decoder_huffman_get_ac(
  *
  * \return DC Huffman code.
  */
-size_t lrpt_decoder_huffman_get_dc(
+int32_t lrpt_decoder_huffman_get_dc(
         const lrpt_decoder_huffman_t *huff,
         uint16_t w);
 
@@ -93,9 +95,9 @@ size_t lrpt_decoder_huffman_get_dc(
  *
  * \return Mapped range value.
  */
-int lrpt_decoder_huffman_map_range(
-        int cat,
-        uint32_t vl);
+int32_t lrpt_decoder_huffman_map_range(
+        uint8_t cat,
+        uint16_t val);
 
 /*************************************************************************************************/
 

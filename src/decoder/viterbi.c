@@ -191,7 +191,7 @@ static uint16_t metric_soft_distance(
             break;
     }
 
-    /* Linear distance */
+    /* Manhattan (linear) distance */
     return (uint16_t)(abs((int8_t)soft_y0 - soft_x0) + abs((int8_t)soft_y1 - soft_x1));
 
     /* Quadratic distance, results are not much better or worser. Needs math.h for sqrt and pow. */
@@ -381,14 +381,12 @@ static void viterbi_inner(
 
         const uint8_t highbase = (VITERBI_HIGH_BIT >> 1);
         uint8_t low = 0;
-        uint8_t high = VITERBI_HIGH_BIT;
         uint8_t base = 0;
 
-        while (high < VITERBI_NUM_ITER) {
+        for (uint8_t high = VITERBI_HIGH_BIT; high < VITERBI_NUM_ITER; high += 8) {
             uint8_t offset = 0;
-            uint8_t base_offset = 0;
 
-            while (base_offset < 4) {
+            for (uint8_t base_offset = 0; base_offset < 4; base_offset++) {
                 const uint8_t low_key = vit->pair_keys[base + base_offset];
                 const uint8_t high_key = vit->pair_keys[highbase + base + base_offset];
 
@@ -439,11 +437,9 @@ static void viterbi_inner(
                 history[plus_one_successor] = plus_one_history_mask;
 
                 offset += 2;
-                base_offset++;
             }
 
             low += 8;
-            high += 8;
             base += 4;
         }
 
@@ -472,10 +468,9 @@ static void viterbi_tail(
 
         const uint8_t highbase = (VITERBI_HIGH_BIT >> 1);
         uint8_t low = 0;
-        uint8_t high = VITERBI_HIGH_BIT;
         uint8_t base = 0;
 
-        while (high < VITERBI_NUM_ITER) {
+        for (uint8_t high = VITERBI_HIGH_BIT; high < VITERBI_NUM_ITER; high += skip) {
             const uint8_t low_output = vit->table[low];
             const uint8_t high_output = vit->table[high];
 
@@ -505,7 +500,6 @@ static void viterbi_tail(
             history[successor] = history_mask;
 
             low += skip;
-            high += skip;
             base += base_skip;
         }
 
@@ -577,6 +571,7 @@ static void convolutional_encode(
 
 /*************************************************************************************************/
 
+/* TODO add metric distance selection as a parameter */
 /* lrpt_decoder_viterbi_init() */
 lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Allocate Viterbi decoder object */

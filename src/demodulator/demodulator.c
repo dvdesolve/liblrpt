@@ -258,6 +258,7 @@ void lrpt_demodulator_deinit(
 
 /*************************************************************************************************/
 
+/* TODO review that and other accessor functions. Do we need that error-checking? */
 /* lrpt_demodulator_gain() */
 bool lrpt_demodulator_gain(
         const lrpt_demodulator_t *demod,
@@ -266,6 +267,7 @@ bool lrpt_demodulator_gain(
         return false;
 
     *gain = demod->agc->gain;
+
     return true;
 }
 
@@ -279,6 +281,7 @@ bool lrpt_demodulator_siglvl(
         return false;
 
     *level = demod->agc->average;
+
     return true;
 }
 
@@ -292,6 +295,7 @@ bool lrpt_demodulator_phaseerr(
         return false;
 
     *error = demod->pll->moving_average;
+
     return true;
 }
 

@@ -39,6 +39,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/* DEBUG */
+#include <inttypes.h>
+#include <stdio.h>
+/* DEBUG */
+
 /*************************************************************************************************/
 
 /* TODO review and recheck */
@@ -285,6 +290,9 @@ static void fill_pix(
 
         /* TODO signal in some kind of APID counters so we can analyze it later */
         decoder->channel_image[apid - 64][off] = (uint8_t)t;
+        /* DEBUG */
+        fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %d; t = %d\n", apid, off, t);
+        /* DEBUG */
         /* TODO stopped rechecking here; should be fine to dump images now */
     }
 }
@@ -354,20 +362,19 @@ bool lrpt_decoder_jpeg_decode_mcus(
     fill_dqt_by_q(dqt, q);
 
     double prev_dc = 0;
-    uint8_t m = 0;
 
     double zdct[64]; /* TODO why it is of double type? */
     double dct[64];
     double img_dct[64];
 
-    while (m < JPEG_MCU_PER_PACKET) {
-        int dc_cat = lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
+    for (uint8_t m = 0; m < JPEG_MCU_PER_PACKET; m++) {
+        int32_t dc_cat = lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
-        if (dc_cat == -1) /* TODO recheck for -1 case */
+        if (dc_cat == -1)
             return false; /* TODO need error reporting */
 
         b.pos += JPEG_DC_CAT_OFFSET[dc_cat];
-        uint32_t n = lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat);
+        uint16_t n = lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat);
 
         zdct[0] = lrpt_decoder_huffman_map_range(dc_cat, n) + prev_dc;
         prev_dc = zdct[0];
@@ -375,9 +382,9 @@ bool lrpt_decoder_jpeg_decode_mcus(
         uint8_t k = 1;
 
         while (k < 64) {
-            int ac = lrpt_decoder_huffman_get_ac(decoder->huff, (uint16_t)(lrpt_decoder_bitop_peek_n_bits(&b, 16))); /* TODO recheck casts */
+            int32_t ac = lrpt_decoder_huffman_get_ac(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
-            if (ac == -1) /* TODO recheck for -1 case */
+            if (ac == -1)
                 return false; /* TODO need error reporting */
 
             size_t ac_len = decoder->huff->ac_tbl[ac].len;
@@ -413,11 +420,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
 
         flt_idct_8x8(decoder->jpeg, img_dct, dct);
         fill_pix(decoder, img_dct, apid, mcu_id, m);
-
-        m++;
     }
-
-    /* TODO at this step image can be updated in realtime. State vars: channel_image, apid, cur_y */
 
     return true;
 }
