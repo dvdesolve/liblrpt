@@ -181,9 +181,7 @@ void lrpt_decoder_exec(
     }
 
     /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */
-    /* DEBUG */
     decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
-    /* DEBUG */
 
     /* TODO we can report here:
      * signal quality (sig_q)

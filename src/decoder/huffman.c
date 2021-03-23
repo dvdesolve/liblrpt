@@ -82,7 +82,6 @@ static int get_dc_real(
 
 /*****************************************************************************/
 
-/* TODO change w */
 /* get_ac_real() */
 static int get_ac_real(
         const lrpt_decoder_huffman_t *huff,
@@ -96,7 +95,6 @@ static int get_ac_real(
 
 /*****************************************************************************/
 
-/* TODO change w */
 /* get_dc_real() */
 static int get_dc_real(
         uint16_t w) {
@@ -106,22 +104,27 @@ static int get_dc_real(
     switch (w >> 13) {
         case 2:
             return 1;
+
             break;
 
         case 3:
             return 2;
+
             break;
 
         case 4:
             return 3;
+
             break;
 
         case 5:
             return 4;
+
             break;
 
         case 6:
             return 5;
+
             break;
     }
 
@@ -217,21 +220,18 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
         uint16_t min_val = min_code[min_valn];
         uint16_t max_val = maj_code[max_valn];
 
-        for (uint16_t j = 0; j < (1 << i); j++) {
+        for (uint32_t j = 0; j < (1 << i); j++) {
             if ((j <= max_val) && (j >= min_val)) {
-                uint16_t size_val = v[(i << 8) + j - (int)min_val];
+                uint16_t size_val = v[(i << 8) + j - min_val];
 
                 huff->ac_tbl[n].run = (size_val >> 4);
                 huff->ac_tbl[n].size = (size_val & 0x0F);
                 huff->ac_tbl[n].len = i;
-                huff->ac_tbl[n].mask = (1 << i) - 1;
-                huff->ac_tbl[n].code = (uint32_t)j;
+                huff->ac_tbl[n].mask = ((1 << i) - 1);
+                huff->ac_tbl[n].code = j;
 
                 n++;
             }
-
-            if (j == ((1 << i) - 1))
-                break;
         }
 
         min_valn++;
@@ -249,7 +249,6 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
         return NULL;
     }
 
-    /* TODO recheck this very carefully! */
     /* Zero out newly allocated portion (if any) */
     if (n > huff->ac_tbl_len)
         memset(new_ac_tbl + huff->ac_tbl_len, 0,

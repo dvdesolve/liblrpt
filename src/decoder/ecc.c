@@ -263,26 +263,20 @@ bool lrpt_decoder_ecc_decode(
     for (uint8_t i = 0; i <= deg_omega; i++) {
         uint8_t tmp = 0;
 
-        for (uint8_t j = i; j >= 0; j--) {
+        for (int8_t j = i; j >= 0; j--) { /* Signed type is needed for valid (j >= 0) */
             if ((s[i - j] != 255) && (lambda[j] != 255))
                 tmp ^= ECC_ALPHA_TBL[(s[i - j] + lambda[j]) % 255];
-
-            if (j == 0)
-                break;
         }
 
         omega[i] = ECC_IDX_TBL[tmp];
     }
 
-    for (uint8_t i = num_fixed - 1; i >= 0; i--) {
+    for (uint8_t i = (num_fixed - 1); i >= 0; i--) {
         uint8_t num1 = 0;
 
-        for (uint8_t j = deg_omega; j >= 0; j--) {
+        for (int8_t j = deg_omega; j >= 0; j--) { /* Signed type is needed for valid (j >= 0) */
             if (omega[j] != 255)
                 num1 ^= ECC_ALPHA_TBL[(omega[j] + j * root[i]) % 255];
-
-            if (j == 0)
-                break;
         }
 
         uint8_t num2 = ECC_ALPHA_TBL[(root[i] * 111 + 255) % 255];

@@ -142,6 +142,7 @@ static bool find_sync(
 
             if (*sync != test) {
                 result = false;
+
                 break;
             }
         }
@@ -151,6 +152,7 @@ static bool find_sync(
          */
         if (result) {
             *offset = i;
+
             break;
         }
     }
@@ -211,6 +213,7 @@ static bool resync_stream(
 
                     if (sync == test) {
                         ok = true;
+
                         break;
                     }
                 }
