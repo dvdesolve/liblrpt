@@ -103,7 +103,6 @@ uint8_t lrpt_decoder_bitop_count(
 
 /*************************************************************************************************/
 
-/* TODO use correct types (uchar) */
 /* lrpt_decoder_bitop_writer_set() */
 void lrpt_decoder_bitop_writer_set(
         lrpt_decoder_bitop_t *w,

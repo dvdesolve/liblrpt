@@ -80,6 +80,7 @@ struct lrpt_decoder__ {
     uint32_t last_sync;
     uint8_t sig_q;
     bool r[4];
+    bool framing_ok;
     /** @} */
 
     /** @{ */

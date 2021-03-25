@@ -47,10 +47,10 @@ typedef struct lrpt_decoder_jpeg__ {
     uint16_t cur_y, last_y;
     /** @} */
 
-    /* TODO recheck, may be type should be different */
     /** @{ */
     /** Packet indices */
-    int first_pck, prev_pck;
+    int32_t first_pck;
+    uint16_t prev_pck;
     /** @} */
 
     /** @{ */

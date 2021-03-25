@@ -42,7 +42,7 @@ static const uint16_t PACKET_FULL_MARK = 2047;
 
 /*************************************************************************************************/
 
-/** Parse APID 70 (onboard time).
+/** Parse APID 70.
  *
  * \param decoder Pointer to the decoder object.
  * \param p Data buffer.
@@ -134,7 +134,7 @@ static void parse_apid(
     uint16_t pck_cnt = (uint16_t)((p[2] << 8) | p[3]) & 0x3FFF;
 
     /* 14 is an offset to get User data directly */
-    if (apid == 70) /* TODO parse onboard time data */
+    if (apid == 70)
         parse_70(decoder, p + 14);
     else
         act_apid(decoder, p + 14, apid, pck_cnt);

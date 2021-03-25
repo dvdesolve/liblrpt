@@ -76,7 +76,7 @@ static const uint8_t JPEG_ZZ_TBL[64] = {
 };
 
 /** Offsets for DC Huffman codes */
-static const int JPEG_DC_CAT_OFFSET[12] = { 2, 3, 3, 3, 3, 3, 4, 5, 6, 7, 8, 9 };
+static const uint8_t JPEG_DC_CAT_OFFSET[12] = { 2, 3, 3, 3, 3, 3, 4, 5, 6, 7, 8, 9 };
 
 /*************************************************************************************************/
 

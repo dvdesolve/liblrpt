@@ -32,6 +32,7 @@
 #include "../liblrpt/lrpt.h"
 #include "correlator.h"
 #include "data.h"
+#include "ecc.h"
 #include "jpeg.h"
 #include "huffman.h"
 #include "packet.h"
@@ -43,11 +44,10 @@
 
 /*************************************************************************************************/
 
-/* Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
 const size_t LRPT_DECODER_SOFT_FRAME_LEN = 16384;
-
-/* Length of hard frame in bytes (produced after Viterbi decoding) */
 const size_t LRPT_DECODER_HARD_FRAME_LEN = LRPT_DECODER_SOFT_FRAME_LEN / (2 * 8);
+
+static const uint16_t DECODER_PACKET_BUF_LEN = 2048;
 
 /*************************************************************************************************/
 
@@ -86,9 +86,8 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
     decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
     decoder->ecced = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
-    /* TODO avoid magic numbers */
-    decoder->ecc_buf = calloc(255, sizeof(uint8_t)); /* ECC buffer */
-    decoder->packet_buf = calloc(2048, sizeof(uint8_t)); /* Packet buffer */
+    decoder->ecc_buf = calloc(ECC_BUF_LEN, sizeof(uint8_t)); /* ECC buffer */
+    decoder->packet_buf = calloc(DECODER_PACKET_BUF_LEN, sizeof(uint8_t)); /* Packet buffer */
 
     /* Check for allocation problems */
     if (!decoder->corr || !decoder->vit || !decoder->huff || !decoder->jpeg ||
@@ -114,6 +113,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->tot_cnt = 0;
 
     decoder->sig_q = 0;
+    decoder->framing_ok = false;
 
     decoder->packet_off = 0;
     decoder->last_vcdu = 0;
@@ -168,24 +168,16 @@ void lrpt_decoder_exec(
             lrpt_decoder_packet_parse_cvcdu(decoder, LRPT_DECODER_HARD_FRAME_LEN - 132);
 
             decoder->ok_cnt++;
-
-            /* TODO we can report Framing OK here */
+            decoder->framing_ok = true;
         }
-        else {
-            /* TODO we can report Framing non-OK here */
-        }
+        else
+            decoder->framing_ok = false;
 
         decoder->tot_cnt++; /* TODO this relies upon 16384-long blocks in input, should be changed */
     }
 
     /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */
     decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
-
-    /* TODO we can report here:
-     * signal quality (sig_q)
-     * total number of received packets (tot_cnt)
-     * percent of successfully decoded packets (ok_cnt / tot_cnt * 100), but flag for handling 0/0 is needed
-     */
 }
 
 /*************************************************************************************************/

@@ -34,7 +34,6 @@
 
 /*************************************************************************************************/
 
-/* TODO use correct types (uchar) */
 /** Bit I/O object */
 typedef struct lrpt_decoder_bitop__ {
     uint8_t *p; /**< Data */

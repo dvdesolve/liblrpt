@@ -105,6 +105,8 @@ static const uint8_t ECC_IDX_TBL[256] = {
     246, 135, 165, 23 , 58 , 163, 60 , 183
 };
 
+const uint8_t ECC_BUF_LEN = 255;
+
 /*************************************************************************************************/
 
 /* lrpt_decoder_ecc_interleave() */
@@ -113,7 +115,7 @@ void lrpt_decoder_ecc_interleave(
         uint8_t *output,
         uint8_t pos,
         uint8_t n) {
-    for (uint8_t i = 0; i < 255; i++)
+    for (uint8_t i = 0; i < ECC_BUF_LEN; i++)
         output[i * n + pos] = input[i];
 }
 
@@ -125,7 +127,7 @@ void lrpt_decoder_ecc_deinterleave(
         uint8_t *output,
         uint8_t pos,
         uint8_t n) {
-    for (uint8_t i = 0; i < 255; i++)
+    for (uint8_t i = 0; i < ECC_BUF_LEN; i++)
         output[i] = input[i * n + pos];
 }
 
@@ -140,7 +142,7 @@ bool lrpt_decoder_ecc_decode(
     for (uint8_t i = 0; i < 32; i++)
         s[i] = data[0];
 
-    for (uint8_t i = 1; i < (255 - pad); i++)
+    for (uint8_t i = 1; i < (ECC_BUF_LEN - pad); i++)
         for (uint8_t j = 0; j < 32; j++)
             if (s[j] == 0)
                 s[j] = data[i];
@@ -178,7 +180,7 @@ bool lrpt_decoder_ecc_decode(
 
         discr_r = ECC_IDX_TBL[discr_r];
 
-        if (discr_r == 255) { /* Append 255 to b array and shift it */
+        if (discr_r == 255) { /* Prepend 255 to b array and shift it */
             memmove((b + 1), b, sizeof(uint8_t) * 32);
             b[0] = 255;
         }

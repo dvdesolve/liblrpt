@@ -41,7 +41,7 @@
 /* Randomization polynomial. For more information see section "5.6 Randomisation",
  * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
  */
-static const uint8_t DECODER_PRAND_TBL[255] = {
+static const uint8_t DATA_PRAND_TBL[255] = {
     0xFF, 0x48, 0x0E, 0xC0, 0x9A, 0x0D, 0x70, 0xBC,
     0x8E, 0x2C, 0x93, 0xAD, 0xA7, 0xB7, 0x46, 0xCE,
     0x5A, 0x97, 0x7D, 0xCC, 0x32, 0xA2, 0xBF, 0x3E,
@@ -76,10 +76,10 @@ static const uint8_t DECODER_PRAND_TBL[255] = {
     0x08, 0x78, 0xC4, 0x4A, 0x66, 0xF5, 0x58
 };
 
-static const uint16_t DECODER_CORRELATION_MIN = 45; /**< Threshold for correlation */
+static const uint16_t DATA_CORRELATION_MIN = 45; /**< Threshold for correlation */
 
-static const uint32_t DECODER_SYNC_WORD = 0x1DFCCF1A; /**< Sync word */
-static const uint32_t DECODER_SYNC_WORD_FLIP = 0xE20330E5; /**< Sync word, bitflipped */
+static const uint32_t DATA_SYNC_WORD = 0x1DFCCF1A; /**< Sync word */
+static const uint32_t DATA_SYNC_WORD_FLIP = 0xE20330E5; /**< Sync word, bitflipped */
 
 /*************************************************************************************************/
 
@@ -197,7 +197,7 @@ static void do_full_correlate(
     decoder->corr_val = decoder->corr->correlation[decoder->corr_word];
 
     /* If low correlation observed just copy new part of data to the aligned buffer */
-    if (decoder->corr_val < DECODER_CORRELATION_MIN) {
+    if (decoder->corr_val < DATA_CORRELATION_MIN) {
         memcpy(decoder->aligned,
                 (data + decoder->pos),
                 sizeof(int8_t) * LRPT_DECODER_SOFT_FRAME_LEN);
@@ -237,8 +237,8 @@ static bool decode_frame(
     decoder->sig_q = 100 - lrpt_decoder_viterbi_ber_percent(decoder->vit);
 
     /* You can flip all bits in a packet and get a correct ECC anyway. Check for that case */
-    if (lrpt_decoder_bitop_count(decoder->last_sync ^ DECODER_SYNC_WORD_FLIP) <
-            lrpt_decoder_bitop_count(decoder->last_sync ^ DECODER_SYNC_WORD)) {
+    if (lrpt_decoder_bitop_count(decoder->last_sync ^ DATA_SYNC_WORD_FLIP) <
+            lrpt_decoder_bitop_count(decoder->last_sync ^ DATA_SYNC_WORD)) {
         for (size_t i = 0; i < LRPT_DECODER_HARD_FRAME_LEN; i++)
             decoder->decoded[i] ^= 0xFF;
 
@@ -252,7 +252,7 @@ static bool decode_frame(
 
     /* 4 is an offset because of sync word */
     for (size_t i = 0; i < (LRPT_DECODER_HARD_FRAME_LEN - 4); i++)
-        decoder->decoded[4 + i] ^= DECODER_PRAND_TBL[i % 255];
+        decoder->decoded[4 + i] ^= DATA_PRAND_TBL[i % 255];
 
     for (uint8_t i = 0; i < 4; i++) {
         lrpt_decoder_ecc_deinterleave((decoder->decoded + 4), decoder->ecc_buf, i, 4);

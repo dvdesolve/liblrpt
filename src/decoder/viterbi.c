@@ -551,8 +551,7 @@ static void convolutional_encode(
     b.p = input;
     b.pos = 0;
 
-    /* TODO review type and casts */
-    uint32_t sh = 0;
+    uint8_t sh = 0;
 
     for (uint16_t i = 0; i < VITERBI_FRAME_BITS; i++) {
         sh = ((sh << 1) | lrpt_decoder_bitop_fetch_n_bits(&b, 1)) & 0x7F;
@@ -603,7 +602,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Allocate internals */
     vit->bit_writer = malloc(sizeof(lrpt_decoder_bitop_t));
 
-    vit->dist_table = calloc(4 * 65536, sizeof(uint16_t)); /* TODO use static consts instead of 4 and 65536 */
+    vit->dist_table = calloc(4 * 65536, sizeof(uint16_t));
     vit->table = calloc(VITERBI_STATES_NUM, sizeof(uint8_t));
 
     vit->pair_outputs = calloc(VITERBI_PAIR_OUTPUTS_NUM, sizeof(uint16_t));
@@ -655,8 +654,8 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Fill up pair keys table */
     uint8_t oc = 1;
 
-    for (uint8_t i = 0; i < VITERBI_PAIR_KEYS_NUM; i++) { /* TODO review casts */
-        uint16_t o = (uint16_t)((vit->table[i * 2 + 1] << 2) | vit->table[i * 2]);
+    for (uint8_t i = 0; i < VITERBI_PAIR_KEYS_NUM; i++) {
+        uint16_t o = ((vit->table[i * 2 + 1] << 2) | vit->table[i * 2]);
 
         if (inv_outputs[o] == 0) {
             inv_outputs[o] = oc;
@@ -714,7 +713,7 @@ void lrpt_decoder_viterbi_deinit(
 /*************************************************************************************************/
 
 /* lrpt_decoder_viterbi_decode() */
-void lrpt_decoder_viterbi_decode( /* TODO may be rename to lrpt_decoder_viterbi_exec() or smth similar */
+void lrpt_decoder_viterbi_decode(
         lrpt_decoder_viterbi_t *vit,
         const lrpt_decoder_correlator_t *corr,
         const int8_t *input,

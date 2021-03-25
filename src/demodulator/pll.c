@@ -168,7 +168,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
     /* Populate lookup table for tanh() */
     for (uint16_t i = 0; i < PLL_TANH_LUT_SIZE; i++)
-        pll->lut_tanh[i] = tanh((double)((int)i - 128));
+        pll->lut_tanh[i] = tanh((double)((int)i - 128)); /* TODO do we need that cast? */
 
     /* Set default parameters */
     pll->nco_freq = PLL_INIT_FREQ;
