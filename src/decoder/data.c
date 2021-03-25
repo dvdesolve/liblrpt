@@ -38,8 +38,9 @@
 
 /*************************************************************************************************/
 
-/* Randomization polynomial */
-/* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
+/* Randomization polynomial. For more information see section "5.6 Randomisation",
+ * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+ */
 static const uint8_t DECODER_PRAND_TBL[255] = {
     0xFF, 0x48, 0x0E, 0xC0, 0x9A, 0x0D, 0x70, 0xBC,
     0x8E, 0x2C, 0x93, 0xAD, 0xA7, 0xB7, 0x46, 0xCE,
@@ -107,7 +108,7 @@ static void do_next_correlate(
  * \param decoder Pointer to the decoder object.
  * \param data Data array.
  *
- * \warn \p data should contain at least two extra #LRPT_DECODER_SOFT_FRAME_LENGTH blocks
+ * \warn \p data should contain at least two extra #LRPT_DECODER_SOFT_FRAME_LEN blocks
  * so correlator will be able to perform full correlation run without violating memory access!
  */
 static void do_full_correlate(

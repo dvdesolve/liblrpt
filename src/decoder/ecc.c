@@ -198,7 +198,7 @@ bool lrpt_decoder_ecc_decode(
                 for (uint8_t i = 0; i < 32; i++) {
                     if (lambda[i] == 0)
                         b[i] = 255;
-                    else /* TODO suspicious part here, may be overflow and cast is needed */
+                    else
                         b[i] = (ECC_IDX_TBL[lambda[i]] - discr_r + 255) % 255;
                 }
             }
@@ -232,7 +232,7 @@ bool lrpt_decoder_ecc_decode(
 
         for (uint8_t i = deg_lambda; i >= 1; i--) {
             if (reg[i] != 255) {
-                reg[i] = (reg[i] + i) % 255; /* TODO suspicious cast to uint8_t was here */
+                reg[i] = (reg[i] + i) % 255;
                 q ^= ECC_ALPHA_TBL[reg[i]];
             }
         }
@@ -243,7 +243,6 @@ bool lrpt_decoder_ecc_decode(
             continue;
         }
 
-        /* TODO do we need that casts? */
         root[num_fixed] = (n + 1);
         loc[num_fixed] = k;
         num_fixed++;

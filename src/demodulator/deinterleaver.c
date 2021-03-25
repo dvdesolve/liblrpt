@@ -39,8 +39,9 @@
 
 /*************************************************************************************************/
 
-/* Library defaults */
-/* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
+/* For more information see section "6.2 Interleaving",
+ * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+ */
 static const uint8_t INTLV_BRANCHES = 36;
 static const uint16_t INTLV_DELAY = 2048;
 static const uint32_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;

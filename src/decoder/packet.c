@@ -92,6 +92,9 @@ static size_t parse_partial(
 static void parse_70(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
+    /* TODO This is the code specific for Meteor-M2 only. For more information see appendix "A",
+     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+     */
     /* hour = p[8];
      * min = p[9];
      * sec = p[10];
@@ -107,6 +110,9 @@ static void act_apid(
         uint8_t *p,
         uint16_t apid,
         uint16_t pck_cnt) {
+    /* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
+     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+     */
     const uint8_t mcu_id = p[0];
     const uint8_t q = p[5];
 
@@ -119,11 +125,15 @@ static void act_apid(
 static void parse_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
+    /* For more information see section "3.2 Source Packet structure",
+     * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+     */
     uint16_t w = ((p[0] << 8) | p[1]);
     uint16_t apid = (w & 0x07FF); /* TODO consult with LRPT documentation for limit values */
 
     uint16_t pck_cnt = (uint16_t)((p[2] << 8) | p[3]) & 0x3FFF;
 
+    /* 14 is an offset to get User data directly */
     if (apid == 70) /* TODO parse onboard time data */
         parse_70(decoder, p + 14);
     else
@@ -137,6 +147,9 @@ static size_t parse_partial(
         lrpt_decoder_t *decoder,
         uint8_t *p,
         size_t len) {
+    /* For more information see section "3.2 Source Packet structure",
+     * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+     */
     if (len < 6) {
         decoder->packet_part = true;
 
@@ -166,8 +179,9 @@ void lrpt_decoder_packet_parse_cvcdu(
         size_t len) {
     uint8_t *p = decoder->ecced;
 
-    /* Parse VCDU primary header */
-    /* https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf */
+    /* Parse VCDU primary header. For more details see section "5 DATA LINK LAYER",
+     * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+     */
     uint16_t w = ((p[0] << 8) | p[1]); /* Version + VCDU-ID */
     uint8_t ver = (w >> 14); /* CCSDS structure version (should be 0x01 for version-2) */
     uint8_t vch_id = (w & 0x3F); /* Virtual channel identifier (should be 5 for LRPT AVHRR) */
@@ -183,7 +197,7 @@ void lrpt_decoder_packet_parse_cvcdu(
     if ((ver == 0) || (vch_id == 0))
         return;
 
-    /* Subtract 10 octets because of CVCDU structure to get M_PDU pointer */
+    /* Subtract 10 octets because of CVCDU structure to get pointer to the M_PDU packet zone */
     size_t data_len = len - 10;
 
     if (vcdu_cnt == (decoder->last_vcdu + 1)) { /* Process consecutive VCDUs */

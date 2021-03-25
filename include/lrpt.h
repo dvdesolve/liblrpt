@@ -165,6 +165,12 @@ typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
 /** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
 
+/** Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
+LRPT_API extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
+
+/** Length of hard frame in bytes (produced after Viterbi decoding) */
+LRPT_API extern const size_t LRPT_DECODER_HARD_FRAME_LEN;
+
 /** @} */
 
 /*************************************************************************************************/

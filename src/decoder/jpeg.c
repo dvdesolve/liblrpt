@@ -46,7 +46,9 @@
 
 /*************************************************************************************************/
 
-/* TODO review and recheck */
+/* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
+ * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+ */
 static const uint8_t JPEG_MCU_PER_PACKET = 14; /**< How many MCUs are in single packet? */
 
 /** Standard quantization table */
@@ -141,18 +143,13 @@ static void flt_idct_8x8(
 
             for (uint8_t u = 0; u < 8; u++) {
                 double cxu = jpeg->alpha[u] * jpeg->cosine[x][u];
+                double ss = 0;
 
-                /* TODO make loop */
-                /* Unrolled to 8 */
-                s += cxu * (
-                        in[0 * 8 + u] * jpeg->alpha[0] * jpeg->cosine[y][0] +
-                        in[1 * 8 + u] * jpeg->alpha[1] * jpeg->cosine[y][1] +
-                        in[2 * 8 + u] * jpeg->alpha[2] * jpeg->cosine[y][2] +
-                        in[3 * 8 + u] * jpeg->alpha[3] * jpeg->cosine[y][3] +
-                        in[4 * 8 + u] * jpeg->alpha[4] * jpeg->cosine[y][4] +
-                        in[5 * 8 + u] * jpeg->alpha[5] * jpeg->cosine[y][5] +
-                        in[6 * 8 + u] * jpeg->alpha[6] * jpeg->cosine[y][6] +
-                        in[7 * 8 + u] * jpeg->alpha[7] * jpeg->cosine[y][7]);
+                for (uint8_t i = 0; i < 8; i++)
+                    ss += in[i * 8 + u] * jpeg->alpha[i] * jpeg->cosine[y][i];
+
+                ss *= cxu;
+                s += ss;
             }
 
             res[y * 8 + x] = s / 4.0;
@@ -193,7 +190,6 @@ static bool progress_image(
 
     lrpt_decoder_jpeg_t *jpeg = decoder->jpeg;
 
-    /* TODO a bit awkward construct here; recheck how it's implemented in original medet */
     if (jpeg->first) {
         if (mcu_id != 0)
             return false;
@@ -203,6 +199,10 @@ static bool progress_image(
         jpeg->prev_pck = pck_cnt;
         jpeg->first_pck = pck_cnt;
 
+        /* TODO seems like there is some kind of mess. May be it's related to the Meteor-M2
+         * specifics (http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf). In any case
+         * that should be retested well in future with new spacecrafts and reviewed.
+         */
         /* Realign */
         if (apid == 65)
             jpeg->first_pck -= 14;
@@ -211,13 +211,21 @@ static bool progress_image(
             jpeg->first_pck -= 28;
     }
 
+    /* Handle counter reset. For more information see section "3.2 Source Packet structure",
+     * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+     */
     if (pck_cnt < jpeg->prev_pck)
         jpeg->first_pck -= 16384;
 
     jpeg->prev_pck = pck_cnt;
 
-    /* TODO 8 is MCU block size */
-    jpeg->cur_y = 8 * ((pck_cnt - jpeg->first_pck) / 43); /* TODO why 43? */
+    /* 8 is MCU block size; 43 = (14 + 14 + 14 + 1) - number of partial packets for single line.
+     * For more information see section "I",
+     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+     * and section "3.2 Source Packet structure",
+     * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
+     */
+    jpeg->cur_y = 8 * ((pck_cnt - jpeg->first_pck) / 43);
 
     if ((jpeg->cur_y > jpeg->last_y) || !jpeg->progressed) {
         size_t channel_image_height = jpeg->cur_y + 8;
@@ -227,7 +235,9 @@ static bool progress_image(
         /* TODO realloc is costly. May be pre-alloc big enough array is a better idea? */
         for (uint8_t i = 0; i < 6; i++)
             decoder->channel_image[i] = /* TODO add error checking */
-                reallocarray(decoder->channel_image[i], decoder->channel_image_size, sizeof(uint8_t));
+                reallocarray(decoder->channel_image[i],
+                        decoder->channel_image_size,
+                        sizeof(uint8_t));
 
         jpeg->progressed = true;
 
@@ -256,10 +266,8 @@ static void fill_pix(
         uint16_t apid,
         uint8_t mcu_id,
         uint8_t m) {
-    int x, y, off = 0; /* TODO recheck typing */
-
     for (size_t i = 0; i < 64; i++) {
-        int t = (int)(round(img_dct[i] + 128.0)); /* TODO recheck type */
+        int32_t t = (int32_t)(round(img_dct[i] + 128.0));
 
         if (t < 0)
             t = 0;
@@ -267,9 +275,9 @@ static void fill_pix(
         if (t > 255)
             t = 255;
 
-        x = (mcu_id + m) * 8 + i % 8;
-        y = decoder->jpeg->cur_y + i / 8;
-        off = x + y * 1568; /* TODO should use named constant here */
+        uint16_t x = (mcu_id + m) * 8 + i % 8;
+        uint16_t y = decoder->jpeg->cur_y + i / 8;
+        size_t off = x + y * 1568; /* TODO should use spacecraft-dependent parameter here */
 
         /* TODO that should be done in postprocessor later or a list of invertable APIDs should be given */
 //        bool inv = false;
@@ -291,9 +299,8 @@ static void fill_pix(
         /* TODO signal in some kind of APID counters so we can analyze it later */
         decoder->channel_image[apid - 64][off] = (uint8_t)t;
         /* DEBUG */
-        fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %d; t = %d\n", apid, off, t);
+        fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %zu; t = %" PRId32 "\n", apid, off, t);
         /* DEBUG */
-        /* TODO stopped rechecking here; should be fine to dump images now */
     }
 }
 
@@ -307,16 +314,15 @@ lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void) {
     if (!jpeg)
         return NULL;
 
-    /* TODO review naming */
     /* Initialize DCT tables */
-    for (size_t y = 0; y < 8; y++)
-        for (size_t x = 0; x < 8; x++)
+    for (uint8_t y = 0; y < 8; y++)
+        for (uint8_t x = 0; x < 8; x++)
             jpeg->cosine[y][x] = cos(M_PI / 16.0 * (2.0 * (double)y + 1.0) * (double)x);
 
     jpeg->alpha[0] = 1.0 / sqrt(2.0);
 
-    for (size_t x = 1; x < 8; x++)
-        jpeg->alpha[x] = 1.0;
+    for (uint8_t i = 1; i < 8; i++)
+        jpeg->alpha[i] = 1.0;
 
     /* Set internal state variables */
     jpeg->first = true;
@@ -367,11 +373,15 @@ bool lrpt_decoder_jpeg_decode_mcus(
     double dct[64];
     double img_dct[64];
 
+    /* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
+     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+     */
     for (uint8_t m = 0; m < JPEG_MCU_PER_PACKET; m++) {
-        int32_t dc_cat = lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
+        int32_t dc_cat =
+            lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
         if (dc_cat == -1)
-            return false; /* TODO need error reporting */
+            return false;
 
         b.pos += JPEG_DC_CAT_OFFSET[dc_cat];
         uint16_t n = lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat);
@@ -382,10 +392,11 @@ bool lrpt_decoder_jpeg_decode_mcus(
         uint8_t k = 1;
 
         while (k < 64) {
-            int32_t ac = lrpt_decoder_huffman_get_ac(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
+            int32_t ac =
+                lrpt_decoder_huffman_get_ac(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
             if (ac == -1)
-                return false; /* TODO need error reporting */
+                return false;
 
             size_t ac_len = decoder->huff->ac_tbl[ac].len;
             uint16_t ac_size = decoder->huff->ac_tbl[ac].size;

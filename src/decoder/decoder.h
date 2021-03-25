@@ -40,11 +40,6 @@
 
 /*************************************************************************************************/
 
-extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
-extern const size_t LRPT_DECODER_HARD_FRAME_LEN;
-
-/*************************************************************************************************/
-
 /** Decoder object */
 struct lrpt_decoder__ {
     lrpt_decoder_correlator_t *corr; /**< Correlator */

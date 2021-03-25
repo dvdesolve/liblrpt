@@ -44,7 +44,7 @@ typedef struct lrpt_decoder_jpeg__ {
 
     /** @{ */
     /** Need for tracking row number in transmitted image */
-    size_t cur_y, last_y;
+    uint16_t cur_y, last_y;
     /** @} */
 
     /* TODO recheck, may be type should be different */
