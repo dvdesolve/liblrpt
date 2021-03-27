@@ -737,7 +737,7 @@ void lrpt_decoder_viterbi_decode(
 /* lrpt_decoder_viterbi_ber_percent() */
 uint8_t lrpt_decoder_viterbi_ber_percent(
         const lrpt_decoder_viterbi_t *vit) {
-    return (100 * vit->ber / VITERBI_FRAME_BITS);
+    return (100 * vit->ber / (VITERBI_FRAME_BITS * 2));
 }
 
 /*************************************************************************************************/

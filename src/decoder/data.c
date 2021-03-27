@@ -234,7 +234,7 @@ static bool decode_frame(
     decoder->last_sync = tmp;
 
     /* Estimate signal quality */
-    decoder->sig_q = 100 - lrpt_decoder_viterbi_ber_percent(decoder->vit);
+    decoder->sig_q = (100 - lrpt_decoder_viterbi_ber_percent(decoder->vit));
 
     /* You can flip all bits in a packet and get a correct ECC anyway. Check for that case */
     if (lrpt_decoder_bitop_count(decoder->last_sync ^ DATA_SYNC_WORD_FLIP) <
