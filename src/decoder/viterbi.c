@@ -38,18 +38,19 @@
 
 /*************************************************************************************************/
 
-/* Library defaults */
-static const uint8_t VITERBI_STATES_NUM = 128; /**< Number of states of Viterbi decoder */
-static const uint8_t VITERBI_PAIR_OUTPUTS_NUM = 16; /**< 2 ^ (2 * rate), rate = 2 */
-static const uint8_t VITERBI_PAIR_KEYS_NUM = 64; /**< 2 ^ (order - 1), order = 7 */
-static const uint8_t VITERBI_TRACEBACK_MIN = 35; /**< Minimal traceback (5 * 7) */
-static const uint8_t VITERBI_TRACEBACK_LENGTH = 105; /**< Length of traceback (15 * 7) */
-static const uint8_t VITERBI_POLYA = 0x4F; /**< Viterbi polynomial A, 01001111 */
-static const uint8_t VITERBI_POLYB = 0x6D; /**< Viterbi polynomial B, 01101101 */
-static const uint16_t VITERBI_FRAME_BITS = 8192; /**< Number of bits in frame */
+static const uint8_t VITERBI_STATES_NUM = 128;
+static const uint8_t VITERBI_PAIR_OUTPUTS_NUM = 16; /* 2 ^ (2 * rate), rate = 2 */
+static const uint8_t VITERBI_PAIR_KEYS_NUM = 64; /* 2 ^ (order - 1), order = 7 */
+static const uint8_t VITERBI_TRACEBACK_MIN = 35; /* (5 * 7) */
+static const uint8_t VITERBI_TRACEBACK_LENGTH = 105; /* (15 * 7) */
+static const uint8_t VITERBI_POLYA = 0x4F; /* Viterbi polynomial A (G1), 01001111 */
+static const uint8_t VITERBI_POLYB = 0x6D; /* Viterbi polynomial B (G2), 01101101 */
+static const uint16_t VITERBI_FRAME_BITS = 8192; /* (LRPT_DECODER_SOFT_FRAME_LEN / rate), rate = 2 */
 static const uint8_t VITERBI_HIGH_BIT = 64;
 static const uint8_t VITERBI_NUM_ITER = (VITERBI_HIGH_BIT * 2);
 static const uint8_t VITERBI_RENORM_INTERVAL = 128; /* 65536 / (2 * 256) */
+static const uint32_t VITERBI_DIST_TBL_X = 65536;
+static const uint8_t VITERBI_DIST_TBL_Y = 4;
 
 /*************************************************************************************************/
 
@@ -213,7 +214,7 @@ static inline void swap_error_buffers(
 /* fill_pair_lookup_dists() */
 static void fill_pair_lookup_dists(
         lrpt_decoder_viterbi_t *vit) {
-    for (size_t i = 1; i < vit->pair_outputs_len; i++) {
+    for (uint8_t i = 1; i < vit->pair_outputs_len; i++) {
         const uint16_t c = vit->pair_outputs[i];
         const uint16_t i0 = (c & 0x03);
         const uint16_t i1 = (c >> 2);
@@ -287,9 +288,9 @@ static void history_buffer_traceback(
     else
         prefetch_index--;
 
-    uint8_t fetched_index = 0;
+    uint16_t fetched_index = 0;
 
-    for (size_t i = min_traceback_length; i < vit->len; i++) {
+    for (uint16_t i = min_traceback_length; i < vit->len; i++) {
         index = prefetch_index;
 
         if (prefetch_index == 0)
@@ -359,10 +360,10 @@ static void viterbi_inner(
         const int8_t *input) {
     for (uint8_t i = 0; i < 6; i++) {
         for (uint8_t j = 0; j < (1 << (i + 1)); j++) {
-            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2];
+            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2]; // TODO may be use bitshift instead of 256
 
             vit->write_errors[j] =
-                vit->dist_table[vit->table[j] * 65536 + idx] + vit->read_errors[j >> 1];
+                vit->dist_table[vit->table[j] * VITERBI_DIST_TBL_X + idx] + vit->read_errors[j >> 1];
         }
 
         swap_error_buffers(vit);
@@ -370,9 +371,9 @@ static void viterbi_inner(
 
     for (uint16_t i = 6; i < (VITERBI_FRAME_BITS - 6); i++) {
         for (uint8_t j = 0; j < 4; j++) {
-            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2];
+            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2]; // TODO may be use bitshift instead of 256
 
-            vit->distances[j] = vit->dist_table[j * 65536 + idx];
+            vit->distances[j] = vit->dist_table[j * VITERBI_DIST_TBL_X + idx];
         }
 
         uint8_t *history = vit->history + vit->hist_index * VITERBI_STATES_NUM;
@@ -456,9 +457,9 @@ static void viterbi_tail(
         const int8_t *input) {
     for (uint16_t i = (VITERBI_FRAME_BITS - 6); i < VITERBI_FRAME_BITS; i++) {
         for (uint8_t j = 0; j < 4; j++) {
-            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2];
+            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2]; // TODO may be use bitshift instead of 256
 
-            vit->distances[j] = vit->dist_table[j * 65536 + idx];
+            vit->distances[j] = vit->dist_table[j * VITERBI_DIST_TBL_X + idx];
         }
 
         uint8_t *history = vit->history + vit->hist_index * VITERBI_STATES_NUM;
@@ -602,7 +603,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Allocate internals */
     vit->bit_writer = malloc(sizeof(lrpt_decoder_bitop_t));
 
-    vit->dist_table = calloc(4 * 65536, sizeof(uint16_t));
+    vit->dist_table = calloc(VITERBI_DIST_TBL_X * VITERBI_DIST_TBL_Y, sizeof(uint16_t));
     vit->table = calloc(VITERBI_STATES_NUM, sizeof(uint8_t));
 
     vit->pair_outputs = calloc(VITERBI_PAIR_OUTPUTS_NUM, sizeof(uint16_t));
@@ -627,13 +628,13 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     }
 
     /* Init metric lookup table */
-    for (size_t i = 0; i < 4; i++)
-        for (size_t j = 0; j < 65536; j++)
-            vit->dist_table[i * 65536 + j] =
+    for (uint8_t i = 0; i < VITERBI_DIST_TBL_Y; i++)
+        for (uint32_t j = 0; j < VITERBI_DIST_TBL_X; j++)
+            vit->dist_table[i * VITERBI_DIST_TBL_X + j] =
                 metric_soft_distance((uint8_t)i, (uint8_t)(j & 0xFF), (uint8_t)(j >> 8));
 
     /* Polynomial table */
-    for (size_t i = 0; i < VITERBI_STATES_NUM; i++) {
+    for (uint8_t i = 0; i < VITERBI_STATES_NUM; i++) {
         vit->table[i] = 0;
 
         if (lrpt_decoder_bitop_count(i & VITERBI_POLYA) % 2)

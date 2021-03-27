@@ -79,14 +79,14 @@ static const uint8_t BITOP_BITCNT_TBL[256] = {
  */
 static inline uint8_t nth_byte(
         const uint8_t *l,
-        size_t n);
+        int8_t n);
 
 /*************************************************************************************************/
 
 /* nth_byte() */
 static inline uint8_t nth_byte(
         const uint8_t *l,
-        size_t n) {
+        int8_t n) {
     return *(l + n);
 }
 
@@ -125,10 +125,10 @@ void lrpt_decoder_bitop_writer_reverse(
     size_t byte_index = w->pos;
     uint16_t b;
 
-    l = l + len - 1;
+    l += (len - 1);
 
     if (w->cur_len != 0) {
-        uint8_t close_len = 8 - w->cur_len;
+        uint8_t close_len = 8 - w->cur_len; /* close_len in [1; 8] range now */
 
         if (close_len >= len)
             close_len = len;
@@ -145,12 +145,12 @@ void lrpt_decoder_bitop_writer_reverse(
 
         if ((w->cur_len + close_len) == 8) {
             b >>= 1;
-            bytes[byte_index] = (uint8_t)b;
+            bytes[byte_index] = b;
 
             byte_index++;
         }
         else {
-            w->cur = (uint8_t)b;
+            w->cur = b;
             w->cur_len += close_len;
 
             return;
@@ -170,19 +170,19 @@ void lrpt_decoder_bitop_writer_reverse(
         l -= 8;
     }
 
-    len -= 8 * full_bytes;
+    len -= 8 * full_bytes; /* len in [0; 7] range now */
 
     b = 0;
 
-    for (size_t i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++) {
         b |= l[0];
         b <<= 1;
         l--;
     }
 
-    w->cur = (uint8_t)b;
+    w->cur = b;
     w->pos = byte_index;
-    w->cur_len = len;
+    w->cur_len = len; /* cur_len in [0; 7] range now */
 }
 
 /*************************************************************************************************/
@@ -190,14 +190,14 @@ void lrpt_decoder_bitop_writer_reverse(
 /* lrpt_decoder_bitop_peek_n_bits() */
 uint32_t lrpt_decoder_bitop_peek_n_bits(
         lrpt_decoder_bitop_t *b,
-        size_t n) {
+        uint8_t n) {
     uint32_t result = 0;
 
-    for (size_t i = 0; i < n; i++) {
-        const size_t p = b->pos + i;
+    for (uint8_t i = 0; i < n; i++) {
+        const size_t p = (b->pos + i);
         const uint8_t bit = (b->p[p >> 3] >> (7 - (p & 0x07))) & 0x01;
 
-        result = (result << 1) | (uint32_t)bit;
+        result = (result << 1) | bit;
     }
 
     return result;
@@ -208,7 +208,7 @@ uint32_t lrpt_decoder_bitop_peek_n_bits(
 /* lrpt_decoder_bitop_fetch_n_bits() */
 uint32_t lrpt_decoder_bitop_fetch_n_bits(
         lrpt_decoder_bitop_t *b,
-        size_t n) {
+        uint8_t n) {
     uint32_t result = lrpt_decoder_bitop_peek_n_bits(b, n);
     b->pos += n;
 

@@ -698,7 +698,7 @@ LRPT_API bool lrpt_qpsk_data_write_to_file(
  * \param bandwidth Bandwidth of the signal, Hz.
  * \param samplerate Signal sampling rate.
  * \param ripple Ripple level, %.
- * \param num_poles Number of filter poles.
+ * \param num_poles Number of filter poles. Must be even and not greater than 252!
  * \param type Filter type.
  *
  * \return Pointer to the Chebyshev filter object or \c NULL in case of error.

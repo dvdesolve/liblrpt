@@ -52,7 +52,7 @@ struct lrpt_decoder__ {
     uint8_t *ecced; /**< ECCed data */
     uint8_t *ecc_buf; /**< Buffer for ECC processing */
 
-    size_t pos; /**< Position information */
+    size_t pos; /**< Decoder position */
 
     /** @{ */
     /** Correlator state variables (for shortcut) */
@@ -72,7 +72,7 @@ struct lrpt_decoder__ {
 
     /** @{ */
     /** Packet counters (only for stats) */
-    size_t ok_cnt, tot_cnt;
+    uint32_t ok_cnt, tot_cnt;
     /** @} */
 
     /** @{ */
@@ -86,7 +86,7 @@ struct lrpt_decoder__ {
     /** @{ */
     /** Used by packet link layer processor */
     uint8_t *packet_buf;
-    size_t packet_off;
+    uint16_t packet_off;
     uint32_t last_vcdu;
     bool packet_part;
     /** @} */

@@ -129,7 +129,7 @@ static bool decode_frame(
 /* fix_packet() */
 static void fix_packet(
         int8_t *data,
-        size_t len,
+        size_t len, /* TODO do we need to pass than len? */
         uint8_t shift) {
     len /= 2; /* Useful while swapping elements */
 

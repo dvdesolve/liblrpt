@@ -40,7 +40,7 @@ typedef struct lrpt_decoder_bitop__ {
 
     size_t pos; /**< Position */
     uint8_t cur; /**< Data at current position */
-    size_t cur_len; /**< Current length */
+    uint8_t cur_len; /**< Current length */
 } lrpt_decoder_bitop_t;
 
 /*************************************************************************************************/
@@ -83,7 +83,7 @@ void lrpt_decoder_bitop_writer_reverse(
  */
 uint32_t lrpt_decoder_bitop_peek_n_bits(
         lrpt_decoder_bitop_t *b,
-        size_t n);
+        uint8_t n);
 
 /** Fetch \p n bits from bit I/O object.
  *
@@ -94,7 +94,7 @@ uint32_t lrpt_decoder_bitop_peek_n_bits(
  */
 uint32_t lrpt_decoder_bitop_fetch_n_bits(
         lrpt_decoder_bitop_t *b,
-        size_t n);
+        uint8_t n);
 
 /*************************************************************************************************/
 

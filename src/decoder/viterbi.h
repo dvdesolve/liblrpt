@@ -46,9 +46,9 @@ typedef struct lrpt_decoder_viterbi__ {
     uint8_t *history;
     uint8_t *fetched;
 
-    size_t len;
+    uint16_t len;
     uint8_t hist_index;
-    size_t renormalize_counter;
+    uint8_t renormalize_counter;
     /** @} */
 
     /** @{ */

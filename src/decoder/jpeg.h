@@ -38,7 +38,6 @@
 
 /** JPEG decoder object */
 typedef struct lrpt_decoder_jpeg__ {
-    size_t last_mcu; /**< Last MCU number */
     bool first; /**< Whether we had some data previously or not */
     bool progressed; /**< Whether some progress were made on our image */
 

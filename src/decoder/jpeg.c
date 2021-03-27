@@ -89,7 +89,7 @@ static const uint8_t JPEG_DC_CAT_OFFSET[12] = { 2, 3, 3, 3, 3, 3, 4, 5, 6, 7, 8,
 static void flt_idct_8x8(
         lrpt_decoder_jpeg_t *jpeg,
         double *res,
-        const double *in);
+        const int32_t *in);
 
 /** Fill quantization table.
  *
@@ -136,7 +136,7 @@ static void fill_pix(
 static void flt_idct_8x8(
         lrpt_decoder_jpeg_t *jpeg,
         double *res,
-        const double *in) {
+        const int32_t *in) {
     for (uint8_t y = 0; y < 8; y++)
         for (uint8_t x = 0; x < 8; x++) {
             double s = 0;
@@ -146,7 +146,7 @@ static void flt_idct_8x8(
                 double ss = 0;
 
                 for (uint8_t i = 0; i < 8; i++)
-                    ss += in[i * 8 + u] * jpeg->alpha[i] * jpeg->cosine[y][i];
+                    ss += (double)(in[i * 8 + u]) * jpeg->alpha[i] * jpeg->cosine[y][i];
 
                 ss *= cxu;
                 s += ss;
@@ -230,7 +230,7 @@ static bool progress_image(
     jpeg->cur_y = 8 * ((pck_cnt - jpeg->first_pck) / 43);
 
     if ((jpeg->cur_y > jpeg->last_y) || !jpeg->progressed) {
-        size_t channel_image_height = jpeg->cur_y + 8;
+        uint16_t channel_image_height = jpeg->cur_y + 8;
 
         decoder->channel_image_size = decoder->channel_image_width * channel_image_height;
 
@@ -268,7 +268,7 @@ static void fill_pix(
         uint16_t apid,
         uint8_t mcu_id,
         uint8_t m) {
-    for (size_t i = 0; i < 64; i++) {
+    for (uint8_t i = 0; i < 64; i++) {
         int32_t t = (int32_t)(round(img_dct[i] + 128.0));
 
         if (t < 0)
@@ -330,7 +330,6 @@ lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void) {
     jpeg->first = true;
     jpeg->progressed = false;
 
-    jpeg->last_mcu = 0;
     jpeg->cur_y = 0;
     jpeg->last_y = 0;
     jpeg->first_pck = 0;
@@ -369,10 +368,9 @@ bool lrpt_decoder_jpeg_decode_mcus(
     uint16_t dqt[64];
     fill_dqt_by_q(dqt, q);
 
-    double prev_dc = 0;
-
-    double zdct[64]; /* TODO why it is of double type? */
-    double dct[64];
+    int32_t prev_dc = 0;
+    int32_t zdct[64];
+    int32_t dct[64];
     double img_dct[64];
 
     /* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
@@ -400,7 +398,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
             if (ac == -1)
                 return false;
 
-            size_t ac_len = decoder->huff->ac_tbl[ac].len;
+            uint8_t ac_len = decoder->huff->ac_tbl[ac].len;
             uint16_t ac_size = decoder->huff->ac_tbl[ac].size;
             uint16_t ac_run = decoder->huff->ac_tbl[ac].run;
 

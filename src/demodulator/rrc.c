@@ -98,9 +98,9 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
     const uint16_t taps = order * 2 + 1;
 
     rrc->count = taps;
-    rrc->coeffs = calloc((size_t)taps, sizeof(double));
+    rrc->coeffs = calloc(taps, sizeof(double));
     rrc->idm = 0;
-    rrc->memory = calloc((size_t)taps, sizeof(complex double));
+    rrc->memory = calloc(taps, sizeof(complex double));
 
     if (!rrc->coeffs || !rrc->memory) {
         lrpt_demodulator_rrc_filter_deinit(rrc);
@@ -109,7 +109,7 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
     }
 
     /* Compute filter coefficients */
-    for (size_t i = 0; i < taps; i++)
+    for (uint16_t i = 0; i < taps; i++)
         rrc->coeffs[i] = rrc_coeff((uint16_t)i, taps, osf * (double)factor, alpha);
 
     return rrc;

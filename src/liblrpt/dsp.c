@@ -74,7 +74,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     filter->ri = 0;
 
     /* Allocate data and coefficients arrays */
-    size_t n = (size_t)(num_poles + 3);
+    uint8_t n = (num_poles + 3);
 
     double * const ta = calloc(n, sizeof(double));
     double * const tb = calloc(n, sizeof(double));
@@ -82,7 +82,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     filter->b = calloc(n, sizeof(double));
 
     /* Allocate saved input and output arrays */
-    n = (size_t)(num_poles + 1);
+    n = (num_poles + 1);
 
     filter->x = calloc(n, sizeof(complex double));
     filter->y = calloc(n, sizeof(complex double));
@@ -237,11 +237,10 @@ bool lrpt_dsp_filter_apply(
 
     /* For convenient access purposes */
     const uint8_t npp1 = filter->npoles + 1;
-    const size_t len = data->len;
     complex double * const samples = data->iq;
 
     /* Filter samples in the buffer */
-    for (size_t buf_idx = 0; buf_idx < len; buf_idx++) {
+    for (size_t buf_idx = 0; buf_idx < data->len; buf_idx++) {
         complex double *cur_s = samples + buf_idx;
 
         /* Calculate and save filtered samples */

@@ -81,10 +81,10 @@ static void parse_apid(
  *
  * \return Packet length.
  */
-static size_t parse_partial(
+static uint16_t parse_partial(
         lrpt_decoder_t *decoder,
         uint8_t *p,
-        size_t len);
+        uint16_t len);
 
 /*************************************************************************************************/
 
@@ -143,10 +143,10 @@ static void parse_apid(
 /*************************************************************************************************/
 
 /* parse_partial() */
-static size_t parse_partial(
+static uint16_t parse_partial(
         lrpt_decoder_t *decoder,
         uint8_t *p,
-        size_t len) {
+        uint16_t len) {
     /* For more information see section "3.2 Source Packet structure",
      * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
      */
@@ -156,7 +156,7 @@ static size_t parse_partial(
         return 0;
     }
 
-    size_t len_pck = (p[4] << 8) | p[5];
+    uint16_t len_pck = (p[4] << 8) | p[5];
 
     if (len_pck >= (len - 6)) {
         decoder->packet_part = true;
@@ -176,7 +176,7 @@ static size_t parse_partial(
 /* lrpt_decoder_packet_parse_cvcdu() */
 void lrpt_decoder_packet_parse_cvcdu(
         lrpt_decoder_t *decoder,
-        size_t len) {
+        uint16_t len) {
     uint8_t *p = decoder->ecced;
 
     /* Parse VCDU primary header. For more details see section "5 DATA LINK LAYER",
@@ -198,7 +198,7 @@ void lrpt_decoder_packet_parse_cvcdu(
         return;
 
     /* Subtract 10 octets because of CVCDU structure to get pointer to the M_PDU packet zone */
-    size_t data_len = len - 10;
+    uint16_t data_len = (len - 10);
 
     if (vcdu_cnt == (decoder->last_vcdu + 1)) { /* Process consecutive VCDUs */
         if (decoder->packet_part) {
@@ -229,10 +229,10 @@ void lrpt_decoder_packet_parse_cvcdu(
     decoder->last_vcdu = vcdu_cnt;
 
     data_len -= hdr_off;
-    size_t off = hdr_off;
+    uint16_t off = hdr_off;
 
     while (data_len > 0) {
-        size_t n = parse_partial(decoder, p + 10 + off, data_len);
+        uint16_t n = parse_partial(decoder, p + 10 + off, data_len);
 
         if (decoder->packet_part) {
             decoder->packet_off = data_len;

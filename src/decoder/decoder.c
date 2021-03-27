@@ -154,7 +154,7 @@ void lrpt_decoder_deinit(
 void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
         lrpt_qpsk_data_t *input,
-        size_t buf_len) {
+        size_t buf_len) { /* TODO may be use input data length and process it accordingly (check for 2 extra SFLs as in do_full_correlate(), e. g.) */
     /* Return immediately if no valid input was given */
     if (!input)
         return;
@@ -162,6 +162,7 @@ void lrpt_decoder_exec(
     /* Go through data given */
     while (decoder->pos < buf_len) { /* TODO this may be redundant if we'll require SFL-multiples only blocks of data; also see below */
         if (lrpt_decoder_data_process_frame(decoder, input->qpsk)) {
+            /* TODO may be don't pass length at all */
             /* We're subtracting 132 because of 4 bytes of Reed-Solomon coding with interleaving
              * depth of 4 and 128 bytes of CVCDU check symbols inside CVCDU
              */

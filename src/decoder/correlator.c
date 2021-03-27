@@ -35,8 +35,8 @@
 
 /*************************************************************************************************/
 
-static const size_t CORR_PATTERN_SIZE = 64; /**< Pattern size for correlator */
-static const size_t CORR_PATTERN_COUNT = 8; /**< Number of patterns */
+static const uint8_t CORR_PATTERN_SIZE = 64; /**< Pattern size for correlator */
+static const uint8_t CORR_PATTERN_COUNT = 8; /**< Number of patterns */
 /** CCSDS synchronization word (0x1ACFFC1D) in Viterbi-encoded form */
 static const uint64_t CORR_SYNC_WORD_ENC = 0xFCA2B63DB00D9794;
 static const uint32_t CORR_LIMIT = 55; /**< Correlation limit */
@@ -51,7 +51,7 @@ static const uint32_t CORR_LIMIT = 55; /**< Correlation limit */
  */
 static void set_patterns(
         lrpt_decoder_correlator_t *corr,
-        size_t n,
+        uint8_t n,
         uint64_t p);
 
 /** Rotate symbol.
@@ -65,7 +65,7 @@ static void set_patterns(
 static uint8_t rotate_iq(
         const lrpt_decoder_correlator_t *corr,
         uint8_t data,
-        size_t shift);
+        uint8_t shift);
 
 /** Rotate word.
  *
@@ -78,7 +78,7 @@ static uint8_t rotate_iq(
 static uint64_t rotate_iq_qw(
         const lrpt_decoder_correlator_t *corr,
         uint64_t data,
-        size_t shift);
+        uint8_t shift);
 
 /** Invert word.
  *
@@ -96,9 +96,9 @@ static uint64_t flip_iq_qw(
 /* set_patterns() */
 static void set_patterns(
         lrpt_decoder_correlator_t *corr,
-        size_t n,
+        uint8_t n,
         uint64_t p) {
-    for (size_t i = 0; i < CORR_PATTERN_SIZE; i++) {
+    for (uint8_t i = 0; i < CORR_PATTERN_SIZE; i++) {
         if ((p >> (CORR_PATTERN_SIZE - i - 1)) & 0x01)
             corr->patterns[i * CORR_PATTERN_SIZE + n] = 0xFF;
         else
@@ -112,7 +112,7 @@ static void set_patterns(
 static uint8_t rotate_iq(
         const lrpt_decoder_correlator_t *corr,
         uint8_t data,
-        size_t shift) {
+        uint8_t shift) {
     if ((shift == 1) | (shift == 3))
         data = corr->rotate_iq_tab[data];
 
@@ -128,10 +128,10 @@ static uint8_t rotate_iq(
 static uint64_t rotate_iq_qw(
         const lrpt_decoder_correlator_t *corr,
         uint64_t data,
-        size_t shift) {
+        uint8_t shift) {
     uint64_t result = 0;
 
-    for (size_t i = 0; i < CORR_PATTERN_COUNT; i++) {
+    for (uint8_t i = 0; i < CORR_PATTERN_COUNT; i++) {
         uint8_t bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
 
         result <<= 8;
@@ -149,7 +149,7 @@ static uint64_t flip_iq_qw(
         uint64_t data) {
     uint64_t result = 0;
 
-    for (size_t i = 0; i < CORR_PATTERN_COUNT; i++) {
+    for (uint8_t i = 0; i < CORR_PATTERN_COUNT; i++) {
         uint8_t bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
 
         result <<= 8;
@@ -198,19 +198,19 @@ lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(void) {
     }
 
     /* Initialize correlator tables */
-    for (size_t i = 0; i < 256; i++) {
-        corr->rotate_iq_tab[i] = (uint8_t)((((i & 0x55) ^ 0x55) << 1) | ((i & 0xAA) >> 1));
-        corr->invert_iq_tab[i] = (uint8_t)(( (i & 0x55)         << 1) | ((i & 0xAA) >> 1));
+    for (uint16_t i = 0; i < 256; i++) {
+        corr->rotate_iq_tab[i] = ((((i & 0x55) ^ 0x55) << 1) | ((i & 0xAA) >> 1));
+        corr->invert_iq_tab[i] = (((i & 0x55) << 1) | ((i & 0xAA) >> 1));
 
-        for (size_t j = 0; j < 256; j++)
+        for (uint16_t j = 0; j < 256; j++)
             corr->corr_tab[i * 256 + j] =
-                (uint8_t)(((i > 127) && (j == 0)) || ((i <= 127) && (j == 255)));
+                (((i > 127) && (j == 0)) || ((i <= 127) && (j == 255))) ? 1 : 0;
     }
 
-    for (size_t i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < 4; i++)
         set_patterns(corr, i, rotate_iq_qw(corr, CORR_SYNC_WORD_ENC, i));
 
-    for (size_t i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < 4; i++)
         set_patterns(corr, i + 4, rotate_iq_qw(corr, flip_iq_qw(corr, CORR_SYNC_WORD_ENC), i));
 
     return corr;

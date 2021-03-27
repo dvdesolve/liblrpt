@@ -258,7 +258,6 @@ void lrpt_demodulator_deinit(
 
 /*************************************************************************************************/
 
-/* TODO review that and other accessor functions. Do we need that error-checking? */
 /* lrpt_demodulator_gain() */
 bool lrpt_demodulator_gain(
         const lrpt_demodulator_t *demod,

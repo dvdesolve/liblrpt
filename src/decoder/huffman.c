@@ -100,6 +100,9 @@ static int32_t get_ac_real(
 /* get_dc_real() */
 static int32_t get_dc_real(
         uint16_t w) {
+    /* Standard Codecs: Image Compression to Advanced Video Coding (IET Telecommunications Series),
+     * M. Ghanbari. Appendix B, table B.1
+     */
     if ((w >> 14) == 0)
         return 0;
 
@@ -183,11 +186,11 @@ lrpt_decoder_huffman_t *lrpt_decoder_huffman_init(void) {
     uint16_t min_code[17], maj_code[17];
     uint32_t code = 0;
 
-    for (size_t i = 1; i <= 16; i++) {
-        min_code[i] = (uint16_t)code;
+    for (uint8_t i = 1; i <= 16; i++) {
+        min_code[i] = code;
 
-        for (size_t j = 1; j <= HUFF_AC_Y_TBL[i - 1]; j++)
-            code++;
+        if (HUFF_AC_Y_TBL[i - 1] >= 1)
+            code += HUFF_AC_Y_TBL[i - 1];
 
         maj_code[i] = (code - ((code != 0) ? 1 : 0));
         code *= 2;

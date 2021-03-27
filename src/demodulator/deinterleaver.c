@@ -76,7 +76,7 @@ static uint8_t qpsk_to_byte(
  * repeating every 80 symbols in stream).
  *
  * \param data Pointer to the data stream to find sync in.
- * \param[out] offset Pointer to the final offset value. Contains valid value only of search
+ * \param[out] offset Pointer to the final offset value. Contains valid value only if search
  * was successfull.
  * \param[out] sync Pointer to the final value of sync byte.
  *
@@ -84,7 +84,7 @@ static uint8_t qpsk_to_byte(
  */
 static bool find_sync(
         const int8_t *data,
-        size_t *offset,
+        uint8_t *offset,
         uint8_t *sync);
 
 /** Perform stream resyncing.
@@ -122,7 +122,7 @@ static uint8_t qpsk_to_byte(
 /* find_sync() */
 static bool find_sync(
         const int8_t *data,
-        size_t *offset,
+        uint8_t *offset,
         uint8_t *sync) {
     *offset = 0;
     bool result  = false;
@@ -137,7 +137,7 @@ static bool find_sync(
         /* Search ahead SYNCD_DEPTH times in buffer to see if there are exactly equal sync
          * byte candidates at intervals of (sync + data = 80 syms) blocks
          */
-        for (size_t j = 1; j <= SYNCD_DEPTH; j++) {
+        for (uint8_t j = 1; j <= SYNCD_DEPTH; j++) {
             /* Break if there is a mismatch at any position */
             uint8_t test = qpsk_to_byte(&data[i + j * INTLV_SYNCDATA]);
 
@@ -180,7 +180,7 @@ static bool resync_stream(
 
     size_t resync_siz = 0;
     size_t posn = 0;
-    size_t offset = 0;
+    uint8_t offset = 0;
     size_t limit1 = data->len - SYNCD_BUF_MARGIN;
     size_t limit2 = data->len - INTLV_SYNCDATA;
 
@@ -206,7 +206,7 @@ static bool resync_stream(
             /* Look ahead to prevent it losing sync on a weak signal */
             bool ok = false;
 
-            for (size_t i = 0; i < 128; i++) {
+            for (uint8_t i = 0; i < 128; i++) {
                 size_t tmp = posn + i * INTLV_SYNCDATA;
 
                 if (tmp < limit2) {

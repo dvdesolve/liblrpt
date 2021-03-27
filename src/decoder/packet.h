@@ -42,7 +42,7 @@
  */
 void lrpt_decoder_packet_parse_cvcdu(
         lrpt_decoder_t *decoder,
-        size_t len);
+        uint16_t len);
 
 /*************************************************************************************************/
 

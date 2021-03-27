@@ -68,11 +68,11 @@ void lrpt_utils_s_uint16_t(
     t.ui = x;
 
     if (is_be()) {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             v[i] = t.uc[i];
     }
     else {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             v[i] = t.uc[1 - i];
     }
 }
@@ -88,11 +88,11 @@ uint16_t lrpt_utils_ds_uint16_t(
     } t;
 
     if (is_be()) {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             t.uc[i] = x[i];
     }
     else {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             t.uc[i] = x[1 - i];
     }
 
@@ -113,11 +113,11 @@ void lrpt_utils_s_int16_t(
     t.si = x;
 
     if (is_be()) {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             v[i] = t.uc[i];
     }
     else {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             v[i] = t.uc[1 - i];
     }
 }
@@ -133,11 +133,11 @@ int16_t lrpt_utils_ds_int16_t(
     } t;
 
     if (is_be()) {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             t.uc[i] = x[i];
     }
     else {
-        for (size_t i = 0; i < 2; i++)
+        for (uint8_t i = 0; i < 2; i++)
             t.uc[i] = x[1 - i];
     }
 
@@ -158,11 +158,11 @@ void lrpt_utils_s_uint32_t(
     t.ui = x;
 
     if (is_be()) {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             v[i] = t.uc[i];
     }
     else {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             v[i] = t.uc[3 - i];
     }
 }
@@ -178,11 +178,11 @@ uint32_t lrpt_utils_ds_uint32_t(
     } t;
 
     if (is_be()) {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             t.uc[i] = x[i];
     }
     else {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             t.uc[i] = x[3 - i];
     }
 
@@ -203,11 +203,11 @@ void lrpt_utils_s_int32_t(
     t.si = x;
 
     if (is_be()) {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             v[i] = t.uc[i];
     }
     else {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             v[i] = t.uc[3 - i];
     }
 }
@@ -223,11 +223,11 @@ int32_t lrpt_utils_ds_int32_t(
     } t;
 
     if (is_be()) {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             t.uc[i] = x[i];
     }
     else {
-        for (size_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
             t.uc[i] = x[3 - i];
     }
 
@@ -248,11 +248,11 @@ void lrpt_utils_s_uint64_t(
     t.ui = x;
 
     if (is_be()) {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             v[i] = t.uc[i];
     }
     else {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             v[i] = t.uc[7 - i];
     }
 }
@@ -268,11 +268,11 @@ uint64_t lrpt_utils_ds_uint64_t(
     } t;
 
     if (is_be()) {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             t.uc[i] = x[i];
     }
     else {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             t.uc[i] = x[7 - i];
     }
 
@@ -293,11 +293,11 @@ void lrpt_utils_s_int64_t(
     t.si = x;
 
     if (is_be()) {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             v[i] = t.uc[i];
     }
     else {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             v[i] = t.uc[7 - i];
     }
 }
@@ -313,11 +313,11 @@ int64_t lrpt_utils_ds_int64_t(
     } t;
 
     if (is_be()) {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             t.uc[i] = x[i];
     }
     else {
-        for (size_t i = 0; i < 8; i++)
+        for (uint8_t i = 0; i < 8; i++)
             t.uc[i] = x[7 - i];
     }
 

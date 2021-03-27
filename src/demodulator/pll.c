@@ -58,7 +58,7 @@ static const double PLL_LOCKED_WINSIZEX = 10.0; /* Error average window size mul
 
 static const double PLL_FREQ_MAX = 0.8; /* Maximum frequency range of locked PLL */
 
-static const uint16_t PLL_TANH_LUT_SIZE = 256; /* Size of tanh() lookup table */
+static const uint16_t PLL_TANH_LUT_LEN = 256; /* Size of tanh() lookup table */
 
 /*************************************************************************************************/
 
@@ -158,7 +158,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     pll->lut_tanh = NULL;
 
     /* Allocate lookup table for tanh() */
-    pll->lut_tanh = calloc(PLL_TANH_LUT_SIZE, sizeof(double));
+    pll->lut_tanh = calloc(PLL_TANH_LUT_LEN, sizeof(double));
 
     if (!pll->lut_tanh) {
         lrpt_demodulator_pll_deinit(pll);
@@ -167,7 +167,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     }
 
     /* Populate lookup table for tanh() */
-    for (uint16_t i = 0; i < PLL_TANH_LUT_SIZE; i++)
+    for (uint16_t i = 0; i < PLL_TANH_LUT_LEN; i++)
         pll->lut_tanh[i] = tanh((double)(i - 128));
 
     /* Set default parameters */
