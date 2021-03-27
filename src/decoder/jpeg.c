@@ -201,7 +201,9 @@ static bool progress_image(
 
         /* TODO seems like there is some kind of mess. May be it's related to the Meteor-M2
          * specifics (http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf). In any case
-         * that should be retested well in future with new spacecrafts and reviewed.
+         * that should be retested well in future with new spacecrafts and reviewed. It's even
+         * better to pass current active APIDs by hand so we can do right things here.
+         * Or may be we can decide proper APIDs on the pre-analysis...
          */
         /* Realign */
         if (apid == 65)
