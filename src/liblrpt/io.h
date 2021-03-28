@@ -45,8 +45,8 @@ struct lrpt_iq_file__ {
     uint32_t samplerate; /**< Sampling rate */
     char *device_name; /**< Device name info */
 
-    uint64_t header_length; /**< Length of header data */
-    uint64_t data_length; /**< Number of I/Q samples in file */
+    uint64_t header_len; /**< Length of header data */
+    uint64_t data_len; /**< Number of I/Q samples in file */
     uint64_t current; /**< Current I/Q sample in file stream */
 
     unsigned char *iobuf; /**< Temporary buffer for reading/writing */
@@ -62,8 +62,8 @@ struct lrpt_qpsk_file__ {
     unsigned char flags; /**< Demod flags (mode, diffcoding, interleaving, symbol type etc) */
     uint32_t symrate; /**< Symbol rate */
 
-    uint64_t header_length; /**< Length of header data */
-    uint64_t data_length; /**< Number of QPSK samples in file */
+    uint64_t header_len; /**< Length of header data */
+    uint64_t data_len; /**< Number of QPSK samples in file */
     uint64_t current; /**< Current QPSK sample in file stream */
 };
 

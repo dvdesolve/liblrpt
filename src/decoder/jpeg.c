@@ -138,7 +138,7 @@ static void flt_idct_8x8(
         lrpt_decoder_jpeg_t *jpeg,
         double *res,
         const int32_t *in) {
-    for (uint8_t y = 0; y < 8; y++)
+    for (uint8_t y = 0; y < 8; y++) {
         for (uint8_t x = 0; x < 8; x++) {
             double s = 0;
 
@@ -155,6 +155,7 @@ static void flt_idct_8x8(
 
             res[y * 8 + x] = s / 4.0;
         }
+    }
 }
 
 /*************************************************************************************************/

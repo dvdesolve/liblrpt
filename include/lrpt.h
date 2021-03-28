@@ -181,16 +181,16 @@ LRPT_API extern const size_t LRPT_DECODER_HARD_FRAME_LEN;
 
 /** Allocate I/Q data storage object.
  *
- * Tries to allocate storage for I/Q data of requested \p length. User should free the object with
+ * Tries to allocate storage for I/Q data of requested \p len. User should free the object with
  * #lrpt_iq_data_free() after use.
  *
- * \param length Length of new I/Q data storage. If zero length is requested, empty storage
+ * \param len Length of new I/Q data storage. If zero length is requested, empty storage
  * will be allocated but it will be possible to resize it later with #lrpt_iq_data_resize().
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation has failed.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(
-        size_t length);
+        size_t len);
 
 /** Free previously allocated I/Q data storage.
  *
@@ -210,37 +210,37 @@ LRPT_API size_t lrpt_iq_data_length(
 
 /** Resize existing I/Q data storage.
  *
- * If valid \p data is provided it will be resized to accomodate \p new_length I/Q pairs. If new
+ * If valid \p data is provided it will be resized to accomodate \p new_len I/Q pairs. If new
  * storage was allocated during resize it will be initialized to 0.
  *
  * \param data Pointer to the I/Q data storage object.
- * \param new_length Length \p data will be resized to.
+ * \param new_len Length \p data will be resized to.
  *
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
-        size_t new_length);
+        size_t new_len);
 
 /** Convert array of I/Q samples into library format.
  *
- * Converts array of I/Q samples \p iq of size \p length into library format of I/Q
+ * Converts array of I/Q samples \p iq of size \p len into library format of I/Q
  * data storage. Storage given with \p data will be auto-resized to fit requested data length.
  *
  * \param data Pointer to the I/Q data storage object.
  * \param iq Pointer to the array of I/Q samples.
- * \param length Number of samples to merge into I/Q data.
+ * \param len Number of samples to merge into I/Q data.
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
  * \warning It's the user's responsibility to be sure that \p iq array contain at least
- * \p length samples!
+ * \p len samples!
  */
 LRPT_API bool lrpt_iq_data_from_samples(
         lrpt_iq_data_t *data,
         const complex double *iq,
-        size_t length);
+        size_t len);
 
 /** Create I/Q storage object from I/Q samples.
  *
@@ -248,7 +248,7 @@ LRPT_API bool lrpt_iq_data_from_samples(
  * I/Q storage automatically.
  *
  * \param iq Pointer to the array of I/Q samples.
- * \param length Number of samples in I and Q arrays to repack into I/Q data.
+ * \param len Number of samples in I and Q arrays to repack into I/Q data.
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation was
  * unsuccessful.
@@ -258,29 +258,29 @@ LRPT_API bool lrpt_iq_data_from_samples(
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const complex double *iq,
-        size_t length);
+        size_t len);
 
 /** Merge separate arrays of double-typed I/Q samples into library format.
  *
- * Merges arrays of I and Q samples (\p i and \p q) of size \p length each into library format
+ * Merges arrays of I and Q samples (\p i and \p q) of size \p len each into library format
  * of I/Q data storage. Storage given with \p data will be auto-resized to fit
  * requested data length.
  *
  * \param data Pointer to the I/Q data storage object.
  * \param i Pointer to the array of I samples.
  * \param q Pointer to the array of Q samples.
- * \param length Number of samples in I and Q arrays to merge into I/Q data.
+ * \param len Number of samples in I and Q arrays to merge into I/Q data.
  *
  * \return \c true on successfull merging and \c false otherwise.
  *
  * \warning It's the user's responsibility to be sure that \p i and \p q arrays contain at least
- * \p length samples!
+ * \p len samples!
  */
 LRPT_API bool lrpt_iq_data_from_doubles(
         lrpt_iq_data_t *data,
         const double *i,
         const double *q,
-        size_t length);
+        size_t len);
 
 /** Create I/Q storage object from double-typed I/Q samples.
  *
@@ -289,7 +289,7 @@ LRPT_API bool lrpt_iq_data_from_doubles(
  *
  * \param i Pointer to the array of I samples.
  * \param q Pointer to the array of Q samples.
- * \param length Number of samples in I and Q arrays to repack into I/Q data.
+ * \param len Number of samples in I and Q arrays to repack into I/Q data.
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation was
  * unsuccessful.
@@ -300,21 +300,21 @@ LRPT_API bool lrpt_iq_data_from_doubles(
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *i,
         const double *q,
-        size_t length);
+        size_t len);
 
 /** Allocate QPSK data storage object.
  *
- * Tries to allocate storage for QPSK data of requested \p length. User should free the object with
+ * Tries to allocate storage for QPSK data of requested \p len. User should free the object with
  * #lrpt_qpsk_data_free() after use.
  *
- * \param length Length of new QPSK data storage. If zero length is requested,
+ * \param len Length of new QPSK data storage. If zero length is requested,
  * empty storage will be allocated but it's still possible to resize it later with
  * #lrpt_qpsk_data_resize().
  *
  * \return Pointer to the allocated QPSK data storage object or \c NULL if allocation has failed.
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
-        size_t length);
+        size_t len);
 
 /** Free previously allocated QPSK data storage.
  *
@@ -335,36 +335,36 @@ LRPT_API size_t lrpt_qpsk_data_length(
 
 /** Resize existing QPSK soft symbol data storage.
  *
- * If valid \p data is provided it will be resized to accomodate \p new_length QPSK soft symbols.
+ * If valid \p data is provided it will be resized to accomodate \p new_len QPSK soft symbols.
  *
  * \param data Pointer to the QPSK soft symbol data storage object.
- * \param new_length New length \p data will be resized to.
+ * \param new_len New length \p data will be resized to.
  *
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_qpsk_data_resize(
         lrpt_qpsk_data_t *data,
-        size_t new_length);
+        size_t new_len);
 
 /** Convert array of QPSK symbols into library format.
  *
- * Converts array of QPSK symbols \p qpsk of size \p length into library format of QPSK
+ * Converts array of QPSK symbols \p qpsk of size \p len into library format of QPSK
  * data storage. Storage given with \p data will be auto-resized to fit requested data length.
  *
  * \param data Pointer to the QPSK data storage object.
  * \param qpsk Pointer to the array of QPSK symbols.
- * \param length Number of symbols to merge into QPSK data.
+ * \param len Number of symbols to merge into QPSK data.
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
  * \warning It's the user's responsibility to be sure that \p qpsk array contain at least
- * \p length symbols!
+ * \p len symbols!
  */
 LRPT_API bool lrpt_qpsk_data_from_symbols(
         lrpt_qpsk_data_t *data,
         const int8_t *qpsk,
-        size_t length);
+        size_t len);
 
 /** Create QPSK storage object from raw QPSK symbols.
  *
@@ -372,7 +372,7 @@ LRPT_API bool lrpt_qpsk_data_from_symbols(
  * QPSK storage automatically.
  *
  * \param qpsk Pointer to the array of QPSK symbols.
- * \param length Number of QPSK symbols to repack into QPSK data.
+ * \param len Number of QPSK symbols to repack into QPSK data.
  *
  * \return Pointer to the allocated QPSK data storage object or \c NULL if allocation was
  * unsuccessful.
@@ -382,23 +382,23 @@ LRPT_API bool lrpt_qpsk_data_from_symbols(
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
         const int8_t *qpsk,
-        size_t length);
+        size_t len);
 
 /** Return QPSK data as an int8_t bytes.
  *
- * Copies \p length QPSK symbols to the resulting \p qpsk array. Caller should be responsible
- * that \p qpsk is large enough to hold at least \p length elements!
+ * Copies \p len QPSK symbols to the resulting \p qpsk array. Caller should be responsible
+ * that \p qpsk is large enough to hold at least \p len elements!
  *
  * \param data Pointer to the QPSK data storage object.
  * \param qpsk Pointer to the resulting storage.
- * \param length Number of QPSK symbols to copy.
+ * \param len Number of QPSK symbols to copy.
  *
  * \return \c true on successful copy and \c false otherwise.
  */
 LRPT_API bool lrpt_qpsk_data_to_ints(
         const lrpt_qpsk_data_t *data,
         int8_t *qpsk,
-        size_t length);
+        size_t len);
 
 /** @} */
 
@@ -491,12 +491,12 @@ LRPT_API bool lrpt_iq_file_goto(
 
 /** Read I/Q data from file.
  *
- * Reads \p length consecutive I/Q samples into I/Q storage \p data from file \p file.
+ * Reads \p len consecutive I/Q samples into I/Q storage \p data from file \p file.
  * Storage will be auto-resized to proper length.
  *
  * \param[out] data Pointer to the I/Q data storage object.
  * \param file Pointer to the I/Q data file object.
- * \param length Number of I/Q samples to read.
+ * \param len Number of I/Q samples to read.
  * \param rewind If true, sample position in file stream will be preserved after reading.
  *
  * \return \c true on successfull reading and \c false otherwise.
@@ -507,7 +507,7 @@ LRPT_API bool lrpt_iq_file_goto(
 LRPT_API bool lrpt_iq_data_read_from_file(
         lrpt_iq_data_t *data,
         lrpt_iq_file_t *file,
-        size_t length,
+        size_t len,
         bool rewind);
 
 /** Write I/Q data to file.
@@ -649,12 +649,12 @@ LRPT_API bool lrpt_qpsk_file_goto(
 
 /** Read QPSK data from file.
  *
- * Reads \p length consecutive QPSK symbols into QPSK storage \p data from file \p file.
+ * Reads \p len consecutive QPSK symbols into QPSK storage \p data from file \p file.
  * Storage will be auto-resized to proper length.
  *
  * \param[out] data Pointer to the QPSK data storage object.
  * \param file Pointer to the QPSK data file object.
- * \param length Number of QPSK samples to read.
+ * \param len Number of QPSK samples to read.
  * \param rewind If true, symbol position in file stream will be preserved after reading.
  *
  * \return \c true on successfull reading and \c false otherwise.
@@ -665,7 +665,7 @@ LRPT_API bool lrpt_qpsk_file_goto(
 LRPT_API bool lrpt_qpsk_data_read_from_file(
         lrpt_qpsk_data_t *data,
         lrpt_qpsk_file_t *file,
-        size_t length,
+        size_t len,
         bool rewind);
 
 /** Write QPSK data to file.

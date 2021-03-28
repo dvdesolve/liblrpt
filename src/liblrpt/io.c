@@ -168,8 +168,8 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     file->version = LRPT_IQ_FILE_VER_1;
     file->samplerate = sr;
     file->device_name = name;
-    file->header_length = 20 + name_l; /* Just a sum of all elements previously read */
-    file->data_length = data_l;
+    file->header_len = 20 + name_l; /* Just a sum of all elements previously read */
+    file->data_len = data_l;
     file->current = 0;
     file->iobuf = iobuf;
 
@@ -247,8 +247,8 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     file->version = LRPT_QPSK_FILE_VER_1;
     file->flags = flags;
     file->symrate = sr;
-    file->header_length = 22; /* Just a sum of all elements previously read */
-    file->data_length = data_l; /* TODO add code for hard symbols */
+    file->header_len = 22; /* Just a sum of all elements previously read */
+    file->data_len = data_l; /* TODO add code for hard symbols */
     file->current = 0;
 
     return file;
@@ -420,8 +420,8 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     file->version = LRPT_IQ_FILE_VER_1;
     file->samplerate = samplerate;
     file->device_name = name;
-    file->header_length = 20 + name_l; /* Just a sum of all elements previously written */
-    file->data_length = 0;
+    file->header_len = 20 + name_l; /* Just a sum of all elements previously written */
+    file->data_len = 0;
     file->current = 0;
     file->iobuf = iobuf;
 
@@ -471,7 +471,7 @@ const char *lrpt_iq_file_devicename(
 /* lrpt_iq_file_length() */
 uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *file) {
-    return file->data_length;
+    return file->data_len;
 }
 
 /*************************************************************************************************/
@@ -480,11 +480,11 @@ uint64_t lrpt_iq_file_length(
 bool lrpt_iq_file_goto(
         lrpt_iq_file_t *file,
         uint64_t sample) {
-    if (!file || !file->fhandle || sample > file->data_length)
+    if (!file || !file->fhandle || sample > file->data_len)
         return false;
 
     file->current = sample;
-    fseek(file->fhandle, file->header_length + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET);
+    fseek(file->fhandle, file->header_len + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET);
 
     return true;
 }
@@ -495,26 +495,26 @@ bool lrpt_iq_file_goto(
 bool lrpt_iq_data_read_from_file(
         lrpt_iq_data_t *data,
         lrpt_iq_file_t *file,
-        size_t length,
+        size_t len,
         bool rewind) {
     /* Check if we have enough data to read */
     if (!data ||
-            !file || !file->fhandle || file->write_mode || file->current == file->data_length)
+            !file || !file->fhandle || file->write_mode || file->current == file->data_len)
         return false;
 
     /* Read up to the end if requested length is bigger than remaining data */
-    if ((file->current + length) > file->data_length)
-        length = file->data_length - file->current;
+    if ((file->current + len) > file->data_len)
+        len = file->data_len - file->current;
 
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, length))
+    if (!lrpt_iq_data_resize(data, len))
         return false;
 
     /* Determine required number of block reads */
-    const size_t nreads = length / IO_IQ_DATA_N;
+    const size_t nreads = (len / IO_IQ_DATA_N);
 
     for (size_t i = 0; i <= nreads; i++) {
-        const size_t toread = (i == nreads) ? (length - nreads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
+        const size_t toread = (i == nreads) ? (len - nreads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
         if (toread == 0)
             break;
@@ -550,7 +550,7 @@ bool lrpt_iq_data_read_from_file(
     if (rewind)
         lrpt_iq_file_goto(file, file->current);
     else
-        file->current += length;
+        file->current += len;
 
     return true;
 }
@@ -567,11 +567,11 @@ bool lrpt_iq_data_write_to_file(
         return false;
 
     /* Determine required number of block writes */
-    const size_t length = data->len;
-    const size_t nwrites = length / IO_IQ_DATA_N;
+    const size_t len = data->len;
+    const size_t nwrites = (len / IO_IQ_DATA_N);
 
     for (size_t i = 0; i <= nwrites; i++) {
-        const size_t towrite = (i == nwrites) ? (length - nwrites * IO_IQ_DATA_N) : IO_IQ_DATA_N;
+        const size_t towrite = (i == nwrites) ? (len - nwrites * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
         if (towrite == 0)
             break;
@@ -601,14 +601,14 @@ bool lrpt_iq_data_write_to_file(
             return false;
 
         file->current += towrite;
-        file->data_length += towrite;
+        file->data_len += towrite;
 
         /* Flush data length if inplace is requested */
         if (inplace) {
             unsigned char v_s[8];
 
-            lrpt_utils_s_uint64_t(file->data_length, v_s);
-            fseek(file->fhandle, file->header_length - 8, SEEK_SET);
+            lrpt_utils_s_uint64_t(file->data_len, v_s);
+            fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
             if (fwrite(v_s, 1, 8, file->fhandle) != 8)
                 return false;
@@ -621,8 +621,8 @@ bool lrpt_iq_data_write_to_file(
     if (!inplace) {
         unsigned char v_s[8];
 
-        lrpt_utils_s_uint64_t(file->data_length, v_s);
-        fseek(file->fhandle, file->header_length - 8, SEEK_SET);
+        lrpt_utils_s_uint64_t(file->data_len, v_s);
+        fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
         if (fwrite(v_s, 1, 8, file->fhandle) != 8)
             return false;
@@ -777,8 +777,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
     file->version = LRPT_QPSK_FILE_VER_1;
     file->flags = flags;
     file->symrate = symrate;
-    file->header_length = 22; /* Just a sum of all elements previously written */
-    file->data_length = 0; /* TODO add code for hard symbols */
+    file->header_len = 22; /* Just a sum of all elements previously written */
+    file->data_len = 0; /* TODO add code for hard symbols */
     file->current = 0;
 
     return file;
@@ -850,7 +850,7 @@ uint32_t lrpt_qpsk_file_symrate(
 uint64_t lrpt_qpsk_file_length(
         const lrpt_qpsk_file_t *file) {
     /* TODO actually one QPSK symbol consist of two bytes. Need to report exactly this number */
-    return file->data_length; /* TODO add code for hard symbols */
+    return file->data_len; /* TODO add code for hard symbols */
 }
 
 /*************************************************************************************************/
@@ -859,11 +859,11 @@ uint64_t lrpt_qpsk_file_length(
 bool lrpt_qpsk_file_goto(
         lrpt_qpsk_file_t *file,
         uint64_t symbol) {
-    if (!file || !file->fhandle || symbol > file->data_length)
+    if (!file || !file->fhandle || symbol > file->data_len)
         return false;
 
     file->current = symbol; /* TODO add code for hard symbols */
-    fseek(file->fhandle, file->header_length + symbol, SEEK_SET); /* TODO add code for hard symbols */
+    fseek(file->fhandle, file->header_len + symbol, SEEK_SET); /* TODO add code for hard symbols */
 
     return true;
 }
@@ -874,26 +874,26 @@ bool lrpt_qpsk_file_goto(
 bool lrpt_qpsk_data_read_from_file(
         lrpt_qpsk_data_t *data,
         lrpt_qpsk_file_t *file,
-        size_t length,
+        size_t len,
         bool rewind) {
     /* Check if we have enough data to read */
     if (!data ||
-            !file || !file->fhandle || file->write_mode || file->current == file->data_length)
+            !file || !file->fhandle || file->write_mode || file->current == file->data_len)
         return false;
 
     /* Read up to the end if requested length is bigger than remaining data */
-    if ((file->current + length) > file->data_length)
-        length = file->data_length - file->current;
+    if ((file->current + len) > file->data_len)
+        len = file->data_len - file->current;
 
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, length))
+    if (!lrpt_qpsk_data_resize(data, len))
         return false;
 
     /* Determine required number of block reads */
-    const size_t nreads = length / IO_QPSK_DATA_N;
+    const size_t nreads = (len / IO_QPSK_DATA_N);
 
     for (size_t i = 0; i <= nreads; i++) {
-        const size_t toread = (i == nreads) ? (length - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
+        const size_t toread = (i == nreads) ? (len - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
         if (toread == 0)
             break;
@@ -906,7 +906,7 @@ bool lrpt_qpsk_data_read_from_file(
     if (rewind)
         lrpt_qpsk_file_goto(file, file->current);
     else
-        file->current += length;
+        file->current += len;
 
     return true;
 }
@@ -923,11 +923,11 @@ bool lrpt_qpsk_data_write_to_file(
         return false;
 
     /* Determine required number of block writes */
-    const size_t length = data->len;
-    const size_t nwrites = length / IO_QPSK_DATA_N;
+    const size_t len = data->len;
+    const size_t nwrites = (len / IO_QPSK_DATA_N);
 
     for (size_t i = 0; i <= nwrites; i++) {
-        const size_t towrite = (i == nwrites) ? (length - nwrites * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
+        const size_t towrite = (i == nwrites) ? (len - nwrites * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
         if (towrite == 0)
             break;
@@ -937,14 +937,14 @@ bool lrpt_qpsk_data_write_to_file(
             return false;
 
         file->current += towrite;
-        file->data_length += towrite;
+        file->data_len += towrite;
 
         /* Flush data length if inplace is requested */
         if (inplace) {
             unsigned char v_s[8];
 
-            lrpt_utils_s_uint64_t(file->data_length, v_s);
-            fseek(file->fhandle, file->header_length - 8, SEEK_SET);
+            lrpt_utils_s_uint64_t(file->data_len, v_s);
+            fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
             if (fwrite(v_s, 1, 8, file->fhandle) != 8)
                 return false;
@@ -957,8 +957,8 @@ bool lrpt_qpsk_data_write_to_file(
     if (!inplace) {
         unsigned char v_s[8];
 
-        lrpt_utils_s_uint64_t(file->data_length, v_s);
-        fseek(file->fhandle, file->header_length - 8, SEEK_SET);
+        lrpt_utils_s_uint64_t(file->data_len, v_s);
+        fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
         if (fwrite(v_s, 1, 8, file->fhandle) != 8)
             return false;

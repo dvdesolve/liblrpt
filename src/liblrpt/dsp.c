@@ -117,10 +117,10 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         k = 1.0;
 
     /* Find coefficients for 2-pole filter for each pole pair */
-    for (uint8_t p = 1; p <= (num_poles / 2); p++) {
+    for (uint8_t i = 1; i <= (num_poles / 2); i++) {
         /* Calculate the pole location on the unit circle */
         double tmp =
-            M_PI / (double)num_poles / 2.0 + (double)(p - 1) * M_PI / (double)num_poles;
+            M_PI / (double)num_poles / 2.0 + (double)(i - 1) * M_PI / (double)num_poles;
         double rp = -cos(tmp);
         double ip =  sin(tmp);
 
@@ -164,14 +164,14 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         }
 
         /* Add coefficients to the cascade */
-        for (uint8_t i = 0; i < (num_poles + 3); i++) {
-            ta[i] = filter->a[i];
-            tb[i] = filter->b[i];
+        for (uint8_t j = 0; j < (num_poles + 3); j++) {
+            ta[j] = filter->a[j];
+            tb[j] = filter->b[j];
         }
 
-        for (uint8_t i = 2; i < (num_poles + 3); i++) {
-            filter->a[i] = a0 * ta[i] + a1 * ta[i - 1] + a2 * ta[i - 2];
-            filter->b[i] =      tb[i] - b1 * tb[i - 1] - b2 * tb[i - 2];
+        for (uint8_t j = 2; j < (num_poles + 3); j++) {
+            filter->a[j] = a0 * ta[j] + a1 * ta[j - 1] + a2 * ta[j - 2];
+            filter->b[j] = tb[j] - b1 * tb[j - 1] - b2 * tb[j - 2];
         }
     }
 
@@ -240,18 +240,18 @@ bool lrpt_dsp_filter_apply(
     complex double * const samples = data->iq;
 
     /* Filter samples in the buffer */
-    for (size_t buf_idx = 0; buf_idx < data->len; buf_idx++) {
-        complex double *cur_s = samples + buf_idx;
+    for (size_t i = 0; i < data->len; i++) {
+        complex double *cur_s = samples + i;
 
         /* Calculate and save filtered samples */
         complex double yn0 = *cur_s * filter->a[0];
 
-        for (uint8_t idx = 1; idx < npp1; idx++) {
+        for (uint8_t j = 1; j < npp1; j++) {
             /* Summate contribution of past input samples */
-            yn0 += filter->x[filter->ri] * filter->a[idx];
+            yn0 += filter->x[filter->ri] * filter->a[j];
 
             /* Summate contribution of past output samples */
-            yn0 += filter->y[filter->ri] * filter->b[idx];
+            yn0 += filter->y[filter->ri] * filter->b[j];
 
             /* Advance ring buffers index */
             filter->ri++;

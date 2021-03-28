@@ -57,17 +57,17 @@ const double LRPT_M_2PI = 6.28318530717958647692;
 
 /* lrpt_iq_data_alloc() */
 lrpt_iq_data_t *lrpt_iq_data_alloc(
-        size_t length) {
+        size_t len) {
     lrpt_iq_data_t *data = malloc(sizeof(lrpt_iq_data_t));
 
     if (!data)
         return NULL;
 
     /* Set requested length and allocate storage for I and Q samples if length is not zero */
-    data->len = length;
+    data->len = len;
 
-    if (length > 0) {
-        data->iq = calloc(length, sizeof(complex double));
+    if (len > 0) {
+        data->iq = calloc(len, sizeof(complex double));
 
         /* Return NULL only if allocation attempt has failed */
         if (!data->iq) {
@@ -107,33 +107,33 @@ size_t lrpt_iq_data_length(
 /* lrpt_iq_data_resize() */
 bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
-        size_t new_length) {
+        size_t new_len) {
     /* We accept only valid data objects or simple empty objects */
     if (!data || ((data->len > 0) && !data->iq))
         return false;
 
     /* Is sizes are the same just return true */
-    if (data->len == new_length)
+    if (data->len == new_len)
         return true;
 
     /* In case of zero length create empty but valid data object */
-    if (new_length == 0) {
+    if (new_len == 0) {
         free(data->iq);
 
         data->len = 0;
         data->iq = NULL;
     }
     else {
-        complex double *new_iq = reallocarray(data->iq, new_length, sizeof(complex double));
+        complex double *new_iq = reallocarray(data->iq, new_len, sizeof(complex double));
 
         if (!new_iq)
             return false;
         else {
             /* Zero out newly allocated portion */
-            if (new_length > data->len)
-                memset(new_iq + data->len, 0, sizeof(complex double) * (new_length - data->len));
+            if (new_len > data->len)
+                memset(new_iq + data->len, 0, sizeof(complex double) * (new_len - data->len));
 
-            data->len = new_length;
+            data->len = new_len;
             data->iq = new_iq;
         }
     }
@@ -147,16 +147,16 @@ bool lrpt_iq_data_resize(
 bool lrpt_iq_data_from_samples(
         lrpt_iq_data_t *data,
         const complex double *iq,
-        size_t length) {
+        size_t len) {
     if (!data)
         return false;
 
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, length))
+    if (!lrpt_iq_data_resize(data, len))
         return false;
 
     /* Merge samples into I/Q data */
-    memcpy(data->iq, iq, sizeof(complex double) * length);
+    memcpy(data->iq, iq, sizeof(complex double) * len);
 
     return true;
 }
@@ -166,13 +166,13 @@ bool lrpt_iq_data_from_samples(
 /* lrpt_iq_data_create_from_samples() */
 lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const complex double *iq,
-        size_t length) {
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(length);
+        size_t len) {
+    lrpt_iq_data_t *data = lrpt_iq_data_alloc(len);
 
     if (!data)
         return NULL;
 
-    if (!lrpt_iq_data_from_samples(data, iq, length)) {
+    if (!lrpt_iq_data_from_samples(data, iq, len)) {
         lrpt_iq_data_free(data);
 
         return NULL;
@@ -188,16 +188,16 @@ bool lrpt_iq_data_from_doubles(
         lrpt_iq_data_t *data,
         const double *i,
         const double *q,
-        size_t length) {
+        size_t len) {
     if (!data)
         return false;
 
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, length))
+    if (!lrpt_iq_data_resize(data, len))
         return false;
 
     /* Repack doubles into I/Q data */
-    for (size_t k = 0; k < length; k++)
+    for (size_t k = 0; k < len; k++)
         data->iq[k] = i[k] + q[k] * I;
 
     return true;
@@ -209,13 +209,13 @@ bool lrpt_iq_data_from_doubles(
 lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *i,
         const double *q,
-        size_t length) {
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(length);
+        size_t len) {
+    lrpt_iq_data_t *data = lrpt_iq_data_alloc(len);
 
     if (!data)
         return NULL;
 
-    if (!lrpt_iq_data_from_doubles(data, i, q, length)) {
+    if (!lrpt_iq_data_from_doubles(data, i, q, len)) {
         lrpt_iq_data_free(data);
 
         return NULL;
@@ -228,17 +228,17 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
 
 /* lrpt_qpsk_data_alloc() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
-        size_t length) {
+        size_t len) {
     lrpt_qpsk_data_t *data = malloc(sizeof(lrpt_qpsk_data_t));
 
     if (!data)
         return NULL;
 
     /* Set requested length and allocate storage for soft symbols if length is not zero */
-    data->len = length;
+    data->len = len;
 
-    if (length > 0) {
-        data->qpsk = calloc(length, sizeof(int8_t));
+    if (len > 0) {
+        data->qpsk = calloc(len, sizeof(int8_t));
 
         /* Return NULL only if allocation attempt has failed */
         if (!data->qpsk) {
@@ -278,33 +278,33 @@ size_t lrpt_qpsk_data_length(
 /* lrpt_qpsk_data_resize() */
 bool lrpt_qpsk_data_resize(
         lrpt_qpsk_data_t *data,
-        size_t new_length) {
+        size_t new_len) {
     /* We accept only valid data objects or simple empty objects */
     if (!data || ((data->len > 0) && !data->qpsk))
         return false;
 
     /* Is sizes are the same just return true */
-    if (data->len == new_length)
+    if (data->len == new_len)
         return true;
 
     /* In case of zero length create empty but valid data object */
-    if (new_length == 0) {
+    if (new_len == 0) {
         free(data->qpsk);
 
         data->len = 0;
         data->qpsk = NULL;
     }
     else {
-        int8_t *new_s = reallocarray(data->qpsk, new_length, sizeof(int8_t));
+        int8_t *new_s = reallocarray(data->qpsk, new_len, sizeof(int8_t));
 
         if (!new_s)
             return false;
         else {
             /* Zero out newly allocated portion */
-            if (new_length > data->len)
-                memset(new_s + data->len, 0, sizeof(int8_t) * (new_length - data->len));
+            if (new_len > data->len)
+                memset(new_s + data->len, 0, sizeof(int8_t) * (new_len - data->len));
 
-            data->len = new_length;
+            data->len = new_len;
             data->qpsk = new_s;
         }
     }
@@ -318,16 +318,16 @@ bool lrpt_qpsk_data_resize(
 bool lrpt_qpsk_data_from_symbols(
         lrpt_qpsk_data_t *data,
         const int8_t *qpsk,
-        size_t length) {
+        size_t len) {
     if (!data)
         return false;
 
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, length))
+    if (!lrpt_qpsk_data_resize(data, len))
         return false;
 
     /* Merge symbols into QPSK data */
-    memcpy(data->qpsk, qpsk, sizeof(int8_t) * length);
+    memcpy(data->qpsk, qpsk, sizeof(int8_t) * len);
 
     return true;
 }
@@ -337,13 +337,13 @@ bool lrpt_qpsk_data_from_symbols(
 /* lrpt_qpsk_data_create_from_symbols() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
         const int8_t *qpsk,
-        size_t length) {
-    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(length);
+        size_t len) {
+    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(len);
 
     if (!data)
         return NULL;
 
-    if (!lrpt_qpsk_data_from_symbols(data, qpsk, length)) {
+    if (!lrpt_qpsk_data_from_symbols(data, qpsk, len)) {
         lrpt_qpsk_data_free(data);
 
         return NULL;
@@ -358,11 +358,11 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
 bool lrpt_qpsk_data_to_ints(
         const lrpt_qpsk_data_t *data,
         int8_t *qpsk,
-        size_t length) {
-    if (!data || !data->qpsk || (length > data->len))
+        size_t len) {
+    if (!data || !data->qpsk || (len > data->len))
         return false;
 
-    memcpy(qpsk, data->qpsk, sizeof(int8_t) * length);
+    memcpy(qpsk, data->qpsk, sizeof(int8_t) * len);
 
     return true;
 }
