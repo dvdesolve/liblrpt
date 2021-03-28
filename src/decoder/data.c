@@ -95,7 +95,7 @@ static void fix_packet(
 /** Correlate next frame.
  *
  * \param decoder Pointer to the decoder object.
- * \param raw Raw data array.
+ * \param data Data array.
  */
 static void do_next_correlate(
         lrpt_decoder_t *decoder,
@@ -106,7 +106,7 @@ static void do_next_correlate(
  * \param decoder Pointer to the decoder object.
  * \param data Data array.
  *
- * \warn \p data should contain at least two extra #LRPT_DECODER_SOFT_FRAME_LEN blocks
+ * \warning \p data should contain at least two extra #LRPT_DECODER_SOFT_FRAME_LEN blocks
  * so correlator will be able to perform full correlation run without violating memory access!
  */
 static void do_full_correlate(

@@ -217,4 +217,13 @@ uint32_t lrpt_decoder_bitop_fetch_n_bits(
 
 /*************************************************************************************************/
 
+/* lrpt_decoder_bitop_advance_n_bits() */
+void lrpt_decoder_bitop_advance_n_bits(
+        lrpt_decoder_bitop_t *b,
+        uint8_t n) {
+    b->pos += n;
+}
+
+/*************************************************************************************************/
+
 /** \endcond */

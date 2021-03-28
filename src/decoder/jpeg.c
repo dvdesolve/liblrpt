@@ -358,8 +358,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
         uint8_t mcu_id,
         uint8_t q) {
     lrpt_decoder_bitop_t b;
-    b.p = p;
-    b.pos = 0;
+    lrpt_decoder_bitop_writer_set(&b, p);
 
     if (!progress_image(decoder, apid, mcu_id, pck_cnt))
         return false; /* TODO need error reporting, but be aware of APIDs 0, 70 and mcu_id != 0 */
@@ -382,7 +381,8 @@ bool lrpt_decoder_jpeg_decode_mcus(
         if (dc_cat == -1)
             return false;
 
-        b.pos += JPEG_DC_CAT_OFFSET[dc_cat];
+        lrpt_decoder_bitop_advance_n_bits(&b, JPEG_DC_CAT_OFFSET[dc_cat]);
+
         uint16_t n = lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat);
 
         zdct[0] = lrpt_decoder_huffman_map_range(dc_cat, n) + prev_dc;
@@ -401,7 +401,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
             uint16_t ac_size = decoder->huff->ac_tbl[ac].size;
             uint16_t ac_run = decoder->huff->ac_tbl[ac].run;
 
-            b.pos += ac_len;
+            lrpt_decoder_bitop_advance_n_bits(&b, ac_len);
 
             if ((ac_run == 0) && (ac_size == 0)) {
                 for (uint8_t i = k; i < 64; i++)

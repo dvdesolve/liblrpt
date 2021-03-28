@@ -96,6 +96,15 @@ uint32_t lrpt_decoder_bitop_fetch_n_bits(
         lrpt_decoder_bitop_t *b,
         uint8_t n);
 
+/** Advance bit I/O object by \p n bits.
+ *
+ * \param b Pointer to the bit I/O object.
+ * \param n Number of bits to advance bit I/O object to.
+ */
+void lrpt_decoder_bitop_advance_n_bits(
+        lrpt_decoder_bitop_t *b,
+        uint8_t n);
+
 /*************************************************************************************************/
 
 #endif

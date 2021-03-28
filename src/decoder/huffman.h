@@ -91,7 +91,7 @@ int32_t lrpt_decoder_huffman_get_dc(
 /** Perform mapping.
  *
  * \param cat Category.
- * \param vl Value.
+ * \param val Value.
  *
  * \return Mapped range value.
  */

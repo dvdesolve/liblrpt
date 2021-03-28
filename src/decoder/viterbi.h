@@ -39,7 +39,7 @@
 
 /** Viterbi decoder object */
 typedef struct lrpt_decoder_viterbi__ {
-    lrpt_decoder_bitop_t *bit_writer; /**< Bit writer object */
+    lrpt_decoder_bitop_t bit_writer; /**< Bit writer object */
 
     /** @{ */
     /** Used by history buffer */

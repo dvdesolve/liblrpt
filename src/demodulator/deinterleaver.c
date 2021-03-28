@@ -132,14 +132,14 @@ static bool find_sync(
         result = true;
 
         /* Assemble a sync byte candidate */
-        *sync = qpsk_to_byte(&data[i]);
+        *sync = qpsk_to_byte(data + i);
 
         /* Search ahead SYNCD_DEPTH times in buffer to see if there are exactly equal sync
          * byte candidates at intervals of (sync + data = 80 syms) blocks
          */
         for (uint8_t j = 1; j <= SYNCD_DEPTH; j++) {
             /* Break if there is a mismatch at any position */
-            uint8_t test = qpsk_to_byte(&data[i + j * INTLV_SYNCDATA]);
+            uint8_t test = qpsk_to_byte(data + i + j * INTLV_SYNCDATA);
 
             if (*sync != test) {
                 result = false;
@@ -192,7 +192,7 @@ static bool resync_stream(
 
         /* Only search for sync if look-forward below fails to find a sync train */
         if (!find_sync(
-                    &tmp_buf[posn],
+                    tmp_buf + posn,
                     &offset,
                     &sync)) {
             posn += SYNCD_BUF_STEP;
@@ -210,7 +210,7 @@ static bool resync_stream(
                 size_t tmp = posn + i * INTLV_SYNCDATA;
 
                 if (tmp < limit2) {
-                    uint8_t test = qpsk_to_byte(&tmp_buf[tmp]);
+                    uint8_t test = qpsk_to_byte(tmp_buf + tmp);
 
                     if (sync == test) {
                         ok = true;
@@ -226,7 +226,7 @@ static bool resync_stream(
             /* Copy the actual data after the sync train and update total number of
              * copied symbols
              */
-            memcpy(data->qpsk + resync_siz, &tmp_buf[posn + 8], sizeof(int8_t) * INTLV_DATA_LEN);
+            memcpy(data->qpsk + resync_siz, tmp_buf + posn + 8, sizeof(int8_t) * INTLV_DATA_LEN);
             resync_siz += INTLV_DATA_LEN;
 
             /* Move on to the next sync train position */

@@ -739,7 +739,7 @@ LRPT_API bool lrpt_dsp_filter_apply(
  * Creates demodulator object with specified parameters. User should properly free the object with
  * #lrpt_demodulator_deinit() after use.
  *
- * \param mode PSK modulation mode.
+ * \param offset Whether offsetted version of QPSK modulation is used.
  * \param costas_bandwidth Initial Costas' PLL bandwidth in Hz.
  * \param interp_factor Interpolation factor. Usual value is 4.
  * \param demod_samplerate Demodulation sampling rate in samples/s.

@@ -322,7 +322,7 @@ static void history_buffer_traceback(
         fetched_index++;
     }
 
-    lrpt_decoder_bitop_writer_reverse(vit->bit_writer, vit->fetched, fetched_index);
+    lrpt_decoder_bitop_writer_reverse(&(vit->bit_writer), vit->fetched, fetched_index);
     vit->len -= fetched_index;
 }
 
@@ -521,7 +521,7 @@ static void convolutional_decode(
         const int8_t *input,
         uint8_t *output) {
     /* (Re)init bit writer */
-    lrpt_decoder_bitop_writer_set(vit->bit_writer, output);
+    lrpt_decoder_bitop_writer_set(&(vit->bit_writer), output);
 
     /* (Re)set history buffer */
     vit->len = 0;
@@ -551,10 +551,7 @@ static void convolutional_encode(
         uint8_t *input,
         uint8_t *output) {
     lrpt_decoder_bitop_t b;
-
-    /* TODO why not to use lrpt_decoder_bitop_writer_set? */
-    b.p = input;
-    b.pos = 0;
+    lrpt_decoder_bitop_writer_set(&b, input);
 
     uint8_t sh = 0;
 
@@ -586,8 +583,6 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     vit->ber = 0;
 
     /* NULL-init internals for safe deallocation */
-    vit->bit_writer = NULL;
-
     vit->dist_table = NULL;
     vit->table = NULL;
 
@@ -604,8 +599,6 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     vit->encoded = NULL;
 
     /* Allocate internals */
-    vit->bit_writer = malloc(sizeof(lrpt_decoder_bitop_t));
-
     vit->dist_table = calloc(VITERBI_DIST_TBL_X * VITERBI_DIST_TBL_Y, sizeof(uint16_t));
     vit->table = calloc(VITERBI_STATES_NUM, sizeof(uint8_t));
 
@@ -622,7 +615,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     vit->encoded = calloc(VITERBI_FRAME_BITS * 2, sizeof(uint8_t)); /* rate = 1/2 */
 
     /* Check for allocation problems */
-    if (!vit->bit_writer || !vit->dist_table || !vit->table || !vit->pair_outputs ||
+    if (!vit->dist_table || !vit->table || !vit->pair_outputs ||
             !vit->history || !vit->fetched || !vit->pair_keys ||
             !vit->errors[0] || !vit->errors[1] || !vit->encoded) {
         lrpt_decoder_viterbi_deinit(vit);
@@ -707,8 +700,6 @@ void lrpt_decoder_viterbi_deinit(
 
     free(vit->table);
     free(vit->dist_table);
-
-    free(vit->bit_writer);
 
     free(vit);
 }
