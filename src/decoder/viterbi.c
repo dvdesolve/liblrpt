@@ -192,15 +192,15 @@ static uint16_t metric_soft_distance(
             break;
     }
 
+    /* In both cases explicit cast is needed to prevent unwanted unsigned underflow */
+
     /* Manhattan distance */
-    return (uint16_t)(abs((int8_t)soft_y0 - soft_x0) + abs((int8_t)soft_y1 - soft_x1));
+    return (abs((int8_t)soft_y0 - soft_x0) + abs((int8_t)soft_y1 - soft_x1));
 
     /* Euclidean distance, results are not much better or worser.
      * Needs math.h for sqrt() and pow().
      */
-    /* return (uint16_t)sqrt(
-            pow((double)((int8_t)soft_y0 - soft_x0), 2.0) + pow((double)((int8_t)soft_y1 - soft_x1),
-                2.0)); */
+    /* return sqrt(pow((int8_t)soft_y0 - soft_x0, 2.0) + pow((int8_t)soft_y1 - soft_x1, 2.0)); */
 }
 
 /*************************************************************************************************/
@@ -627,7 +627,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     for (uint8_t i = 0; i < VITERBI_DIST_TBL_Y; i++)
         for (uint32_t j = 0; j < VITERBI_DIST_TBL_X; j++)
             vit->dist_table[i * VITERBI_DIST_TBL_X + j] =
-                metric_soft_distance((uint8_t)i, (uint8_t)(j & 0xFF), (uint8_t)(j >> 8));
+                metric_soft_distance(i, j & 0xFF, j >> 8);
 
     /* Polynomial table */
     for (uint8_t i = 0; i < VITERBI_STATES_NUM; i++) {

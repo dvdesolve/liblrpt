@@ -347,8 +347,8 @@ bool lrpt_utils_s_double(
     unsigned char ex[2];
     unsigned char mant[8];
 
-    lrpt_utils_s_int16_t((int16_t)e, ex);
-    lrpt_utils_s_int64_t((int64_t)(c_2to53 * m), mant);
+    lrpt_utils_s_int16_t(e, ex);
+    lrpt_utils_s_int64_t(c_2to53 * m, mant);
 
     memcpy(v, ex, sizeof(unsigned char) * 2); /* ex is 2 elements long */
     memcpy(v + 2, mant, sizeof(unsigned char) * 8); /* mant is 8 elements long */
@@ -377,7 +377,7 @@ bool lrpt_utils_ds_double(
     if (isnan(m) || isinf(m))
         return false;
 
-    double t = ldexp(m, (int)e);
+    double t = ldexp(m, e);
 
     if (errno == ERANGE)
         return false;

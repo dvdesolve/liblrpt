@@ -756,7 +756,7 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
         bool offset,
         double costas_bandwidth,
         uint8_t interp_factor,
-        double demod_samplerate,
+        uint32_t demod_samplerate,
         uint32_t symbol_rate,
         uint16_t rrc_order,
         double rrc_alpha,

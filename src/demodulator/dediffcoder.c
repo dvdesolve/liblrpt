@@ -57,9 +57,9 @@ static inline int8_t lut_isqrt(
         const uint8_t lut[],
         int16_t value) {
     if (value >= 0)
-        return (int8_t)lut[value];
+        return lut[value];
     else
-        return -(int8_t)lut[-value];
+        return -lut[-value];
 }
 
 /*************************************************************************************************/
@@ -82,7 +82,7 @@ lrpt_dediffcoder_t *lrpt_dediffcoder_init(void) {
     }
 
     for (uint16_t i = 0; i < 16385; i++)
-        dediff->lut[i] = (uint8_t)sqrt((double)i);
+        dediff->lut[i] = sqrt(i);
 
     dediff->pr_I = 0;
     dediff->pr_Q = 0;

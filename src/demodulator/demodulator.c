@@ -95,7 +95,7 @@ static inline int8_t clamp_int8(
     else if ((x > -1.0) && (x < 0.0))
         return -1;
     else
-        return (int8_t)x;
+        return x;
 }
 
 /*************************************************************************************************/
@@ -177,7 +177,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         bool offset,
         double costas_bandwidth,
         uint8_t interp_factor,
-        double demod_samplerate,
+        uint32_t demod_samplerate,
         uint32_t symbol_rate,
         uint16_t rrc_order,
         double rrc_alpha,
@@ -199,7 +199,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
     /* Initialize demodulator parameters */
     demod->sym_rate = symbol_rate;
-    demod->sym_period = (double)interp_factor * demod_samplerate / (double)symbol_rate;
+    demod->sym_period = (double)demod_samplerate * interp_factor / symbol_rate;
     demod->interp_factor = interp_factor;
 
     /* Initialize AGC object */
@@ -212,7 +212,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     }
 
     /* Initialize Costas' PLL object */
-    const double pll_bw = LRPT_M_2PI * costas_bandwidth / (double)symbol_rate;
+    const double pll_bw = LRPT_M_2PI * costas_bandwidth / symbol_rate;
     demod->pll =
         lrpt_demodulator_pll_init(pll_bw, pll_locked_threshold, pll_unlocked_threshold, offset);
 
@@ -223,7 +223,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     }
 
     /* Initialize RRC filter object */
-    const double osf = demod_samplerate / (double)symbol_rate;
+    const double osf = (double)demod_samplerate / symbol_rate;
     demod->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
 
     if (!demod->rrc) {

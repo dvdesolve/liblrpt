@@ -131,7 +131,7 @@ static void parse_apid(
     uint16_t w = ((p[0] << 8) | p[1]);
     uint16_t apid = (w & 0x07FF); /* TODO consult with LRPT documentation for limit values */
 
-    uint16_t pck_cnt = (uint16_t)((p[2] << 8) | p[3]) & 0x3FFF;
+    uint16_t pck_cnt = (((p[2] << 8) | p[3]) & 0x3FFF);
 
     /* 14 is an offset to get User data directly */
     if (apid == 70)

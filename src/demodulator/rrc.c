@@ -67,7 +67,7 @@ static double rrc_coeff(
     if (order == index)
         return (1.0 - alpha + 4.0 * alpha / M_PI);
 
-    const double t = (double)(abs(order - index)) / osf;
+    const double t = (abs(order - index)) / osf;
     const double mpt = M_PI * t;
     const double at4 = 4.0 * alpha * t;
     const double coeff = sin(mpt * (1.0 - alpha)) + at4 * cos(mpt * (1.0 + alpha));
@@ -110,7 +110,7 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
 
     /* Compute filter coefficients */
     for (uint16_t i = 0; i < taps; i++)
-        rrc->coeffs[i] = rrc_coeff((uint16_t)i, taps, osf * (double)factor, alpha);
+        rrc->coeffs[i] = rrc_coeff(i, taps, osf * factor, alpha);
 
     return rrc;
 }
@@ -142,7 +142,7 @@ complex double lrpt_demodulator_rrc_filter_apply(
     uint16_t idc = 0; /* Index for coefficients */
 
     /* Summate nodes till the end of the ring buffer */
-    while (rrc->idm < (int16_t)rrc->count)
+    while (rrc->idm < (int16_t)rrc->count) /* Cast is needed to prevent unintentional promotion */
         result += rrc->memory[(rrc->idm)++] * rrc->coeffs[idc++];
 
     /* Go back to the beginning of the ring buffer and summate remaining nodes */

@@ -222,10 +222,10 @@ static bool decode_frame(
     lrpt_decoder_viterbi_decode(decoder->vit, decoder->corr, decoder->aligned, decoder->decoded);
 
     uint32_t tmp =
-        ((uint32_t)decoder->decoded[3] << 24) +
-        ((uint32_t)decoder->decoded[2] << 16) +
-        ((uint32_t)decoder->decoded[1] << 8) +
-        (uint32_t)decoder->decoded[0];
+        (decoder->decoded[3] << 24) +
+        (decoder->decoded[2] << 16) +
+        (decoder->decoded[1] << 8) +
+        decoder->decoded[0];
     decoder->last_sync = tmp;
 
     /* Estimate signal quality */
@@ -238,10 +238,10 @@ static bool decode_frame(
             decoder->decoded[i] ^= 0xFF;
 
         tmp =
-            ((uint32_t)decoder->decoded[3] << 24) +
-            ((uint32_t)decoder->decoded[2] << 16) +
-            ((uint32_t)decoder->decoded[1] << 8) +
-            (uint32_t)decoder->decoded[0];
+            (decoder->decoded[3] << 24) +
+            (decoder->decoded[2] << 16) +
+            (decoder->decoded[1] << 8) +
+            decoder->decoded[0];
         decoder->last_sync = tmp;
     }
 

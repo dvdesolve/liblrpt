@@ -116,7 +116,7 @@ static inline double clamp_double(
 static inline double lut_tanh(
         const double lut[],
         double value) {
-    int16_t ival = (int16_t)value;
+    int16_t ival = value;
 
     if (ival > 127)
         return 1.0;
@@ -168,7 +168,7 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
     /* Populate lookup table for tanh() */
     for (uint16_t i = 0; i < PLL_TANH_LUT_LEN; i++)
-        pll->lut_tanh[i] = tanh((double)(i - 128));
+        pll->lut_tanh[i] = tanh((int16_t)i - 128); /* Cast is needed to avoid promotion */
 
     /* Set default parameters */
     pll->nco_freq = PLL_INIT_FREQ;
@@ -277,7 +277,7 @@ void lrpt_demodulator_pll_correct_phase(
                 pll->bw / PLL_LOCKED_BW_REDUCE);
         pll->locked = true;
 
-        pll->avg_winsize = PLL_AVG_WINSIZE * PLL_LOCKED_WINSIZEX / (double)interp_factor;
+        pll->avg_winsize = PLL_AVG_WINSIZE * PLL_LOCKED_WINSIZEX / interp_factor;
         pll->avg_winsize_1 = pll->avg_winsize - 1.0;
     }
     else if (pll->locked && (pll->moving_average > pll->pll_unlocked)) {
@@ -287,7 +287,7 @@ void lrpt_demodulator_pll_correct_phase(
                 pll->bw);
         pll->locked = false;
 
-        pll->avg_winsize = PLL_AVG_WINSIZE / (double)interp_factor;
+        pll->avg_winsize = PLL_AVG_WINSIZE / interp_factor;
         pll->avg_winsize_1 = pll->avg_winsize - 1.0;
     }
 

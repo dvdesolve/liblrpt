@@ -160,7 +160,7 @@ void lrpt_decoder_bitop_writer_reverse(
     const size_t full_bytes = len / 8;
 
     for (size_t i = 0; i < full_bytes; i++) {
-        bytes[byte_index] = (uint8_t)(
+        bytes[byte_index] = (
                 (nth_byte(l, 0) << 7) | (nth_byte(l, -1) << 6) |
                 (nth_byte(l, -2) << 5) | (nth_byte(l, -3) << 4) |
                 (nth_byte(l, -4) << 3) | (nth_byte(l, -5) << 2) |

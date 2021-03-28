@@ -147,7 +147,7 @@ static void flt_idct_8x8(
                 double ss = 0;
 
                 for (uint8_t i = 0; i < 8; i++)
-                    ss += (double)(in[i * 8 + u]) * jpeg->alpha[i] * jpeg->cosine[y][i];
+                    ss += in[i * 8 + u] * jpeg->alpha[i] * jpeg->cosine[y][i];
 
                 ss *= cxu;
                 s += ss;
@@ -167,12 +167,12 @@ static void fill_dqt_by_q(
     double f;
 
     if ((q > 20) && (q < 50))
-        f = 5000.0 / (double)q;
+        f = 5000.0 / q;
     else
-        f = 200.0 - 2.0 * (double)q;
+        f = 200.0 - 2.0 * q;
 
     for (uint8_t i = 0; i < 64; i++) {
-        dqt[i] = (uint16_t)(round(f / 100.0 * (double)JPEG_STD_QUANT_TBL[i]));
+        dqt[i] = round(f / 100.0 * JPEG_STD_QUANT_TBL[i]);
 
         if (dqt[i] < 1)
             dqt[i] = 1;
@@ -269,7 +269,7 @@ static void fill_pix(
         uint8_t mcu_id,
         uint8_t m) {
     for (uint8_t i = 0; i < 64; i++) {
-        int32_t t = (int32_t)(round(img_dct[i] + 128.0));
+        int32_t t = round(img_dct[i] + 128.0);
 
         if (t < 0)
             t = 0;
@@ -299,7 +299,7 @@ static void fill_pix(
 //        else /* Normal palette */
 
         /* TODO signal in some kind of APID counters so we can analyze it later */
-        decoder->channel_image[apid - 64][off] = (uint8_t)t;
+        decoder->channel_image[apid - 64][off] = t;
         /* DEBUG */
         fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %zu; t = %" PRId32 "\n", apid, off, t);
         /* DEBUG */
@@ -319,7 +319,7 @@ lrpt_decoder_jpeg_t *lrpt_decoder_jpeg_init(void) {
     /* Initialize DCT tables */
     for (uint8_t y = 0; y < 8; y++)
         for (uint8_t x = 0; x < 8; x++)
-            jpeg->cosine[y][x] = cos(M_PI / 16.0 * (2.0 * (double)y + 1.0) * (double)x);
+            jpeg->cosine[y][x] = cos(M_PI / 16.0 * (2.0 * y + 1.0) * x);
 
     jpeg->alpha[0] = 1.0 / sqrt(2.0);
 

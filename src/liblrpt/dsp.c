@@ -119,8 +119,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     /* Find coefficients for 2-pole filter for each pole pair */
     for (uint8_t i = 1; i <= (num_poles / 2); i++) {
         /* Calculate the pole location on the unit circle */
-        double tmp =
-            M_PI / (double)num_poles / 2.0 + (double)(i - 1) * M_PI / (double)num_poles;
+        double tmp = M_PI / (num_poles * 2.0) + M_PI * (i - 1) / num_poles;
         double rp = -cos(tmp);
         double ip =  sin(tmp);
 
@@ -130,7 +129,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
             const double es = sqrt(tmp * tmp - 1.0);
 
-            tmp = 1.0 / (double)num_poles;
+            tmp = (1.0 / num_poles);
 
             const double vx = tmp * asinh(1.0 / es);
             double kx = tmp * acosh(1.0 / es);
@@ -197,8 +196,8 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
             sb += filter->b[i];
         }
         else if (type == LRPT_DSP_FILTER_TYPE_HIGHPASS) {
-            sa += filter->a[i] * (double)((-1) ^ i);
-            sb += filter->b[i] * (double)((-1) ^ i);
+            sa += filter->a[i] * ((-1) ^ i);
+            sb += filter->b[i] * ((-1) ^ i);
         }
     }
 
