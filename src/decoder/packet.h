@@ -38,11 +38,9 @@
 /** Parse one coded virtual channel data unit.
  *
  * \param decoder Pointer to the decoder object.
- * \param len Data length.
  */
 void lrpt_decoder_packet_parse_cvcdu(
-        lrpt_decoder_t *decoder,
-        uint16_t len);
+        lrpt_decoder_t *decoder);
 
 /*************************************************************************************************/
 

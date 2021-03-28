@@ -38,6 +38,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* DEBUG */
 #include <inttypes.h>
@@ -244,12 +245,10 @@ static bool progress_image(
         jpeg->progressed = true;
 
         /* Clear new allocation */
-        /* TODO may be use more advanced method like in our IO utility funcs... */
         size_t delta_len = decoder->channel_image_size - decoder->prev_len;
 
         for (uint8_t i = 0; i < 6; i++)
-            for (size_t j = 0; j < delta_len; j++)
-                decoder->channel_image[i][j + decoder->prev_len] = 0;
+            memset(decoder->channel_image[i] + decoder->prev_len, 0, sizeof(uint8_t) * delta_len);
 
         decoder->prev_len = decoder->channel_image_size;
     }

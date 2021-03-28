@@ -40,6 +40,7 @@ static const uint8_t CORR_PATTERN_COUNT = 8; /**< Number of patterns */
 /** CCSDS synchronization word (0x1ACFFC1D) in Viterbi-encoded form */
 static const uint64_t CORR_SYNC_WORD_ENC = 0xFCA2B63DB00D9794;
 static const uint32_t CORR_LIMIT = 55; /**< Correlation limit */
+const uint16_t CORR_IQ_TBL_SIZE = 256;
 
 /*************************************************************************************************/
 
@@ -132,7 +133,7 @@ static uint64_t rotate_iq_qw(
     uint64_t result = 0;
 
     for (uint8_t i = 0; i < CORR_PATTERN_COUNT; i++) {
-        uint8_t bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
+        uint8_t bdata = ((data >> (56 - 8 * i)) & 0xFF);
 
         result <<= 8;
         result |= rotate_iq(corr, bdata, shift);
@@ -150,7 +151,7 @@ static uint64_t flip_iq_qw(
     uint64_t result = 0;
 
     for (uint8_t i = 0; i < CORR_PATTERN_COUNT; i++) {
-        uint8_t bdata = (uint8_t)((data >> (56 - 8 * i)) & 0xFF);
+        uint8_t bdata = ((data >> (56 - 8 * i)) & 0xFF);
 
         result <<= 8;
         result |= corr->invert_iq_tab[bdata];
@@ -185,9 +186,9 @@ lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(void) {
     corr->position = calloc(CORR_PATTERN_COUNT, sizeof(size_t));
 
     corr->patterns = calloc(CORR_PATTERN_SIZE * CORR_PATTERN_SIZE, sizeof(uint8_t));
-    corr->rotate_iq_tab = calloc(256, sizeof(uint8_t));
-    corr->invert_iq_tab = calloc(256, sizeof(uint8_t));
-    corr->corr_tab = calloc(256 * 256, sizeof(uint8_t));
+    corr->rotate_iq_tab = calloc(CORR_IQ_TBL_SIZE, sizeof(uint8_t));
+    corr->invert_iq_tab = calloc(CORR_IQ_TBL_SIZE, sizeof(uint8_t));
+    corr->corr_tab = calloc(CORR_IQ_TBL_SIZE * CORR_IQ_TBL_SIZE, sizeof(uint8_t));
 
     /* Check for allocation problems */
     if (!corr->correlation || !corr->tmp_correlation || !corr->position || !corr->patterns ||
@@ -198,12 +199,12 @@ lrpt_decoder_correlator_t *lrpt_decoder_correlator_init(void) {
     }
 
     /* Initialize correlator tables */
-    for (uint16_t i = 0; i < 256; i++) {
+    for (uint16_t i = 0; i < CORR_IQ_TBL_SIZE; i++) {
         corr->rotate_iq_tab[i] = ((((i & 0x55) ^ 0x55) << 1) | ((i & 0xAA) >> 1));
         corr->invert_iq_tab[i] = (((i & 0x55) << 1) | ((i & 0xAA) >> 1));
 
-        for (uint16_t j = 0; j < 256; j++)
-            corr->corr_tab[i * 256 + j] =
+        for (uint16_t j = 0; j < CORR_IQ_TBL_SIZE; j++)
+            corr->corr_tab[i * CORR_IQ_TBL_SIZE + j] =
                 (((i > 127) && (j == 0)) || ((i <= 127) && (j == 255))) ? 1 : 0;
     }
 
@@ -250,7 +251,7 @@ uint8_t lrpt_decoder_correlator_correlate(
         memset(corr->tmp_correlation, 0, sizeof(uint16_t) * CORR_PATTERN_COUNT);
 
         for (uint8_t j = 0; j < CORR_PATTERN_SIZE; j++) {
-            uint8_t *d = (corr->corr_tab + (uint8_t)data[i + j] * 256);
+            uint8_t *d = (corr->corr_tab + (uint8_t)data[i + j] * CORR_IQ_TBL_SIZE);
             uint8_t *p = (corr->patterns + j * CORR_PATTERN_SIZE);
 
             for (uint8_t k = 0; k < CORR_PATTERN_COUNT; k++)

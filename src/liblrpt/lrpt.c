@@ -50,7 +50,7 @@
 
 /*************************************************************************************************/
 
-/** Local definition for 2 * π */
+/** Local definition for 2 * Pi */
 const double LRPT_M_2PI = 6.28318530717958647692;
 
 /*************************************************************************************************/
@@ -295,7 +295,7 @@ bool lrpt_qpsk_data_resize(
         data->qpsk = NULL;
     }
     else {
-        int8_t *new_s = reallocarray(data->qpsk, new_length, 1);
+        int8_t *new_s = reallocarray(data->qpsk, new_length, sizeof(int8_t));
 
         if (!new_s)
             return false;

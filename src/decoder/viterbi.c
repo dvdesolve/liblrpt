@@ -192,11 +192,15 @@ static uint16_t metric_soft_distance(
             break;
     }
 
-    /* Manhattan (linear) distance */
+    /* Manhattan distance */
     return (uint16_t)(abs((int8_t)soft_y0 - soft_x0) + abs((int8_t)soft_y1 - soft_x1));
 
-    /* Quadratic distance, results are not much better or worser. Needs math.h for sqrt and pow. */
-    /* return (uint16_t)sqrt(pow((int8_t)soft_y0 - soft_x0, 2.0) + pow((int8_t)soft_y1 - soft_x1, 2.0)); */
+    /* Euclidean distance, results are not much better or worser.
+     * Needs math.h for sqrt() and pow().
+     */
+    /* return (uint16_t)sqrt(
+            pow((double)((int8_t)soft_y0 - soft_x0), 2.0) + pow((double)((int8_t)soft_y1 - soft_x1),
+                2.0)); */
 }
 
 /*************************************************************************************************/
@@ -360,7 +364,7 @@ static void viterbi_inner(
         const int8_t *input) {
     for (uint8_t i = 0; i < 6; i++) {
         for (uint8_t j = 0; j < (1 << (i + 1)); j++) {
-            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2]; // TODO may be use bitshift instead of 256
+            size_t idx = ((uint8_t)input[i * 2 + 1] << 8) + (uint8_t)input[i * 2];
 
             vit->write_errors[j] =
                 vit->dist_table[vit->table[j] * VITERBI_DIST_TBL_X + idx] + vit->read_errors[j >> 1];
@@ -371,7 +375,7 @@ static void viterbi_inner(
 
     for (uint16_t i = 6; i < (VITERBI_FRAME_BITS - 6); i++) {
         for (uint8_t j = 0; j < 4; j++) {
-            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2]; // TODO may be use bitshift instead of 256
+            size_t idx = ((uint8_t)input[i * 2 + 1] << 8) + (uint8_t)input[i * 2];
 
             vit->distances[j] = vit->dist_table[j * VITERBI_DIST_TBL_X + idx];
         }
@@ -457,7 +461,7 @@ static void viterbi_tail(
         const int8_t *input) {
     for (uint16_t i = (VITERBI_FRAME_BITS - 6); i < VITERBI_FRAME_BITS; i++) {
         for (uint8_t j = 0; j < 4; j++) {
-            size_t idx = (uint8_t)input[i * 2 + 1] * 256 + (uint8_t)input[i * 2]; // TODO may be use bitshift instead of 256
+            size_t idx = ((uint8_t)input[i * 2 + 1] << 8) + (uint8_t)input[i * 2];
 
             vit->distances[j] = vit->dist_table[j * VITERBI_DIST_TBL_X + idx];
         }
@@ -571,7 +575,6 @@ static void convolutional_encode(
 
 /*************************************************************************************************/
 
-/* TODO add metric distance selection as a parameter */
 /* lrpt_decoder_viterbi_init() */
 lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Allocate Viterbi decoder object */
@@ -616,7 +619,7 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     vit->errors[0] = calloc(VITERBI_STATES_NUM, sizeof(uint16_t));
     vit->errors[1] = calloc(VITERBI_STATES_NUM, sizeof(uint16_t));
 
-    vit->encoded = calloc(VITERBI_FRAME_BITS * 2, sizeof(uint8_t));
+    vit->encoded = calloc(VITERBI_FRAME_BITS * 2, sizeof(uint8_t)); /* rate = 1/2 */
 
     /* Check for allocation problems */
     if (!vit->bit_writer || !vit->dist_table || !vit->table || !vit->pair_outputs ||
@@ -670,7 +673,6 @@ lrpt_decoder_viterbi_t *lrpt_decoder_viterbi_init(void) {
     /* Free inverted outputs array */
     free(inv_outputs);
 
-    /* TODO should use explicit values */
     vit->pair_outputs_len = oc;
     vit->pair_distances = calloc(oc, sizeof(uint32_t));
 
@@ -729,7 +731,7 @@ void lrpt_decoder_viterbi_decode(
     vit->ber = 0;
 
     for (uint16_t i = 0; i < (VITERBI_FRAME_BITS * 2); i++)
-        vit->ber += corr->corr_tab[(uint8_t)input[i] * 256 + (vit->encoded[i] ^ 0xFF)];
+        vit->ber += corr->corr_tab[(uint8_t)input[i] * CORR_IQ_TBL_SIZE + (vit->encoded[i] ^ 0xFF)];
 }
 
 /*************************************************************************************************/

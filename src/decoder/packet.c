@@ -175,8 +175,7 @@ static uint16_t parse_partial(
 
 /* lrpt_decoder_packet_parse_cvcdu() */
 void lrpt_decoder_packet_parse_cvcdu(
-        lrpt_decoder_t *decoder,
-        uint16_t len) {
+        lrpt_decoder_t *decoder) {
     uint8_t *p = decoder->ecced;
 
     /* Parse VCDU primary header. For more details see section "5 DATA LINK LAYER",
@@ -196,6 +195,11 @@ void lrpt_decoder_packet_parse_cvcdu(
      */
     if ((ver == 0) || (vch_id == 0))
         return;
+
+    /* We're subtracting 132 because of 4 bytes of Reed-Solomon coding with interleaving
+     * depth of 4 and 128 bytes of CVCDU check symbols inside CVCDU
+     */
+    const uint16_t len = (LRPT_DECODER_HARD_FRAME_LEN - 132);
 
     /* Subtract 10 octets because of CVCDU structure to get pointer to the M_PDU packet zone */
     uint16_t data_len = (len - 10);

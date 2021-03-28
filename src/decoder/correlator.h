@@ -34,6 +34,10 @@
 
 /*************************************************************************************************/
 
+extern const uint16_t CORR_IQ_TBL_SIZE; /**< Rotational, invertional and correlation tables size */
+
+/*************************************************************************************************/
+
 /** Correlator object */
 typedef struct lrpt_decoder_correlator__ {
     /** @{ */

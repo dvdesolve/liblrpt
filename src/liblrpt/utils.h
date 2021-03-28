@@ -34,6 +34,14 @@
 
 /*************************************************************************************************/
 
+/** Each double serialized in form of 10 unsigned chars */
+extern const uint8_t UTILS_DOUBLE_SER_SIZE;
+
+/** Each complex is two doubles */
+extern const uint8_t UTILS_COMPLEX_SER_SIZE;
+
+/*************************************************************************************************/
+
 /** Serialize \c uint16_t value to Big Endian representation.
  *
  * \param x Input value to be serialized.

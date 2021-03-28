@@ -86,12 +86,10 @@ static const uint32_t DATA_SYNC_WORD_FLIP = 0xE20330E5; /**< Sync word, bitflipp
 /** Fix packet.
  *
  * \param data Pointer to the aligned data.
- * \param len Length of the aligned data.
  * \param shift Correlator word.
  */
 static void fix_packet(
         int8_t *data,
-        size_t len,
         uint8_t shift);
 
 /** Correlate next frame.
@@ -129,13 +127,10 @@ static bool decode_frame(
 /* fix_packet() */
 static void fix_packet(
         int8_t *data,
-        size_t len, /* TODO do we need to pass than len? */
         uint8_t shift) {
-    len /= 2; /* Useful while swapping elements */
-
     switch (shift) {
         case 4:
-            for (size_t i = 0; i < len; i++) {
+            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
                 /* Swap adjacent elements */
                 int8_t b = data[i * 2 + 0];
                 data[i * 2 + 0] = data[i * 2 + 1];
@@ -145,14 +140,14 @@ static void fix_packet(
             break;
 
         case 5:
-            for (size_t i = 0; i < len; i++)
+            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
                 /* Invert odd elements */
                 data[i * 2 + 0] = -data[i * 2 + 0];
 
             break;
 
         case 6:
-            for (size_t i = 0; i < len; i++) {
+            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
                 /* Swap and invert adjacent elements */
                 int8_t b = data[i * 2 + 0];
                 data[i * 2 + 0] = -data[i * 2 + 1];
@@ -162,7 +157,7 @@ static void fix_packet(
             break;
 
         case 7:
-            for (size_t i = 0; i < len; i++)
+            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
                 /* Invert even elements */
                 data[i * 2 + 1] = -data[i * 2 + 1];
 
@@ -182,7 +177,7 @@ static void do_next_correlate(
     /* Advance decoder position */
     decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN;
 
-    fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->corr_word);
+    fix_packet(decoder->aligned, decoder->corr_word);
 }
 
 /*************************************************************************************************/
@@ -216,7 +211,7 @@ static void do_full_correlate(
         /* Advance decoder position */
         decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN + decoder->corr_pos);
 
-        fix_packet(decoder->aligned, LRPT_DECODER_SOFT_FRAME_LEN, decoder->corr_word);
+        fix_packet(decoder->aligned, decoder->corr_word);
     }
 }
 

@@ -131,7 +131,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     /* TODO check for incomplete samples (use remainder of the division) and warn about truncation */
     uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
-    uint64_t n_iq = (ftell(fh) - cur_pos) / (10 * 2);
+    uint64_t n_iq = (ftell(fh) - cur_pos) / UTILS_COMPLEX_SER_SIZE;
     fseek(fh, cur_pos, SEEK_SET);
 
     if (n_iq != data_l) {
@@ -142,7 +142,8 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     }
 
     /* Try to allocate temporary I/O buffer */
-    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, sizeof(unsigned char));
+    unsigned char *iobuf =
+        calloc(IO_IQ_DATA_N * UTILS_COMPLEX_SER_SIZE, sizeof(unsigned char));
 
     if (!iobuf) {
         free(name);
@@ -394,7 +395,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     /* File position = 20 + name_l */
 
     /* Try to allocate temporary I/O buffer */
-    unsigned char *iobuf = calloc(IO_IQ_DATA_N * 2 * 10, sizeof(unsigned char));
+    unsigned char *iobuf = calloc(IO_IQ_DATA_N * UTILS_COMPLEX_SER_SIZE, sizeof(unsigned char));
 
     if (!iobuf) {
         free(name);
@@ -483,7 +484,7 @@ bool lrpt_iq_file_goto(
         return false;
 
     file->current = sample;
-    fseek(file->fhandle, file->header_length + sample * 10 * 2, SEEK_SET);
+    fseek(file->fhandle, file->header_length + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET);
 
     return true;
 }
@@ -519,8 +520,8 @@ bool lrpt_iq_data_read_from_file(
             break;
 
         /* Read block */
-        if (fread(file->iobuf, 1, toread * 2 * 10, file->fhandle) !=
-                (toread * 2 * 10))
+        if (fread(file->iobuf, 1, toread * UTILS_COMPLEX_SER_SIZE, file->fhandle) !=
+                (toread * UTILS_COMPLEX_SER_SIZE))
             return false;
 
         /* Parse block */
@@ -528,12 +529,16 @@ bool lrpt_iq_data_read_from_file(
             unsigned char v_s[10];
             double i_part, q_part;
 
-            memcpy(v_s, file->iobuf + 20 * j, sizeof(unsigned char) * 10); /* I sample */
+            memcpy(v_s,
+                    file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
+                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
 
             if (!lrpt_utils_ds_double(v_s, &i_part))
                 return false;
 
-            memcpy(v_s, file->iobuf + 20 * j + 10, sizeof(unsigned char) * 10); /* Q sample */
+            memcpy(v_s,
+                    file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
+                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
 
             if (!lrpt_utils_ds_double(v_s, &q_part))
                 return false;
@@ -578,17 +583,21 @@ bool lrpt_iq_data_write_to_file(
             if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s))
                 return false;
 
-            memcpy(file->iobuf + 20 * j, v_s, sizeof(unsigned char) * 10); /* I sample */
+            memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
+                    v_s,
+                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
 
             if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s))
                 return false;
 
-            memcpy(file->iobuf + 20 * j + 10, v_s, sizeof(unsigned char) * 10); /* Q sample */
+            memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
+                    v_s,
+                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
         }
 
         /* Write block */
-        if (fwrite(file->iobuf, 1, towrite * 2 * 10, file->fhandle) !=
-                (towrite * 2 * 10))
+        if (fwrite(file->iobuf, 1, towrite * UTILS_COMPLEX_SER_SIZE, file->fhandle) !=
+                (towrite * UTILS_COMPLEX_SER_SIZE))
             return false;
 
         file->current += towrite;
