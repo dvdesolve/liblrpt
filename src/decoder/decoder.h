@@ -29,6 +29,7 @@
 
 /*************************************************************************************************/
 
+#include "../../include/lrpt.h"
 #include "correlator.h"
 #include "jpeg.h"
 #include "huffman.h"
@@ -42,6 +43,8 @@
 
 /** Decoder object */
 struct lrpt_decoder__ {
+    lrpt_decoder_spacecraft_t sc; /**< Spacecraft */
+
     lrpt_decoder_correlator_t *corr; /**< Correlator */
     lrpt_decoder_viterbi_t *vit; /**< Viterbi decoder */
     lrpt_decoder_huffman_t *huff; /**< Huffman decoder */

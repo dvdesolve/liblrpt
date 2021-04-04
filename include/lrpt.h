@@ -171,6 +171,11 @@ LRPT_API extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
 /** Length of hard frame in bytes (produced after Viterbi decoding) */
 LRPT_API extern const size_t LRPT_DECODER_HARD_FRAME_LEN;
 
+/** Supported spacecrafts */
+typedef enum lrpt_decoder_spacecraft__ {
+    LRPT_DECODER_SC_METEORM2  /**< Meteor-M2 */
+} lrpt_decoder_spacecraft_t;
+
 /** @} */
 
 /*************************************************************************************************/
@@ -873,13 +878,12 @@ LRPT_API bool lrpt_deinterleaver_exec(
  * Creates decoder object. User should properly free the object with #lrpt_decoder_deinit()
  * after use.
  *
- * \param mcus_per_line Number of MCUs per single line. Usually equals to 256 but Russian Meteors
- * use the value of 196 instead.
+ * \param sc Spacecraft identifier.
  *
  * \return Pointer to the decoder object or \c NULL in case of error.
  */
 LRPT_API lrpt_decoder_t *lrpt_decoder_init(
-        uint16_t mcus_per_line);
+        lrpt_decoder_spacecraft_t sc);
 
 /** Free previously allocated decoder object.
  *

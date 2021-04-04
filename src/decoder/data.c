@@ -130,36 +130,44 @@ static void fix_packet(
         uint8_t shift) {
     switch (shift) {
         case 4:
-            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
-                /* Swap adjacent elements */
-                int8_t b = data[i * 2 + 0];
-                data[i * 2 + 0] = data[i * 2 + 1];
-                data[i * 2 + 1] = b;
+            {
+                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
+                    /* Swap adjacent elements */
+                    int8_t b = data[i * 2 + 0];
+                    data[i * 2 + 0] = data[i * 2 + 1];
+                    data[i * 2 + 1] = b;
+                }
             }
 
             break;
 
         case 5:
-            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
-                /* Invert odd elements */
-                data[i * 2 + 0] = -data[i * 2 + 0];
+            {
+                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
+                    /* Invert odd elements */
+                    data[i * 2 + 0] = -data[i * 2 + 0];
+            }
 
             break;
 
         case 6:
-            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
-                /* Swap and invert adjacent elements */
-                int8_t b = data[i * 2 + 0];
-                data[i * 2 + 0] = -data[i * 2 + 1];
-                data[i * 2 + 1] = -b;
+            {
+                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
+                    /* Swap and invert adjacent elements */
+                    int8_t b = data[i * 2 + 0];
+                    data[i * 2 + 0] = -data[i * 2 + 1];
+                    data[i * 2 + 1] = -b;
+                }
             }
 
             break;
 
         case 7:
-            for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
-                /* Invert even elements */
-                data[i * 2 + 1] = -data[i * 2 + 1];
+            {
+                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
+                    /* Invert even elements */
+                    data[i * 2 + 1] = -data[i * 2 + 1];
+            }
 
             break;
     }

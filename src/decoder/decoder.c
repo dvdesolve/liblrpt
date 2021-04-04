@@ -51,10 +51,9 @@ static const uint16_t DECODER_PACKET_BUF_LEN = 2048;
 
 /*************************************************************************************************/
 
-/* TODO mcus_per_line should be avoided. We should pass spacecraft ID instead */
 /* lrpt_decoder_init() */
 lrpt_decoder_t *lrpt_decoder_init(
-        uint16_t mcus_per_line) {
+        lrpt_decoder_spacecraft_t sc) {
     /* Allocate our working decoder */
     lrpt_decoder_t *decoder = malloc(sizeof(lrpt_decoder_t));
 
@@ -106,7 +105,26 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->corr_val = 64;
 
     decoder->channel_image_size = 0;
-    decoder->channel_image_width = mcus_per_line * 8; /* Each MCU is 8x8 block */
+
+    /* Each MCU is 8x8 block */
+    switch (sc) {
+        case LRPT_DECODER_SC_METEORM2:
+            decoder->channel_image_width = (196 * 8);
+
+            break;
+
+        default:
+            {
+                lrpt_decoder_deinit(decoder);
+
+                return NULL;
+            }
+
+            break;
+    }
+
+    decoder->sc = sc;
+
     decoder->prev_len = 0;
 
     decoder->ok_cnt = 0;
@@ -149,7 +167,7 @@ void lrpt_decoder_deinit(
 
 /*************************************************************************************************/
 
-/* TODO return bool, report framing, write to given data buffer(s) */
+/* TODO return bool */
 /* lrpt_decoder_exec() */
 void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
@@ -164,13 +182,13 @@ void lrpt_decoder_exec(
         if (lrpt_decoder_data_process_frame(decoder, input->qpsk)) {
             lrpt_decoder_packet_parse_cvcdu(decoder);
 
-            decoder->ok_cnt++;
+            decoder->ok_cnt++; /* TODO count frames, CVCDUs and packets separately */
             decoder->framing_ok = true;
         }
         else
             decoder->framing_ok = false;
 
-        decoder->tot_cnt++; /* TODO this relies upon 16384-long blocks in input, should be changed */
+        decoder->tot_cnt++;  /* TODO count frames, CVCDUs and packets separately */
     }
 
     /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */

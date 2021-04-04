@@ -47,11 +47,6 @@
 
 /*************************************************************************************************/
 
-/* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
- * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
- */
-static const uint8_t JPEG_MCU_PER_PACKET = 14; /**< How many MCUs are in single packet? */
-
 /** Standard quantization table */
 static const uint8_t JPEG_STD_QUANT_TBL[64] = {
     16,  11,  10,  16,  24,  40,  51,  61,
@@ -187,9 +182,6 @@ static bool progress_image(
         uint16_t apid,
         uint8_t mcu_id,
         uint16_t pck_cnt) {
-    if ((apid == 0) || (apid == 70))
-        return false;
-
     lrpt_decoder_jpeg_t *jpeg = decoder->jpeg;
 
     if (jpeg->first) {
@@ -201,18 +193,29 @@ static bool progress_image(
         jpeg->prev_pck = pck_cnt;
         jpeg->first_pck = pck_cnt;
 
-        /* TODO seems like there is some kind of mess. May be it's related to the Meteor-M2
-         * specifics (http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf). In any case
-         * that should be retested well in future with new spacecrafts and reviewed. It's even
+        /* TODO seems like there is some kind of mess. That should be retested well. It's even
          * better to pass current active APIDs by hand so we can do right things here.
          * Or may be we can decide proper APIDs on the pre-analysis...
          */
         /* Realign */
-        if (apid == 65)
-            jpeg->first_pck -= 14;
+        switch (decoder->sc) {
+            case LRPT_DECODER_SC_METEORM2:
+                {
+                    /* For more information see
+                     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+                     */
+                    if (apid == 65)
+                        jpeg->first_pck -= 14;
 
-        if ((apid == 66) || (apid == 68))
-            jpeg->first_pck -= 28;
+                    if ((apid == 66) || (apid == 68))
+                        jpeg->first_pck -= 28;
+                }
+
+                break;
+
+            default:
+                break;
+        }
     }
 
     /* Handle counter reset. For more information see section "3.2 Source Packet structure",
@@ -277,28 +280,10 @@ static void fill_pix(
         if (t > 255)
             t = 255;
 
-        uint16_t x = (mcu_id + m) * 8 + i % 8;
-        uint16_t y = decoder->jpeg->cur_y + i / 8;
-        size_t off = x + y * 1568; /* TODO should use spacecraft-dependent parameter here */
+        uint16_t x = ((mcu_id + m) * 8 + i % 8);
+        uint16_t y = (decoder->jpeg->cur_y + i / 8);
+        size_t off = (x + y * decoder->channel_image_width);
 
-        /* TODO that should be done in postprocessor later or a list of invertable APIDs should be given */
-//        bool inv = false;
-//        /* Invert image palette if APID matches */
-//        for (size_t j = 0; j < 3; j++)
-//            if (apid == rc_data.invert_palette[j])
-//                inv = true;
-//
-//        if (inv) {
-//            if( apid == rc_data.apid[RED] )
-//                channel_image[RED][off]   = 255 - (uint8_t)t;
-//            else if( apid == rc_data.apid[GREEN] )
-//                channel_image[GREEN][off] = 255 - (uint8_t)t;
-//            else if( apid == rc_data.apid[BLUE] )
-//                channel_image[BLUE][off]  = 255 - (uint8_t)t;
-//        }
-//        else /* Normal palette */
-
-        /* TODO signal in some kind of APID counters so we can analyze it later */
         decoder->channel_image[apid - 64][off] = t;
         /* DEBUG */
         fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %zu; t = %" PRId32 "\n", apid, off, t);
@@ -362,7 +347,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
     lrpt_decoder_bitop_writer_set(&b, p);
 
     if (!progress_image(decoder, apid, mcu_id, pck_cnt))
-        return false; /* TODO need error reporting, but be aware of APIDs 0, 70 and mcu_id != 0 */
+        return false;
 
     uint16_t dqt[64];
     fill_dqt_by_q(dqt, q);
@@ -375,7 +360,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
     /* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
      * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
      */
-    for (uint8_t m = 0; m < JPEG_MCU_PER_PACKET; m++) {
+    for (uint8_t m = 0; m < 14; m++) { /* Each packet has 14 MCUs */
         int32_t dc_cat =
             lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 

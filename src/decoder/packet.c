@@ -58,7 +58,7 @@ static void parse_70(
  * \param apid APID number.
  * \param pck_cnt Packet count.
  */
-static void act_apid(
+static void parse_img(
         lrpt_decoder_t *decoder,
         uint8_t *p,
         uint16_t apid,
@@ -92,31 +92,54 @@ static uint16_t parse_partial(
 static void parse_70(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
-    /* TODO This is the code specific for Meteor-M2 only. For more information see appendix "A",
-     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
-     */
-    /* hour = p[8];
-     * min = p[9];
-     * sec = p[10];
-     * msec = p[11] * 4
-     */
+    switch (decoder->sc) {
+        case LRPT_DECODER_SC_METEORM2:
+            {
+                /* TODO implement properly */
+                /* For more information see appendix "A",
+                 * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+                 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+                uint8_t hour = p[8];
+                uint8_t min = p[9];
+                uint8_t sec = p[10];
+                uint16_t msec = (p[11] * 4);
+#pragma GCC diagnostic pop
+            }
+
+            break;
+
+        default:
+            break;
+    }
 }
 
 /*************************************************************************************************/
 
-/* act_apid() */
-static void act_apid(
+/* parse_img() */
+static void parse_img(
         lrpt_decoder_t *decoder,
         uint8_t *p,
         uint16_t apid,
         uint16_t pck_cnt) {
-    /* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
-     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
-     */
-    const uint8_t mcu_id = p[0];
-    const uint8_t q = p[5];
+    switch (decoder->sc) {
+        case LRPT_DECODER_SC_METEORM2:
+            {
+                /* For more information see section "I",
+                 * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+                 */
+                const uint8_t mcu_id = p[0];
+                const uint8_t q = p[5];
 
-    lrpt_decoder_jpeg_decode_mcus(decoder, p + 6, apid, pck_cnt, mcu_id, q);
+                lrpt_decoder_jpeg_decode_mcus(decoder, p + 6, apid, pck_cnt, mcu_id, q);
+            }
+
+            break;
+
+        default:
+            break;
+    }
 }
 
 /*************************************************************************************************/
@@ -128,16 +151,20 @@ static void parse_apid(
     /* For more information see section "3.2 Source Packet structure",
      * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
      */
-    uint16_t w = ((p[0] << 8) | p[1]);
-    uint16_t apid = (w & 0x07FF); /* TODO consult with LRPT documentation for limit values */
-
+    uint16_t apid = (((p[0] << 8) | p[1]) & 0x07FF);
     uint16_t pck_cnt = (((p[2] << 8) | p[3]) & 0x3FFF);
 
-    /* 14 is an offset to get User data directly */
-    if (apid == 70)
+    /* TODO implement properly */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+    uint16_t pck_len = ((p[4] << 8) | p[5]);
+#pragma GCC diagnostic pop
+
+    /* 14 is an offset to get "User data" block directly */
+    if ((apid >= 64) && (apid <= 69))
+        parse_img(decoder, p + 14, apid, pck_cnt);
+    else if (apid == 70)
         parse_70(decoder, p + 14);
-    else
-        act_apid(decoder, p + 14, apid, pck_cnt);
 }
 
 /*************************************************************************************************/
@@ -150,15 +177,17 @@ static uint16_t parse_partial(
     /* For more information see section "3.2 Source Packet structure",
      * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
      */
+    /* Check if we have only part of primary header */
     if (len < 6) {
         decoder->packet_part = true;
 
         return 0;
     }
 
-    uint16_t len_pck = (p[4] << 8) | p[5];
+    uint16_t pck_len = ((p[4] << 8) | p[5]);
 
-    if (len_pck >= (len - 6)) {
+    /* If not all data is in packet... */
+    if (pck_len >= (len - 6)) {
         decoder->packet_part = true;
 
         return 0;
@@ -168,7 +197,8 @@ static uint16_t parse_partial(
 
     decoder->packet_part = false;
 
-    return (len_pck + 7);
+    /* Compensate for -1 in counter and add primary header length */
+    return (pck_len + 6 + 1);
 }
 
 /*************************************************************************************************/
@@ -190,7 +220,7 @@ void lrpt_decoder_packet_parse_cvcdu(
     w = ((p[8] << 8) | p[9]);
     uint16_t hdr_off = (w & 0x07FF); /* M_PDU header first pointer */
 
-    /* TODO as of now we're dropping only empty packets. However it should be extended for
+    /* TODO as of now we're only dropping empty packets. However we can extend functionality for
      * other applications too.
      */
     if ((ver == 0) || (vch_id == 0))
@@ -240,7 +270,9 @@ void lrpt_decoder_packet_parse_cvcdu(
 
         if (decoder->packet_part) {
             decoder->packet_off = data_len;
-            memcpy(decoder->packet_buf, p + 10 + off, sizeof(uint8_t) * decoder->packet_off);
+            memcpy(decoder->packet_buf,
+                    p + 10 + off,
+                    sizeof(uint8_t) * decoder->packet_off);
 
             break;
         }

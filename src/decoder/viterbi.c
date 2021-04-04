@@ -162,32 +162,42 @@ static uint16_t metric_soft_distance(
 
     switch (hard & 0x03) {
         case 0:
-            soft_x0 = mag;
-            soft_x1 = mag;
+            {
+                soft_x0 = mag;
+                soft_x1 = mag;
+            }
 
             break;
 
         case 1:
-            soft_x0 = -mag;
-            soft_x1 =  mag;
+            {
+                soft_x0 = -mag;
+                soft_x1 =  mag;
+            }
 
             break;
 
         case 2:
-            soft_x0 =  mag;
-            soft_x1 = -mag;
+            {
+                soft_x0 =  mag;
+                soft_x1 = -mag;
+            }
 
             break;
 
         case 3:
-            soft_x0 = -mag;
-            soft_x1 = -mag;
+            {
+                soft_x0 = -mag;
+                soft_x1 = -mag;
+            }
 
             break;
 
         default:
-            soft_x0 = 0;
-            soft_x1 = 0;
+            {
+                soft_x0 = 0;
+                soft_x1 = 0;
+            }
 
             break;
     }
