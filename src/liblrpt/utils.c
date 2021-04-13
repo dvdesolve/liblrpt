@@ -14,8 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
- * NOTE: source code of this module is based on xdemorse application and adapted for liblrpt
- * internal use!
+ * Author: Viktor Drobot
  */
 
 /** \cond INTERNAL_API_DOCS */

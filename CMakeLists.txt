@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with liblrpt. If not, see https://www.gnu.org/licenses/
+#
+# Author: Viktor Drobot
 
 # global settings
 cmake_minimum_required(VERSION 3.12)

@@ -13,6 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
+ *
+ * Author: Artem Litvinovich
+ * Author: Neoklis Kyriazis
+ * Author: Viktor Drobot
  */
 
 /** \cond INTERNAL_API_DOCS */
@@ -205,6 +209,7 @@ uint32_t lrpt_decoder_bitop_peek_n_bits(
 
 /*************************************************************************************************/
 
+/* TODO may be rename to pop instead */
 /* lrpt_decoder_bitop_fetch_n_bits() */
 uint32_t lrpt_decoder_bitop_fetch_n_bits(
         lrpt_decoder_bitop_t *b,
