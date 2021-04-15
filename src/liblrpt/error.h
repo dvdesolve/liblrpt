@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
- * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
 
@@ -22,42 +21,44 @@
 
 /** \file
  *
- * Public internal API for DSP routines.
+ * Public internal API for error reporting and handling routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_DSP_H
-#define LRPT_LIBLRPT_DSP_H
+#ifndef LRPT_LIBLRPT_ERROR_H
+#define LRPT_LIBLRPT_ERROR_H
 
 /*************************************************************************************************/
 
-#include <complex.h>
-#include <stdint.h>
+#include "../../include/lrpt.h"
 
 /*************************************************************************************************/
 
-/** DSP filter object */
-struct lrpt_dsp_filter__ {
-    uint8_t npoles; /**< Number of poles, must be even. Max value is limited to the 252. */
-
-    /** @{ */
-    /** a and b coefficients of the filter */
-    double * restrict a;
-    double * restrict b;
-    /** @} */
-
-    /** @{ */
-    /** Saved input and output values for I/Q samples */
-    complex double * restrict x;
-    complex double * restrict y;
-    /** @} */
-
-    /** @{ */
-    /** Ring buffer index for I/Q samples */
-    uint8_t ri;
-    /** @} */
+/** Error object */
+struct lrpt_error__ {
+    lrpt_error_level_t level; /**< Error level */
+    lrpt_error_code_t code; /**< Numeric error code */
+    char *msg; /**< Message */
 };
+
+/*************************************************************************************************/
+
+/** Fill error object with data.
+ *
+ * \param err Pointer to the error object.
+ * \param level Error level (see #lrpt_error_level_t for full list of levels).
+ * \param code Numeric error code (see #lrpt_error_code_t for full list of codes).
+ * \param msg Pointer to the character string (null-terminated) containing optional message.
+ *
+ * \warning If non-empty \c msg was passed user must free claimed resources with
+ * #lrpt_error_cleanup() explicitly!
+ */
+void lrpt_error_set(
+        lrpt_error_t *err,
+        lrpt_error_level_t level,
+        lrpt_error_code_t code,
+        const char *msg);
 
 /*************************************************************************************************/
 

@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
- * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
 
@@ -22,46 +21,55 @@
 
 /** \file
  *
- * Public internal API for DSP routines.
+ * Error reporting and handling routines
+ *
+ * Routines for error reporting and handling.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_DSP_H
-#define LRPT_LIBLRPT_DSP_H
+#include "error.h"
+
+#include "../../include/lrpt.h"
+
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*************************************************************************************************/
 
-#include <complex.h>
-#include <stdint.h>
+/* lrpt_error_set() */
+void lrpt_error_set(
+        lrpt_error_t *err,
+        lrpt_error_level_t level,
+        lrpt_error_code_t code,
+        const char *msg) {
+    if (msg) {
+        const size_t len = strlen(msg);
+
+        err->msg = calloc(len + 1, sizeof(char));
+        strncpy(err->msg, msg, len + 1);
+    }
+    else
+        err->msg = NULL;
+
+    err->level = level;
+    err->code = code;
+}
 
 /*************************************************************************************************/
 
-/** DSP filter object */
-struct lrpt_dsp_filter__ {
-    uint8_t npoles; /**< Number of poles, must be even. Max value is limited to the 252. */
+/* lrpt_error_cleanup() */
+void lrpt_error_cleanup(
+        lrpt_error_t *err) {
+    if (!err)
+        return;
 
-    /** @{ */
-    /** a and b coefficients of the filter */
-    double * restrict a;
-    double * restrict b;
-    /** @} */
+    err->level = LRPT_ERR_LVL_NONE;
+    err->code = LRPT_ERR_CODE_NONE;
 
-    /** @{ */
-    /** Saved input and output values for I/Q samples */
-    complex double * restrict x;
-    complex double * restrict y;
-    /** @} */
-
-    /** @{ */
-    /** Ring buffer index for I/Q samples */
-    uint8_t ri;
-    /** @} */
-};
-
-/*************************************************************************************************/
-
-#endif
+    free(err->msg);
+}
 
 /*************************************************************************************************/
 

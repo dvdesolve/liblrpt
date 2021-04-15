@@ -23,12 +23,13 @@
  *
  * I/O routines.
  *
- * This source file contains common routines for working with I/O tasks.
+ * Routines for dealing with I/O tasks.
  */
 
 #include "io.h"
 
 #include "../../include/lrpt.h"
+#include "error.h"
 #include "lrpt.h"
 #include "utils.h"
 
@@ -47,29 +48,34 @@ static const size_t IO_QPSK_DATA_N = 1024; /**< Block size for I/O operations wi
 
 /*************************************************************************************************/
 
-/** Open I/Q samples file of Version 1 for reading.
+/** Open I/Q samples file, Version 1 for reading.
  *
  * \param fh Pointer to the \c FILE object.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the I/Q file object or \c NULL in case of error.
  */
 static lrpt_iq_file_t *iq_file_open_r_v1(
-        FILE *fh);
+        FILE *fh,
+        lrpt_error_t *err);
 
-/** Open QPSK symbols data file of Version 1 for reading.
+/** Open QPSK symbols data file, Version 1 for reading.
  *
  * \param fh Pointer to the \c FILE object.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the QPSK file object or \c NULL in case of error.
  */
 static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
-        FILE *fh);
+        FILE *fh,
+        lrpt_error_t *err);
 
 /*************************************************************************************************/
 
 /* iq_file_open_r_v1() */
 static lrpt_iq_file_t *iq_file_open_r_v1(
-        FILE *fh) {
+        FILE *fh,
+        lrpt_error_t *err) {
     /* File position = 7 */
 
     /* Read sample rate */
@@ -77,6 +83,10 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
     if (fread(sr_s, 1, 4, fh) != 4) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "I/Q file ver. 1 sample rate read error");
 
         return NULL;
     }
@@ -90,6 +100,10 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
     if (fread(&name_l, sizeof(uint8_t), 1, fh) != 1) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "I/Q file ver. 1 device name length read error");
 
         return NULL;
     }
@@ -107,6 +121,10 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
             free(name);
             fclose(fh);
 
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                        "I/Q file ver. 1 device name allocation/read error");
+
             return NULL;
         }
     }
@@ -120,6 +138,10 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         free(name);
         fclose(fh);
 
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "I/Q file ver. 1 data length read error");
+
         return NULL;
     }
 
@@ -130,15 +152,23 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     /* Perform sanity checking - one complex I/Q sample is encoded as two doubles and each double
      * is serialized to the 10 unsigned chars
      */
-    /* TODO check for incomplete samples (use remainder of the division) and warn about truncation */
     uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
-    uint64_t n_iq = (ftell(fh) - cur_pos) / UTILS_COMPLEX_SER_SIZE;
+    uint64_t n_iq = ((ftell(fh) - cur_pos) / UTILS_COMPLEX_SER_SIZE);
+    uint8_t bytes_rem = ((ftell(fh) - cur_pos) % UTILS_COMPLEX_SER_SIZE);
     fseek(fh, cur_pos, SEEK_SET);
+
+    if ((bytes_rem > 0) && err)
+        lrpt_error_set(err, LRPT_ERR_LVL_WARN, LRPT_ERR_CODE_NONE,
+                "I/Q file contains not a whole number of samples");
 
     if (n_iq != data_l) {
         free(name);
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATACORR,
+                    "Actual number of I/Q samples in file differs from internal value");
 
         return NULL;
     }
@@ -151,6 +181,10 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         free(name);
         fclose(fh);
 
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "I/O buffer allocation failed");
+
         return NULL;
     }
 
@@ -161,6 +195,10 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         free(iobuf);
         free(name);
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "I/Q data file object allocation failed");
 
         return NULL;
     }
@@ -182,7 +220,8 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
 /* qpsk_file_open_r_v1() */
 static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
-        FILE *fh) {
+        FILE *fh,
+        lrpt_error_t *err) {
     /* File position = 9 */
 
     /* Read flags */
@@ -190,6 +229,10 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
     if (fread(&flags, 1, 1, fh) != 1) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "QPSK file ver. 1 flags read error");
 
         return NULL;
     }
@@ -201,6 +244,10 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
     if (fread(sr_s, 1, 4, fh) != 4) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "QPSK file ver. 1 symbol rate read error");
 
         return NULL;
     }
@@ -215,6 +262,10 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     if (fread(data_l_s, 1, 8, fh) != 8) {
         fclose(fh);
 
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "QPSK file ver. 1 data length read error");
+
         return NULL;
     }
 
@@ -224,13 +275,18 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
     /* Perform sanity checking - one soft QPSK symbol is encoded as one int8_t */
     /* TODO add code for hard symbols */
+    /* TODO 1 QPSK soft symbol = 2 bytes. Recheck */
     uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
-    uint64_t n_sym = ftell(fh) - cur_pos;
+    uint64_t n_sym = (ftell(fh) - cur_pos);
     fseek(fh, cur_pos, SEEK_SET);
 
     if (n_sym != data_l) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATACORR,
+                    "Actual number of QPSK symbols in file differs from internal value");
 
         return NULL;
     }
@@ -240,6 +296,10 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
     if (!file) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "QPSK data file object allocation failed");
 
         return NULL;
     }
@@ -259,11 +319,17 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
 /* lrpt_iq_file_open_r() */
 lrpt_iq_file_t *lrpt_iq_file_open_r(
-        const char *fname) {
+        const char *fname,
+        lrpt_error_t *err) {
     FILE *fh = fopen(fname, "rb");
 
-    if (!fh)
+    if (!fh) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
+                    "Can't open I/Q file for reading");
+
         return NULL;
+    }
 
     /* File position = 0 */
 
@@ -272,6 +338,10 @@ lrpt_iq_file_t *lrpt_iq_file_open_r(
 
     if ((fread(header, 1, 6, fh) != 6) || strncmp(header, "lrptiq", 6) != 0) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "I/Q file identifier read error");
 
         return NULL;
     }
@@ -284,6 +354,10 @@ lrpt_iq_file_t *lrpt_iq_file_open_r(
     if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
         fclose(fh);
 
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "I/Q file version read error");
+
         return NULL;
     }
 
@@ -291,12 +365,16 @@ lrpt_iq_file_t *lrpt_iq_file_open_r(
 
     switch (ver) {
         case LRPT_IQ_FILE_VER_1:
-            return iq_file_open_r_v1(fh);
+            return iq_file_open_r_v1(fh, err);
 
             break;
 
         default:
             fclose(fh);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_UNSUPP,
+                        "Unsupported I/Q file version");
 
             return NULL;
     }
@@ -639,11 +717,17 @@ bool lrpt_iq_data_write_to_file(
 
 /* lrpt_qpsk_file_open_r() */
 lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
-        const char *fname) {
+        const char *fname,
+        lrpt_error_t *err) {
     FILE *fh = fopen(fname, "rb");
 
-    if (!fh)
+    if (!fh) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
+                    "Can't open QPSK file for reading");
+
         return NULL;
+    }
 
     /* File position = 0 */
 
@@ -652,6 +736,10 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
 
     if ((fread(header, 1, 8, fh) != 8) || strncmp(header, "lrptqpsk", 8) != 0) {
         fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "QPSK file identifier read error");
 
         return NULL;
     }
@@ -664,6 +752,10 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
     if (fread(&ver, sizeof(uint8_t), 1, fh) != 1) {
         fclose(fh);
 
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "QPSK file version read error");
+
         return NULL;
     }
 
@@ -671,12 +763,16 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
 
     switch (ver) {
         case LRPT_QPSK_FILE_VER_1:
-            return qpsk_file_open_r_v1(fh);
+            return qpsk_file_open_r_v1(fh, err);
 
             break;
 
         default:
             fclose(fh);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_UNSUPP,
+                        "Unsupported QPSK file version");
 
             return NULL;
     }

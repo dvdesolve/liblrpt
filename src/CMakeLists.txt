@@ -33,6 +33,7 @@ set(lrpt_SOURCES
     demodulator/pll.c
     demodulator/rrc.c
     liblrpt/dsp.c
+    liblrpt/error.c
     liblrpt/io.c
     liblrpt/lrpt.c
     liblrpt/utils.c
@@ -56,6 +57,7 @@ set(lrpt_HEADERS
     demodulator/pll.h
     demodulator/rrc.h
     liblrpt/dsp.h
+    liblrpt/error.h
     liblrpt/io.h
     liblrpt/lrpt.h
     liblrpt/utils.h

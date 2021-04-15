@@ -86,6 +86,28 @@ typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 /** Type for QPSK data storage */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
+/** Error levels */
+typedef enum lrpt_error_level__ {
+    LRPT_ERR_LVL_NONE = 0,
+    LRPT_ERR_LVL_INFO,
+    LRPT_ERR_LVL_WARN,
+    LRPT_ERR_LVL_ERROR
+} lrpt_error_level_t;
+
+/** Supported error codes */
+typedef enum lrpt_error_code__ {
+    LRPT_ERR_CODE_NONE = 0,
+    LRPT_ERR_CODE_ALLOC,
+    LRPT_ERR_CODE_PARAM,
+    LRPT_ERR_CODE_FOPEN,
+    LRPT_ERR_CODE_FREAD,
+    LRPT_ERR_CODE_DATACORR,
+    LRPT_ERR_CODE_UNSUPP
+} lrpt_error_code_t;
+
+/** Type for error reporting */
+typedef struct lrpt_error__ lrpt_error_t;
+
 /** @} */
 
 /** \addtogroup io I/O
@@ -405,23 +427,32 @@ LRPT_API bool lrpt_qpsk_data_to_ints(
         int8_t *qpsk,
         size_t len);
 
+/** Free resources claimed for error object.
+ *
+ * \param err Pointer to the error object.
+ */
+LRPT_API void lrpt_error_cleanup(
+        lrpt_error_t *err);
+
 /** @} */
 
 /** \addtogroup io
  * @{
  */
 
-/** Open raw I/Q data file for reading.
+/** Open I/Q data file for reading.
  *
  * File format is described at \ref lrptiq section. User should close file properly with
  * #lrpt_iq_file_close() after use.
  *
- * \param fname Name of file with raw I/Q data.
+ * \param fname Name of file with I/Q data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data file object or \c NULL in case of error.
  */
 LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
-        const char *fname);
+        const char *fname,
+        lrpt_error_t *err);
 
 /** Open raw I/Q data file of Version 1 for writing.
  *
@@ -540,11 +571,13 @@ LRPT_API bool lrpt_iq_data_write_to_file(
  * #lrpt_qpsk_file_close() after use.
  *
  * \param fname Name of file with QPSK data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data file object or \c NULL in case of error.
  */
 LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
-        const char *fname);
+        const char *fname,
+        lrpt_error_t *err);
 
 /** Open QPSK data file of Version 1 for writing.
  *
@@ -701,28 +734,30 @@ LRPT_API bool lrpt_qpsk_data_write_to_file(
 /** Initialize recursive Chebyshev filter.
  *
  * \param bandwidth Bandwidth of the signal, Hz.
- * \param samplerate Signal sampling rate.
+ * \param samplerate Signal sampling rate, samples/s.
  * \param ripple Ripple level, %.
  * \param num_poles Number of filter poles. Must be even and not greater than 252!
- * \param type Filter type.
+ * \param type Filter type (see #lrpt_dsp_filter_type_t for supported filter types).
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the Chebyshev filter object or \c NULL in case of error.
  */
 LRPT_API lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         uint32_t bandwidth,
-        double samplerate,
+        uint32_t samplerate,
         double ripple,
         uint8_t num_poles,
-        lrpt_dsp_filter_type_t type);
+        lrpt_dsp_filter_type_t type,
+        lrpt_error_t *err);
 
-/** Free allocated Chebyshev filter.
+/** Free initialized Chebyshev filter.
  *
  * \param filter Pointer to the Chebyshev filter object.
  */
 LRPT_API void lrpt_dsp_filter_deinit(
         lrpt_dsp_filter_t *filter);
 
-/** Apply recursive Chebyshev filter to the raw I/Q data.
+/** Apply recursive Chebyshev filter to the I/Q data.
  *
  * \param filter Pointer to the Chebyshev filter object.
  * \param data Pointer to the I/Q data object.
