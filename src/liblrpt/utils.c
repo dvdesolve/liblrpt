@@ -30,6 +30,9 @@
 
 #include "utils.h"
 
+#include "../../include/lrpt.h"
+#include "error.h"
+
 #include <errno.h>
 #include <math.h>
 #include <stdbool.h>
@@ -44,7 +47,7 @@ const uint8_t UTILS_COMPLEX_SER_SIZE = (UTILS_DOUBLE_SER_SIZE * 2);
 
 /*************************************************************************************************/
 
-/** Tells where we're running on Big Endian system.
+/** Tell if we're running on Big Endian system.
  *
  * \return \c true if environment is Big Endian and \c false in case of Little Endian.
  */
@@ -333,12 +336,26 @@ int64_t lrpt_utils_ds_int64_t(
 /* lrpt_utils_s_double() */
 bool lrpt_utils_s_double(
         double x,
-        unsigned char *v) {
+        unsigned char *v,
+        lrpt_error_t *err) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
-    if (isnan(x) || isinf(x))
+    if (isnan(x)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NAN,
+                    "Given double is NaN");
+
         return false;
+    }
+
+    if (isinf(x)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INF,
+                    "Given double is infinity");
+
+        return false;
+    }
 
     int e;
     double m = frexp(x, &e);
@@ -360,7 +377,8 @@ bool lrpt_utils_s_double(
 /* lrpt_utils_ds_double() */
 bool lrpt_utils_ds_double(
         const unsigned char *x,
-        double *v) {
+        double *v,
+        lrpt_error_t *err) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
@@ -373,15 +391,34 @@ bool lrpt_utils_ds_double(
     int16_t e = lrpt_utils_ds_int16_t(ex);
     double m = (double)lrpt_utils_ds_int64_t(mant) / c_2to53;
 
-    if (isnan(m) || isinf(m))
+    if (isnan(m)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NAN,
+                    "Resulting double is NaN");
+
         return false;
+    }
+
+    if (isinf(m)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INF,
+                    "Resulting double is infinity");
+
+        return false;
+    }
 
     double t = ldexp(m, e);
 
-    if (errno == ERANGE)
+    if (errno == ERANGE) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_MATH,
+                    "Resulting double is too large");
+
         return false;
+    }
     else {
         *v = t;
+
         return true;
     }
 }

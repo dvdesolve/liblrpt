@@ -43,14 +43,14 @@ struct lrpt_dsp_filter__ {
 
     /** @{ */
     /** a and b coefficients of the filter */
-    double * restrict a;
-    double * restrict b;
+    double *a;
+    double *b;
     /** @} */
 
     /** @{ */
     /** Saved input and output values for I/Q samples */
-    complex double * restrict x;
-    complex double * restrict y;
+    complex double *x;
+    complex double *y;
     /** @} */
 
     /** @{ */

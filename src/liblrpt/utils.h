@@ -31,6 +31,8 @@
 
 /*************************************************************************************************/
 
+#include "error.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -161,6 +163,7 @@ int64_t lrpt_utils_ds_int64_t(
  *
  * \param x Input value to be serialized.
  * \param[out] v Resulting value in Big Endian form (should be a size of at least 10).
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull serialization and \c false otherwise.
  *
@@ -169,7 +172,8 @@ int64_t lrpt_utils_ds_int64_t(
  */
 bool lrpt_utils_s_double(
         double x,
-        unsigned char *v);
+        unsigned char *v,
+        lrpt_error_t *err);
 
 /** Deserialize Big Endian portable representation to the \c double value.
  *
@@ -178,6 +182,7 @@ bool lrpt_utils_s_double(
  *
  * \param x Input value to be deserialized (in Big Endian form; size of at least 10).
  * \param[out] v Pointer to the resulting \c double value.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull deserialization and \c false otherwise.
  *
@@ -187,7 +192,8 @@ bool lrpt_utils_s_double(
  */
 bool lrpt_utils_ds_double(
         const unsigned char *x,
-        double *v);
+        double *v,
+        lrpt_error_t *err);
 
 /*************************************************************************************************/
 
