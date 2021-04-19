@@ -98,19 +98,19 @@ static void parse_70(
         uint8_t *p) {
     switch (decoder->sc) {
         case LRPT_DECODER_SC_METEORM2:
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
             {
                 /* TODO implement properly */
                 /* For more information see appendix "A",
                  * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
                  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
                 uint8_t hour = p[8];
                 uint8_t min = p[9];
                 uint8_t sec = p[10];
                 uint16_t msec = (p[11] * 4);
-#pragma GCC diagnostic pop
             }
+#pragma GCC diagnostic pop
 
             break;
 
@@ -149,6 +149,8 @@ static void parse_img(
 /*************************************************************************************************/
 
 /* parse_apid() */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
 static void parse_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
@@ -159,10 +161,7 @@ static void parse_apid(
     uint16_t pck_cnt = (((p[2] << 8) | p[3]) & 0x3FFF);
 
     /* TODO implement properly */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
     uint16_t pck_len = ((p[4] << 8) | p[5]);
-#pragma GCC diagnostic pop
 
     /* 14 is an offset to get "User data" block directly */
     if ((apid >= 64) && (apid <= 69))
@@ -170,6 +169,7 @@ static void parse_apid(
     else if (apid == 70)
         parse_70(decoder, p + 14);
 }
+#pragma GCC diagnostic pop
 
 /*************************************************************************************************/
 
