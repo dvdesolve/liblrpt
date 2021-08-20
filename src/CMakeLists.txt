@@ -21,14 +21,14 @@ set(lrpt_SOURCES
     decoder/correlator.c
     decoder/data.c
     decoder/decoder.c
+    decoder/dediffcoder.c
+    decoder/deinterleaver.c
     decoder/ecc.c
     decoder/jpeg.c
     decoder/huffman.c
     decoder/packet.c
     decoder/viterbi.c
     demodulator/agc.c
-    demodulator/dediffcoder.c
-    demodulator/deinterleaver.c
     demodulator/demodulator.c
     demodulator/pll.c
     demodulator/rrc.c
@@ -45,14 +45,14 @@ set(lrpt_HEADERS
     decoder/correlator.h
     decoder/data.h
     decoder/decoder.h
+    decoder/dediffcoder.h
+    decoder/deinterleaver.h
     decoder/ecc.h
     decoder/jpeg.h
     decoder/huffman.h
     decoder/packet.h
     decoder/viterbi.h
     demodulator/agc.h
-    demodulator/dediffcoder.h
-    demodulator/deinterleaver.h
     demodulator/demodulator.h
     demodulator/pll.h
     demodulator/rrc.h

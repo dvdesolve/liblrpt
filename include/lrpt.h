@@ -175,9 +175,6 @@ typedef enum lrpt_dsp_filter_type__ {
 /** Demodulator object type */
 typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 
-/** Dediffcoder object type */
-typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
-
 /** @} */
 
 /** \addtogroup decoder Decoder
@@ -191,6 +188,9 @@ typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
 
 /** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
+
+/** Dediffcoder object type */
+typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
 
 /** Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
 LRPT_API extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
@@ -886,6 +886,44 @@ LRPT_API bool lrpt_demodulator_exec(
         const lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output);
 
+/** @} */
+
+/** \addtogroup decoder
+ * @{
+ */
+
+/** Allocate and initialize decoder object.
+ *
+ * Creates decoder object. User should properly free the object with #lrpt_decoder_deinit()
+ * after use.
+ *
+ * \param sc Spacecraft identifier.
+ *
+ * \return Pointer to the decoder object or \c NULL in case of error.
+ */
+LRPT_API lrpt_decoder_t *lrpt_decoder_init(
+        lrpt_decoder_spacecraft_t sc);
+
+/** Free previously allocated decoder object.
+ *
+ * \param decoder Pointer to the decoder object.
+ */
+LRPT_API void lrpt_decoder_deinit(
+        lrpt_decoder_t *decoder);
+
+/** Perform LRPT decoding for given data block.
+ *
+ * Performs full decoding for given soft-symbols data chunk.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param input Input soft-symbols data.
+ * \param buf_len Length of given data chunk.
+ */
+LRPT_API void lrpt_decoder_exec(
+        lrpt_decoder_t *decoder,
+        lrpt_qpsk_data_t *input,
+        size_t buf_len);
+
 /** Allocate and initialize dediffcoder object.
  *
  * Allocates and initializes dediffcoder object for use with QPSK diffcoded data.
@@ -925,44 +963,6 @@ LRPT_API bool lrpt_dediffcoder_exec(
  */
 LRPT_API bool lrpt_deinterleaver_exec(
         lrpt_qpsk_data_t *data);
-
-/** @} */
-
-/** \addtogroup decoder
- * @{
- */
-
-/** Allocate and initialize decoder object.
- *
- * Creates decoder object. User should properly free the object with #lrpt_decoder_deinit()
- * after use.
- *
- * \param sc Spacecraft identifier.
- *
- * \return Pointer to the decoder object or \c NULL in case of error.
- */
-LRPT_API lrpt_decoder_t *lrpt_decoder_init(
-        lrpt_decoder_spacecraft_t sc);
-
-/** Free previously allocated decoder object.
- *
- * \param decoder Pointer to the decoder object.
- */
-LRPT_API void lrpt_decoder_deinit(
-        lrpt_decoder_t *decoder);
-
-/** Perform LRPT decoding for given data block.
- *
- * Performs full decoding for given soft-symbols data chunk.
- *
- * \param decoder Pointer to the decoder object.
- * \param input Input soft-symbols data.
- * \param buf_len Length of given data chunk.
- */
-LRPT_API void lrpt_decoder_exec(
-        lrpt_decoder_t *decoder,
-        lrpt_qpsk_data_t *input,
-        size_t buf_len);
 
 /** @} */
 

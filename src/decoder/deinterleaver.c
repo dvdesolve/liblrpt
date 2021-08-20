@@ -25,7 +25,7 @@
  *
  * Deinterleaver routines.
  *
- * This source file contains deinterleaver routines used by QPSK demodulator.
+ * This source file contains deinterleaver routines used by decoder.
  */
 
 /*************************************************************************************************/

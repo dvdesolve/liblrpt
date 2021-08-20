@@ -25,7 +25,7 @@
  *
  * Dediffcoding routines.
  *
- * This source file contains dediffcoding routines used by DQPSK demodulator.
+ * This source file contains dediffcoding routines used by decoder.
  */
 
 /*************************************************************************************************/

@@ -1,0 +1,187 @@
+/* ./liblrpt/dsp.c */
+lrpt_dsp_filter_t *             lrpt_dsp_filter_init(uint32_t bandwidth, double samplerate, double ripple, uint8_t num_poles, lrpt_dsp_filter_type_t type);
+void                            lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *filter);
+bool                            lrpt_dsp_filter_apply(lrpt_dsp_filter_t *filter, lrpt_iq_data_t *data);
+
+/* ./liblrpt/io.c */
+static lrpt_iq_file_t *         iq_file_open_r_v1(FILE *fh);
+static lrpt_qpsk_file_t *       qpsk_file_open_r_v1(FILE *fh);
+lrpt_iq_file_t *                lrpt_iq_file_open_r(const char *fname);
+lrpt_iq_file_t *                lrpt_iq_file_open_w_v1(const char *fname, uint32_t samplerate, const char *device_name);
+void                            lrpt_iq_file_close(lrpt_iq_file_t *file);
+uint8_t                         lrpt_iq_file_version(const lrpt_iq_file_t *file);
+uint32_t                        lrpt_iq_file_samplerate(const lrpt_iq_file_t *file);
+const char *                    lrpt_iq_file_devicename(const lrpt_iq_file_t *file);
+uint64_t                        lrpt_iq_file_length(const lrpt_iq_file_t *file);
+bool                            lrpt_iq_file_goto(lrpt_iq_file_t *file, uint64_t sample);
+bool                            lrpt_iq_data_read_from_file(lrpt_iq_data_t *data, lrpt_iq_file_t *file, size_t len, bool rewind);
+bool                            lrpt_iq_data_write_to_file(const lrpt_iq_data_t *data, lrpt_iq_file_t *file, bool inplace);
+lrpt_qpsk_file_t *              lrpt_qpsk_file_open_r(const char *fname);
+lrpt_qpsk_file_t *              lrpt_qpsk_file_open_w_v1(const char *fname, bool offset, bool differential, bool interleaved, bool hard, uint32_t symrate);
+void                            lrpt_qpsk_file_close(lrpt_qpsk_file_t *file);
+uint8_t                         lrpt_qpsk_file_version(const lrpt_qpsk_file_t *file);
+bool                            lrpt_qpsk_file_is_offsetted(const lrpt_qpsk_file_t *file);
+bool                            lrpt_qpsk_file_is_diffcoded(const lrpt_qpsk_file_t *file);
+bool                            lrpt_qpsk_file_is_interleaved(const lrpt_qpsk_file_t *file);
+bool                            lrpt_qpsk_file_is_hardsymboled(const lrpt_qpsk_file_t *file);
+uint32_t                        lrpt_qpsk_file_symrate(const lrpt_qpsk_file_t *file);
+uint64_t                        lrpt_qpsk_file_length(const lrpt_qpsk_file_t *file);
+bool                            lrpt_qpsk_file_goto(lrpt_qpsk_file_t *file, uint64_t symbol);
+bool                            lrpt_qpsk_data_read_from_file(lrpt_qpsk_data_t *data, lrpt_qpsk_file_t *file, size_t len, bool rewind);
+bool                            lrpt_qpsk_data_write_to_file(const lrpt_qpsk_data_t *data, lrpt_qpsk_file_t *file, bool inplace);
+
+/* ./liblrpt/lrpt.c */
+lrpt_iq_data_t *                lrpt_iq_data_alloc(size_t len);
+void                            lrpt_iq_data_free(lrpt_iq_data_t *data);
+size_t                          lrpt_iq_data_length(const lrpt_iq_data_t *data);
+bool                            lrpt_iq_data_resize(lrpt_iq_data_t *data, size_t new_len);
+bool                            lrpt_iq_data_from_samples(lrpt_iq_data_t *data, const complex double *iq, size_t len);
+lrpt_iq_data_t *                lrpt_iq_data_create_from_samples(const complex double *iq, size_t len);
+bool                            lrpt_iq_data_from_doubles(lrpt_iq_data_t *data, const double *i, const double *q, size_t len);
+lrpt_iq_data_t *                lrpt_iq_data_create_from_doubles(const double *i, const double *q, size_t len);
+lrpt_qpsk_data_t *              lrpt_qpsk_data_alloc(size_t len);
+void                            lrpt_qpsk_data_free(lrpt_qpsk_data_t *data);
+size_t                          lrpt_qpsk_data_length(const lrpt_qpsk_data_t *data);
+bool                            lrpt_qpsk_data_resize(lrpt_qpsk_data_t *data, size_t new_len);
+bool                            lrpt_qpsk_data_from_symbols(lrpt_qpsk_data_t *data, const int8_t *qpsk, size_t len);
+lrpt_qpsk_data_t *              lrpt_qpsk_data_create_from_symbols(const int8_t *qpsk, size_t len);
+bool                            lrpt_qpsk_data_to_ints(const lrpt_qpsk_data_t *data, int8_t *qpsk, size_t len);
+
+/* ./liblrpt/utils.c */
+static inline bool              is_be(void);
+void                            lrpt_utils_s_uint16_t(uint16_t x, unsigned char *v);
+uint16_t                        lrpt_utils_ds_uint16_t(const unsigned char *x);
+void                            lrpt_utils_s_int16_t(int16_t x, unsigned char *v);
+int16_t                         lrpt_utils_ds_int16_t(const unsigned char *x);
+void                            lrpt_utils_s_uint32_t(uint32_t x, unsigned char *v);
+uint32_t                        lrpt_utils_ds_uint32_t(const unsigned char *x);
+void                            lrpt_utils_s_int32_t(int32_t x, unsigned char *v);
+int32_t                         lrpt_utils_ds_int32_t(const unsigned char *x);
+void                            lrpt_utils_s_uint64_t(uint64_t x, unsigned char *v);
+uint64_t                        lrpt_utils_ds_uint64_t(const unsigned char *x);
+void                            lrpt_utils_s_int64_t(int64_t x, unsigned char *v);
+int64_t                         lrpt_utils_ds_int64_t(const unsigned char *x);
+bool                            lrpt_utils_s_double(double x, unsigned char *v);
+bool                            lrpt_utils_ds_double(const unsigned char *x, double *v);
+
+
+/* ./decoder/bitop.c */
+static inline uint8_t           nth_byte(const uint8_t *l, int8_t n);
+uint8_t                         lrpt_decoder_bitop_count(uint32_t n);
+void                            lrpt_decoder_bitop_writer_set(lrpt_decoder_bitop_t *w, uint8_t *bytes);
+void                            lrpt_decoder_bitop_writer_reverse(lrpt_decoder_bitop_t *w, uint8_t *l, size_t len);
+uint32_t                        lrpt_decoder_bitop_peek_n_bits(lrpt_decoder_bitop_t *b, uint8_t n);
+uint32_t                        lrpt_decoder_bitop_fetch_n_bits(lrpt_decoder_bitop_t *b, uint8_t n);
+void                            lrpt_decoder_bitop_advance_n_bits(lrpt_decoder_bitop_t *b, uint8_t n);
+
+/* ./decoder/correlator.c */
+static void                     set_patterns(lrpt_decoder_correlator_t *corr, uint8_t n, uint64_t p);
+static uint8_t                  rotate_iq(const lrpt_decoder_correlator_t *corr, uint8_t data, uint8_t shift);
+static uint64_t                 rotate_iq_qw(const lrpt_decoder_correlator_t *corr, uint64_t data, uint8_t shift);
+static uint64_t                 flip_iq_qw(const lrpt_decoder_correlator_t *corr, uint64_t data);
+lrpt_decoder_correlator_t *     lrpt_decoder_correlator_init(void);
+void                            lrpt_decoder_correlator_deinit(lrpt_decoder_correlator_t *corr);
+uint8_t                         lrpt_decoder_correlator_correlate(lrpt_decoder_correlator_t *corr, const int8_t *data, size_t len);
+
+/* ./decoder/data.c */
+static void                     fix_packet(int8_t *data, uint8_t shift);
+static void                     do_next_correlate(lrpt_decoder_t *decoder, int8_t *data);
+static void                     do_full_correlate(lrpt_decoder_t *decoder, int8_t *data);
+static bool                     decode_frame(lrpt_decoder_t *decoder);
+bool                            lrpt_decoder_data_process_frame(lrpt_decoder_t *decoder, int8_t *data);
+
+/* ./decoder/decoder.c */
+lrpt_decoder_t *                lrpt_decoder_init(lrpt_decoder_spacecraft_t sc);
+void                            lrpt_decoder_deinit(lrpt_decoder_t *decoder);
+void                            lrpt_decoder_exec(lrpt_decoder_t *decoder, lrpt_qpsk_data_t *input, size_t buf_len);
+
+/* ./decoder/dediffcoder.c */
+static inline int8_t            lut_isqrt(const uint8_t lut[], int16_t value);
+lrpt_dediffcoder_t *            lrpt_dediffcoder_init(void);
+void                            lrpt_dediffcoder_deinit(lrpt_dediffcoder_t *dediff);
+bool                            lrpt_dediffcoder_exec(lrpt_dediffcoder_t *dediff, lrpt_qpsk_data_t *data);
+
+/* ./decoder/deinterleaver.c */
+static uint8_t                  qpsk_to_byte(const int8_t *data);
+static bool                     find_sync(const int8_t *data, uint8_t *offset, uint8_t *sync);
+static bool                     resync_stream(lrpt_qpsk_data_t *data);
+bool                            lrpt_deinterleaver_exec(lrpt_qpsk_data_t *data);
+
+/* ./decoder/ecc.c */
+void                            lrpt_decoder_ecc_interleave(const uint8_t *input, uint8_t *output, uint8_t pos, uint8_t n);
+void                            lrpt_decoder_ecc_deinterleave(const uint8_t *input, uint8_t *output, uint8_t pos, uint8_t n);
+bool                            lrpt_decoder_ecc_decode(uint8_t *data, uint8_t pad);
+
+/* ./decoder/huffman.c */
+static int32_t                  get_ac_real(const lrpt_decoder_huffman_t *huff, uint16_t w);
+static int32_t                  get_dc_real(uint16_t w);
+lrpt_decoder_huffman_t *        lrpt_decoder_huffman_init(void);
+void                            lrpt_decoder_huffman_deinit(lrpt_decoder_huffman_t *huff);
+int32_t                         lrpt_decoder_huffman_get_ac(const lrpt_decoder_huffman_t *huff, uint16_t w);
+int32_t                         lrpt_decoder_huffman_get_dc(const lrpt_decoder_huffman_t *huff, uint16_t w);
+int32_t                         lrpt_decoder_huffman_map_range(uint8_t cat, uint16_t val);
+
+/* ./decoder/jpeg.c */
+static void                     flt_idct_8x8(lrpt_decoder_jpeg_t *jpeg, double *res, const int32_t *in);
+static void                     fill_dqt_by_q(uint16_t *dqt, uint8_t q);
+static bool                     progress_image(lrpt_decoder_t *decoder, uint16_t apid, uint8_t mcu_id, uint16_t pck_cnt);
+static void                     fill_pix(lrpt_decoder_t *decoder, double *img_dct, uint16_t apid, uint8_t mcu_id, uint8_t m);
+lrpt_decoder_jpeg_t *           lrpt_decoder_jpeg_init(void);
+void                            lrpt_decoder_jpeg_deinit(lrpt_decoder_jpeg_t *jpeg);
+bool                            lrpt_decoder_jpeg_decode_mcus(lrpt_decoder_t *decoder, uint8_t *p, uint16_t apid, uint16_t pck_cnt, uint8_t mcu_id, uint8_t q);
+
+/* ./decoder/packet.c */
+static void                     parse_70(lrpt_decoder_t *decoder, uint8_t *p);
+static void                     parse_img(lrpt_decoder_t *decoder, uint8_t *p, uint16_t apid, uint16_t pck_cnt);
+static void                     parse_apid(lrpt_decoder_t *decoder, uint8_t *p);
+static uint16_t                 parse_partial(lrpt_decoder_t *decoder, uint8_t *p, uint16_t len);
+void                            lrpt_decoder_packet_parse_cvcdu(lrpt_decoder_t *decoder);
+
+/* ./decoder/viterbi.c */
+static uint16_t                 metric_soft_distance(uint8_t hard, uint8_t soft_y0, uint8_t soft_y1);
+static inline                   void swap_error_buffers(lrpt_decoder_viterbi_t *vit);
+static void                     fill_pair_lookup_dists(lrpt_decoder_viterbi_t *vit);
+static uint8_t                  history_buffer_search(const lrpt_decoder_viterbi_t *vit, uint8_t search_every);
+static void                     history_buffer_renormalize(lrpt_decoder_viterbi_t *vit, uint8_t bestpath);
+static void                     history_buffer_traceback(lrpt_decoder_viterbi_t *vit, uint8_t bestpath, uint8_t min_traceback_length);
+static void                     history_buffer_process_skip(lrpt_decoder_viterbi_t *vit, uint8_t skip);
+static void                     viterbi_inner(lrpt_decoder_viterbi_t *vit, const int8_t *input);
+static void                     viterbi_tail(lrpt_decoder_viterbi_t *vit, const int8_t *input);
+static void                     convolutional_decode(lrpt_decoder_viterbi_t *vit, const int8_t *input, uint8_t *output);
+static void                     convolutional_encode(lrpt_decoder_viterbi_t *vit, uint8_t *input, uint8_t *output);
+lrpt_decoder_viterbi_t *        lrpt_decoder_viterbi_init(void);
+void                            lrpt_decoder_viterbi_deinit(lrpt_decoder_viterbi_t *vit);
+void                            lrpt_decoder_viterbi_decode(lrpt_decoder_viterbi_t *vit, const lrpt_decoder_correlator_t *corr, const int8_t *input, uint8_t *output);
+uint8_t                         lrpt_decoder_viterbi_ber_percent(const lrpt_decoder_viterbi_t *vit);
+
+
+/* ./demodulator/agc.c */
+lrpt_demodulator_agc_t *        lrpt_demodulator_agc_init(double target);
+void                            lrpt_demodulator_agc_deinit(lrpt_demodulator_agc_t *agc);
+complex double                  lrpt_demodulator_agc_apply(lrpt_demodulator_agc_t *agc, complex double sample);
+
+/* ./demodulator/demodulator.c */
+static inline int8_t            clamp_int8(double x);
+static bool                     demod_qpsk(lrpt_demodulator_t *demod, complex double fdata, qpsk_sym_t *sym);
+lrpt_demodulator_t *            lrpt_demodulator_init(bool offset, double costas_bandwidth, uint8_t interp_factor, uint32_t demod_samplerate, uint32_t symbol_rate, uint16_t rrc_order, double rrc_alpha, double pll_locked_threshold, double pll_unlocked_threshold);
+void                            lrpt_demodulator_deinit(lrpt_demodulator_t *demod);
+bool                            lrpt_demodulator_gain(const lrpt_demodulator_t *demod, double *gain);
+bool                            lrpt_demodulator_siglvl(const lrpt_demodulator_t *demod, double *level);
+bool                            lrpt_demodulator_phaseerr(const lrpt_demodulator_t *demod, double *error);
+bool                            lrpt_demodulator_exec(lrpt_demodulator_t *demod, const lrpt_iq_data_t *input, lrpt_qpsk_data_t *output);
+
+/* ./demodulator/pll.c */
+static inline double            clamp_double(double x, double max);
+static inline double            lut_tanh(const double lut[], double value);
+static void                     recompute_coeffs(lrpt_demodulator_pll_t *pll, double damping, double bandwidth);
+lrpt_demodulator_pll_t *        lrpt_demodulator_pll_init(double bandwidth, double locked_threshold, double unlocked_threshold, bool offset);
+void                            lrpt_demodulator_pll_deinit(lrpt_demodulator_pll_t *pll);
+complex double                  lrpt_demodulator_pll_mix(lrpt_demodulator_pll_t *pll, complex double sample);
+double                          lrpt_demodulator_pll_delta(const lrpt_demodulator_pll_t *pll, complex double sample, complex double cosample);
+void                            lrpt_demodulator_pll_correct_phase(lrpt_demodulator_pll_t *pll, double error, uint8_t interp_factor);
+
+/* ./demodulator/rrc.c */
+static double                   rrc_coeff(uint16_t index, uint16_t taps, double osf, double alpha);
+lrpt_demodulator_rrc_filter_t * lrpt_demodulator_rrc_filter_init(uint16_t order, uint8_t factor, double osf, double alpha);
+void                            lrpt_demodulator_rrc_filter_deinit(lrpt_demodulator_rrc_filter_t *rrc);
+complex double                  lrpt_demodulator_rrc_filter_apply(lrpt_demodulator_rrc_filter_t *rrc, complex double value);
