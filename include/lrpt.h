@@ -146,7 +146,8 @@ typedef enum lrpt_qpsk_file_version__ {
  *
  * Digital signal processing routines.
  *
- * This API provides an interface for DSP operations such as filtering and FFT.
+ * This API provides an interface for DSP operations such as filtering, FFT, dediffcoding and
+ * deinterleaving.
  *
  * @{
  */
@@ -160,6 +161,9 @@ typedef enum lrpt_dsp_filter_type__ {
     LRPT_DSP_FILTER_TYPE_HIGHPASS, /**< Highpass filter */
     LRPT_DSP_FILTER_TYPE_BANDPASS  /**< Bandpass filter */
 } lrpt_dsp_filter_type_t;
+
+/** Dediffcoder object type */
+typedef struct lrpt_dsp_dediffcoder__ lrpt_dsp_dediffcoder_t;
 
 /** @} */
 
@@ -188,9 +192,6 @@ typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 
 /** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
-
-/** Dediffcoder object type */
-typedef struct lrpt_dediffcoder__ lrpt_dediffcoder_t;
 
 /** Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
 LRPT_API extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
@@ -792,6 +793,46 @@ LRPT_API bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *filter,
         lrpt_iq_data_t *data);
 
+/** Allocate and initialize dediffcoder object.
+ *
+ * Allocates and initializes dediffcoder object for use with QPSK diffcoded data.
+ *
+ * \return Pointer to the dediffcoder object or \c NULL in case of error.
+ */
+LRPT_API lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(void);
+
+/** Free previously allocated dediffcoder object.
+ *
+ * \param dediff Pointer to the dediffcoder object.
+ */
+LRPT_API void lrpt_dsp_dediffcoder_deinit(
+        lrpt_dsp_dediffcoder_t *dediff);
+
+/** Perform dediffcoding of QPSK data.
+ *
+ * Performs dediffcoding of given QPSK data. Data length should be at least 2 QPSK symbols long and
+ * be an even.
+ *
+ * \param dediff Pointer to the dediffcoder object.
+ * \param[in,out] data Pointer to the diffcoded QPSK data.
+ *
+ * \return \c true on successfull dediffcoding and \c false otherwise.
+ */
+LRPT_API bool lrpt_dsp_dediffcoder_exec(
+        lrpt_dsp_dediffcoder_t *dediff,
+        lrpt_qpsk_data_t *data);
+
+/** Resynchronize and deinterleave a stream of QPSK soft symbols.
+ *
+ * Performs resynchronization and deinterleaving of QPSK symbols stream.
+ *
+ * \param[in,out] data Pointer to the QPSK data storage.
+ *
+ * \return \c true on successfull deinterleaving and \c false otherwise.
+ */
+LRPT_API bool lrpt_dsp_deinterleaver_exec(
+        lrpt_qpsk_data_t *data);
+
 /** @} */
 
 /** \addtogroup demod
@@ -923,46 +964,6 @@ LRPT_API void lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
         lrpt_qpsk_data_t *input,
         size_t buf_len);
-
-/** Allocate and initialize dediffcoder object.
- *
- * Allocates and initializes dediffcoder object for use with QPSK diffcoded data.
- *
- * \return Pointer to the dediffcoder object or \c NULL in case of error.
- */
-LRPT_API lrpt_dediffcoder_t *lrpt_dediffcoder_init(void);
-
-/** Free previously allocated dediffcoder object.
- *
- * \param dediff Pointer to the dediffcoder object.
- */
-LRPT_API void lrpt_dediffcoder_deinit(
-        lrpt_dediffcoder_t *dediff);
-
-/** Perform dediffcoding of QPSK data.
- *
- * Performs dediffcoding of given QPSK data. Data length should be at least 2 QPSK symbols long and
- * be an even.
- *
- * \param dediff Pointer to the dediffcoder object.
- * \param[in,out] data Pointer to the diffcoded QPSK data.
- *
- * \return \c true on successfull dediffcoding and \c false otherwise.
- */
-LRPT_API bool lrpt_dediffcoder_exec(
-        lrpt_dediffcoder_t *dediff,
-        lrpt_qpsk_data_t *data);
-
-/** Resynchronize and deinterleave a stream of QPSK soft symbols.
- *
- * Performs resynchronization and deinterleaving of QPSK symbols stream.
- *
- * \param[in,out] data Pointer to the QPSK data storage.
- *
- * \return \c true on successfull deinterleaving and \c false otherwise.
- */
-LRPT_API bool lrpt_deinterleaver_exec(
-        lrpt_qpsk_data_t *data);
 
 /** @} */
 

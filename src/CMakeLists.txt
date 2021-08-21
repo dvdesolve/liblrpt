@@ -21,8 +21,6 @@ set(lrpt_SOURCES
     decoder/correlator.c
     decoder/data.c
     decoder/decoder.c
-    decoder/dediffcoder.c
-    decoder/deinterleaver.c
     decoder/ecc.c
     decoder/jpeg.c
     decoder/huffman.c
@@ -45,8 +43,6 @@ set(lrpt_HEADERS
     decoder/correlator.h
     decoder/data.h
     decoder/decoder.h
-    decoder/dediffcoder.h
-    decoder/deinterleaver.h
     decoder/ecc.h
     decoder/jpeg.h
     decoder/huffman.h

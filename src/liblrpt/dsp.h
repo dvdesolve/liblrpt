@@ -22,7 +22,7 @@
 
 /** \file
  *
- * Public internal API for DSP routines.
+ * Public internal API for various DSP routines.
  */
 
 /*************************************************************************************************/
@@ -56,6 +56,16 @@ struct lrpt_dsp_filter__ {
     /** @{ */
     /** Ring buffer index for I/Q samples */
     uint8_t ri;
+    /** @} */
+};
+
+/** Dediffcoder object */
+struct lrpt_dsp_dediffcoder__ {
+    uint8_t *lut; /**< Integer sqrt() lookup table */
+
+    /** @{ */
+    /** Used by dediffcoder */
+    int8_t pr_I, pr_Q;
     /** @} */
 };
 

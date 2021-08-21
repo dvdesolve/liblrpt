@@ -38,7 +38,6 @@
 #include "agc.h"
 #include "pll.h"
 #include "rrc.h"
-#include "deinterleaver.h"
 
 #include <complex.h>
 #include <stdbool.h>
