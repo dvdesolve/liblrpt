@@ -466,6 +466,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
  * #lrpt_iq_file_close() after use.
  *
  * \param fname Name of file to write I/Q data to.
+ * \param offset Whether offset QPSK was used or not.
  * \param samplerate Sampling rate.
  * \param device_name Device name string. If \p device_name is \c NULL no device name info will
  * be written.
@@ -475,6 +476,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
  */
 LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         const char *fname,
+        bool offset,
         uint32_t samplerate,
         const char *device_name,
         lrpt_error_t *err);
@@ -493,6 +495,16 @@ LRPT_API void lrpt_iq_file_close(
  * \return File version number info or 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint8_t lrpt_iq_file_version(
+        const lrpt_iq_file_t *file);
+
+/** Offset QPSK modulation presence.
+ *
+ * \param file Pointer to the I/Q data file object.
+ *
+ * \return \c true if offset QPSK was used and \c false otherwise. \c false will be returned if
+ * \c NULL \p file was passed.
+ */
+LRPT_API bool lrpt_iq_file_is_offsetted(
         const lrpt_iq_file_t *file);
 
 /** I/Q data file sampling rate.
@@ -599,7 +611,6 @@ LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
  * #lrpt_qpsk_file_close() after use.
  *
  * \param fname Name of file to write QPSK data to.
- * \param offset Whether offset QPSK was used or not.
  * \param differential Whether differential coding was used or not.
  * \param interleaved Whether interleaving was used or not.
  * \param hard Determines whether data is in hard symbols format (if \p hard is \c true) or soft
@@ -611,7 +622,6 @@ LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
  */
 LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
         const char *fname,
-        bool offset,
         bool differential,
         bool interleaved,
         bool hard,
@@ -632,16 +642,6 @@ LRPT_API void lrpt_qpsk_file_close(
  * \return File version number info or 0 in case of \c NULL \p file parameter..
  */
 LRPT_API uint8_t lrpt_qpsk_file_version(
-        const lrpt_qpsk_file_t *file);
-
-/** Offset QPSK modulation presence.
- *
- * \param file Pointer to the QPSK data file object.
- *
- * \return \c true if offset QPSK was used and \c false otherwise. \c false will be returned if
- * \c NULL \p file was passed.
- */
-LRPT_API bool lrpt_qpsk_file_is_offsetted(
         const lrpt_qpsk_file_t *file);
 
 /** Differential coding modulation presence.

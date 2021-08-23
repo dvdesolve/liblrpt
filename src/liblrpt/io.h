@@ -44,6 +44,7 @@ struct lrpt_iq_file__ {
     bool write_mode; /**< Flag for write mode */
 
     uint8_t version; /**< File format version */
+    unsigned char flags; /**< I/Q data flags */
     uint32_t samplerate; /**< Sampling rate */
     char *device_name; /**< Device name info */
 

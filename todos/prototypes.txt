@@ -1,7 +1,15 @@
 /* ./liblrpt/dsp.c */
+static inline int8_t            lut_isqrt(const uint8_t lut[], int16_t value);
+static uint8_t                  qpsk_to_byte(const int8_t *data);
+static bool                     find_sync(const int8_t *data, uint8_t *offset, uint8_t *sync);
+static bool                     resync_stream(lrpt_qpsk_data_t *data);
 lrpt_dsp_filter_t *             lrpt_dsp_filter_init(uint32_t bandwidth, double samplerate, double ripple, uint8_t num_poles, lrpt_dsp_filter_type_t type);
 void                            lrpt_dsp_filter_deinit(lrpt_dsp_filter_t *filter);
 bool                            lrpt_dsp_filter_apply(lrpt_dsp_filter_t *filter, lrpt_iq_data_t *data);
+lrpt_dsp_dediffcoder_t *        lrpt_dsp_dediffcoder_init(void);
+void                            lrpt_dsp_dediffcoder_deinit(lrpt_dsp_dediffcoder_t *dediff);
+bool                            lrpt_dsp_dediffcoder_exec(lrpt_dsp_dediffcoder_t *dediff, lrpt_qpsk_data_t *data);
+bool                            lrpt_dsp_deinterleaver_exec(lrpt_qpsk_data_t *data);
 
 /* ./liblrpt/io.c */
 static lrpt_iq_file_t *         iq_file_open_r_v1(FILE *fh);
@@ -94,18 +102,6 @@ bool                            lrpt_decoder_data_process_frame(lrpt_decoder_t *
 lrpt_decoder_t *                lrpt_decoder_init(lrpt_decoder_spacecraft_t sc);
 void                            lrpt_decoder_deinit(lrpt_decoder_t *decoder);
 void                            lrpt_decoder_exec(lrpt_decoder_t *decoder, lrpt_qpsk_data_t *input, size_t buf_len);
-
-/* ./decoder/dediffcoder.c */
-static inline int8_t            lut_isqrt(const uint8_t lut[], int16_t value);
-lrpt_dediffcoder_t *            lrpt_dediffcoder_init(void);
-void                            lrpt_dediffcoder_deinit(lrpt_dediffcoder_t *dediff);
-bool                            lrpt_dediffcoder_exec(lrpt_dediffcoder_t *dediff, lrpt_qpsk_data_t *data);
-
-/* ./decoder/deinterleaver.c */
-static uint8_t                  qpsk_to_byte(const int8_t *data);
-static bool                     find_sync(const int8_t *data, uint8_t *offset, uint8_t *sync);
-static bool                     resync_stream(lrpt_qpsk_data_t *data);
-bool                            lrpt_deinterleaver_exec(lrpt_qpsk_data_t *data);
 
 /* ./decoder/ecc.c */
 void                            lrpt_decoder_ecc_interleave(const uint8_t *input, uint8_t *output, uint8_t pos, uint8_t n);

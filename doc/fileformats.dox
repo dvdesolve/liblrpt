@@ -2,37 +2,43 @@
  *
  * Description of different file formats used by library.
  *
- * \section lrptiq Raw I/Q data file format
- * liblrpt is able to store/read raw I/Q data to/from files on hard drive. However it expects that
- * these files are in special format. Raw I/Q files consist of several consecutive sections which
- * contents and order depends on the file format version. However, all raw I/Q files should start
- * with the 2 sections at least: header and version info.
+ * \section lrptiq I/Q data file format
+ * liblrpt is able to store/read I/Q data to/from files. However it requires these files to be in
+ * special format. I/Q data files consist of several consecutive sections which contents and
+ * order depends on the file format version. However, all I/Q files should start with the 2
+ * mandatory sections at least: header and version info.
  *
  * \subsection lrptiq_common Common sections
  *
  * \subsubsection lrptiq_header Header section
- * All raw I/Q files should start with \c lrptiq sequence of ASCII chars.
+ * All I/Q files should start with \c lrptiq sequence of ASCII chars.
  *
  * \subsubsection lrptiq_version Version info
- * Right after header version info should be stored as 1-byte unsigned integer.
+ * Version info is stored right after header marker as 1-byte unsigned integer.
  *
  * \subsection lrptiq_ver1 Version 1 specific sections (version == 0x01)
  *
+ * \subsubsection lrptiq_flags Flags
+ * Flags are stores as 1-byte unsigned integer. Version 1 I/Q data file contains only one flag -
+ * the presence of offset QPSK modulation. If flag value contains \c 0x01 bit being set that shows
+ * the use of offset QPSK modulation in recorded I/Q data. All states of other bits are ignored.
+ *
  * \subsubsection lrptiq_samplerate Sampling rate
  * Sampling rate should be stored as well so QPSK demodulator will be able to perform demodulation.
- * Sampling rate is stored after version info as 4-byte unsigned integer in Big Endian form.
+ * Sampling rate is stored after flags as 4-byte unsigned integer in Big Endian form.
  *
  * \subsubsection lrptiq_devicename Device name
- * Device name section should be presented in raw I/Q file even if actual device name is
- * empty string. This section is actually splitted into two adjacent subsections: length and
- * the device name itself. Length is stored as 1-byte unsigned integer so maximum device name is
- * limited to the 255 symbols. Length is followed by device name string (NOT null-terminated) of
+ * Device name section should be presented in I/Q file even if actual device name is empty
+ * string. This section is actually contains two adjacent subsections: length and device name
+ * itself. Length is stored as 1-byte unsigned integer so maximum device name length is limited to
+ * the 255 symbols. Length is immediately followed by device name string (NOT null-terminated) of
  * exactly that length. For example, device name "RTLSDR" should be presented in I/Q file as the
  * following hex values: \c 0x06 \c 0x52 \c 0x54 \c 0x4C \c 0x53 \c 0x44 \c 0x52.
  *
  * \subsubsection lrptiq_data Data
- * Final section of I/Q file is the I/Q data itself. For portability purposes special form of
- * storing complex-valued I/Q samples was developed.
+ * Final section of Version 1 I/Q file is the I/Q data itself. First, data length (8-byte unsigned
+ * integer) is stored immediately after device name and followed by actual I/Q data. Second, for
+ * portability purposes special form of storing complex-valued I/Q samples was developed.
  *
  * No extra timing information is stored, it will be derived by library by using sampling rate.
  * Because of this consequent I/Q samples are stored one after another in data section.
@@ -48,15 +54,49 @@
  * complex I/Q sample.
  *
  * For example, let's consider I/Q sample which equals to the (123.456 - 0.009876i). Real part is
- * 123.456 and imaginary is -0.009876. After normalization we'll get exponent equals to the value
- * of 7 and mantissa equals to the 0.9645. Multiplication of 0.9645 by 2^53 gives
- * a value 8687443681197687. Thus serialization to the Big Endian format will give us \c 0x0007 for
- * exponent part and \c 0x001EDD2F1A9FBE77 for mantissa. For the imaginary part exponent equals
- * to the -6 and normalized mantissa equals to the -0.632064. Applying analogous transformations
+ * 123.456 and imaginary is -0.009876. After performing normalization procedure for real part we'll
+ * get exponent equals to 7 and mantissa equals to 0.9645. Multiplication of 0.9645 by 2^53 gives
+ * an integer value 8687443681197687. Thus serialization to the Big Endian format will give us
+ * \c 0x0007 for exponent part and \c 0x001EDD2F1A9FBE77 for mantissa. For the imaginary part
+ * exponent equals to -6 and normalized mantissa equals to -0.632064. Applying similar procedure
  * we'll get \c 0xFFFA as serialized exponent and \c 0xFFEBC621B7E0AC7E as serialized mantissa.
  * As a result the sequence of \c 0x0007 \c 0x001EDD2F1A9FBE77 \c 0xFFFA \c 0xFFEBC621B7E0AC7E
  * represents this I/Q sample in liblrpt's format.
  *
  * \section lrptqpsk QPSK symbols data file format
- * \todo Fill here.
+ * liblrpt is able to store/read QPSK symbols to/from files. As with I/Q data files QPSK symbols
+ * should be stored in special format as well. QPSK symbols data files consist of several
+ * consecutive sections which contents and order depends on the file format version. Similar to
+ * I/Q data files all QPSK symbols data files should start with the 2 mandatory sections
+ * at least: header and version info.
+ *
+ * \subsection lrptqpsk_common Common sections
+ *
+ * \subsubsection lrptqpsk_header Header section
+ * All QPSK symbols data files should start with \c lrptqpsk sequence of ASCII chars.
+ *
+ * \subsubsection lrptqpsk_version Version info
+ * Version info is stored right after header marker as 1-byte unsigned integer.
+ *
+ * \subsection lrptqpsk_ver1 Version 1 specific sections (version == 0x01)
+ *
+ * \subsubsection lrptqpsk_flags Flags
+ * Flags are stores as 1-byte unsigned integer. Version 1 QPSK symbols data files make use of
+ * 3 flags:
+ * - differential coded data (\c 0x01 bit);
+ * - interleaved data (\c 0x02 bit);
+ * - data in hard symbols format (\c 0x04 bit).
+ *
+ * All states of other bits are ignored.
+ *
+ * \subsubsection lrptqpsk_symrate Symbol rate
+ * Although it is possible for decoder to automatically select proper symbol rate using only
+ * interleaving flag, liblrpt requires this info to be explicitly presented in QPSK symbols data
+ * file as 4-byte unsigned integer. Usually symbol rate equals to 72000 for non-interleaved data
+ * and to 80000 when interleaving is used.
+ *
+ * \subsubsection lrptqpsk_data Data
+ * Final section of Version 1 QPSK symbols data file is the symbols itself. As with I/Q data,
+ * data length (8-byte unsigned integer) is stored right after symbol rate and followed by actual
+ * QPSK symbols data each symbol is 1-byte signed integer).
  */

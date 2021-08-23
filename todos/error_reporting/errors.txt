@@ -1,3 +1,13 @@
+/* ./liblrpt/dsp.c */
+static inline int8_t            lut_isqrt(const uint8_t lut[], int16_t value);
+static uint8_t                  qpsk_to_byte(const int8_t *data);
+static bool                     find_sync(const int8_t *data, uint8_t *offset, uint8_t *sync);
+static bool                     resync_stream(lrpt_qpsk_data_t *data);
+lrpt_dsp_dediffcoder_t *        lrpt_dsp_dediffcoder_init(void);
+void                            lrpt_dsp_dediffcoder_deinit(lrpt_dsp_dediffcoder_t *dediff);
+bool                            lrpt_dsp_dediffcoder_exec(lrpt_dsp_dediffcoder_t *dediff, lrpt_qpsk_data_t *data);
+bool                            lrpt_dsp_deinterleaver_exec(lrpt_qpsk_data_t *data);
+
 /* ./liblrpt/lrpt.c */
 lrpt_iq_data_t *                lrpt_iq_data_alloc(size_t len);
 void                            lrpt_iq_data_free(lrpt_iq_data_t *data);

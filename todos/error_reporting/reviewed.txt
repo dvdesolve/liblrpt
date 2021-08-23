@@ -1,4 +1,3 @@
-./liblrpt/dsp.c
 ./liblrpt/error.c
 ./liblrpt/io.c
 ./liblrpt/utils.c
