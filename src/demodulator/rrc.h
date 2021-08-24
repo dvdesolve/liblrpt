@@ -33,6 +33,8 @@
 
 /*************************************************************************************************/
 
+#include "../liblrpt/error.h"
+
 #include <complex.h>
 #include <stdint.h>
 
@@ -55,6 +57,7 @@ typedef struct lrpt_demodulator_rrc_filter__ {
  * \param factor Interpolation factor.
  * \param osf Ratio of sampling rate and symbol rate.
  * \param alpha Filter alpha factor.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return RRC filter object.
  */
@@ -62,7 +65,8 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
         uint16_t order,
         uint8_t factor,
         double osf,
-        double alpha);
+        double alpha,
+        lrpt_error_t *err);
 
 /** Frees previously allocated RRC filter object.
  *

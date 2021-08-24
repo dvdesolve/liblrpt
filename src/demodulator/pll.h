@@ -23,7 +23,7 @@
 
 /** \file
  *
- * Public internal API for Costas' phased-locked loop routines.
+ * Public internal API for Costas phase-locked loop routines.
  */
 
 /*************************************************************************************************/
@@ -32,6 +32,8 @@
 #define LRPT_DEMODULATOR_PLL_H
 
 /*************************************************************************************************/
+
+#include "../liblrpt/error.h"
 
 #include <complex.h>
 #include <stdbool.h>
@@ -81,8 +83,9 @@ typedef struct lrpt_demodulator_pll__ {
  * \param locked_threshold Locking threshold.
  * \param unlocked_threshold Unlocking threshold.
  * \param offset Offsetted QPSK modulation mode.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \warning \p locked_threshold should be strictly lesser than \p unlocked_threshold!
+ * \warning \p locked_threshold should be strictly less than \p unlocked_threshold!
  *
  * \return PLL object or \c NULL in case of error.
  */
@@ -90,7 +93,8 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
         double locked_threshold,
         double unlocked_threshold,
-        bool offset);
+        bool offset,
+        lrpt_error_t *err);
 
 /** Frees previously allocated PLL object.
  *

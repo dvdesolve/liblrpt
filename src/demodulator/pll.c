@@ -23,7 +23,7 @@
 
 /** \file
  *
- * Costas' phased-locked loop routines.
+ * Costas phase-locked loop routines.
  *
  * This source file contains routines for Costas' PLL functionality.
  */
@@ -33,6 +33,7 @@
 #include "pll.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/error.h"
 #include "../liblrpt/lrpt.h"
 
 #include <complex.h>
@@ -151,12 +152,18 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
         double bandwidth,
         double locked_threshold,
         double unlocked_threshold,
-        bool offset) {
+        bool offset,
+        lrpt_error_t *err) {
     /* Try to allocate our PLL */
     lrpt_demodulator_pll_t *pll = malloc(sizeof(lrpt_demodulator_pll_t));
 
-    if (!pll)
+    if (!pll) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "PLL object allocation failed");
+
         return NULL;
+    }
 
     /* NULL-init internal storage for safe deallocation */
     pll->lut_tanh = NULL;
@@ -166,6 +173,10 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
 
     if (!pll->lut_tanh) {
         lrpt_demodulator_pll_deinit(pll);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "PLL lookup table allocation failed");
 
         return NULL;
     }
@@ -185,6 +196,10 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     /* Set up thresholds for PLL hysteresis feature */
     if (unlocked_threshold <= locked_threshold) {
         lrpt_demodulator_pll_deinit(pll);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "PLL unlocked threshold exceeds locked threshold");
 
         return NULL;
     }

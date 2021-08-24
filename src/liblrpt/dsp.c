@@ -112,11 +112,13 @@ static bool find_sync(
  * should be stitched back together.
  *
  * \param[in,out] data Pointer to the QPSK data storage.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull resyncing and \c false otherwise.
  */
 static bool resync_stream(
-        lrpt_qpsk_data_t *data);
+        lrpt_qpsk_data_t *data,
+        lrpt_error_t *err);
 
 /*************************************************************************************************/
 
@@ -194,15 +196,26 @@ static bool find_sync(
 
 /* resync_stream() */
 static bool resync_stream(
-        lrpt_qpsk_data_t *data) {
-    if ((data->len < SYNCD_BUF_MARGIN) || (data->len < INTLV_SYNCDATA))
+        lrpt_qpsk_data_t *data,
+        lrpt_error_t *err) {
+    if ((data->len < SYNCD_BUF_MARGIN) || (data->len < INTLV_SYNCDATA)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATACORR,
+                    "Data length for resync is incorrect");
+
         return false;
+    }
 
     /* Allocate temporary buffer for resyncing */
     int8_t *tmp_buf = calloc(data->len, sizeof(int8_t));
 
-    if (!tmp_buf)
+    if (!tmp_buf) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Temporary resync buffer allocation failed");
+
         return false;
+    }
 
     /* Do a copy of the original data */
     memcpy(tmp_buf, data->qpsk, sizeof(int8_t) * data->len);
@@ -266,7 +279,7 @@ static bool resync_stream(
     /* Free temporary buffer */
     free(tmp_buf);
 
-    if (!lrpt_qpsk_data_resize(data, resync_siz))
+    if (!lrpt_qpsk_data_resize(data, resync_siz, err))
         return false;
 
     return true;
@@ -521,18 +534,28 @@ bool lrpt_dsp_filter_apply(
 /*************************************************************************************************/
 
 /* lrpt_dsp_dediffcoder_init() */
-lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(void) {
+lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
+        lrpt_error_t *err) {
     /* Allocate dediffcoder object */
     lrpt_dsp_dediffcoder_t *dediff = malloc(sizeof(lrpt_dsp_dediffcoder_t));
 
-    if (!dediff)
+    if (!dediff) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Dediffcoder object allocation failed");
+
         return NULL;
+    }
 
     /* Try to allocate lookup table */
     dediff->lut = calloc(16385, sizeof(uint8_t));
 
     if (!dediff->lut) {
         free(dediff);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Dediffcoder lookup table allocation failed");
 
         return NULL;
     }
@@ -563,9 +586,15 @@ void lrpt_dsp_dediffcoder_deinit(
 /* lrpt_dsp_dediffcoder_exec() */
 bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
-        lrpt_qpsk_data_t *data) {
-    if (!data || data->len < 2 || (data->len % 2) != 0)
+        lrpt_qpsk_data_t *data,
+        lrpt_error_t *err) {
+    if (!data || data->len < 2 || (data->len % 2) != 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK data object is corrupted");
+
         return false;
+    }
 
     int8_t t1 = data->qpsk[0];
     int8_t t2 = data->qpsk[1];
@@ -594,25 +623,36 @@ bool lrpt_dsp_dediffcoder_exec(
 
 /* lrpt_dsp_deinterleaver_exec() */
 bool lrpt_dsp_deinterleaver_exec(
-        lrpt_qpsk_data_t *data) {
+        lrpt_qpsk_data_t *data,
+        lrpt_error_t *err) {
     size_t old_size = data->len;
     int8_t *res_buf = NULL;
 
     /* Resynchronize raw data at the bottom of the raw buffer after the
      * INTLV_BRANCHES * INTLV_BASE_LEN and up to the end
      */
-    if (!resync_stream(data))
+    if (!resync_stream(data, err))
         return false;
 
     /* Allocate resulting buffer */
     if ((data->len > 0) && (data->len < old_size)) {
         res_buf = calloc(data->len, sizeof(int8_t));
 
-        if (!res_buf)
+        if (!res_buf) {
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                        "Resulting buffer allocation failed");
+
             return false;
+        }
     }
-    else
+    else {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATACORR,
+                    "Resynced data length is incorrect");
+
         return false;
+    }
 
     /* Perform convolutional deinterleaving */
     /* https://en.wikipedia.org/wiki/Burst_error-correcting_code#Convolutional_interleaver */

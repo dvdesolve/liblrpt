@@ -32,6 +32,8 @@
 
 #include "rrc.h"
 
+#include "../liblrpt/error.h"
+
 #include <complex.h>
 #include <math.h>
 #include <stddef.h>
@@ -87,12 +89,18 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
         uint16_t order,
         uint8_t factor,
         double osf,
-        double alpha) {
+        double alpha,
+        lrpt_error_t *err) {
     /* Try to allocate our RRC */
     lrpt_demodulator_rrc_filter_t *rrc = malloc(sizeof(lrpt_demodulator_rrc_filter_t));
 
-    if (!rrc)
+    if (!rrc) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "RRC object allocation failed");
+
         return NULL;
+    }
 
     /* NULL-init internal storage for safe deallocation */
     rrc->coeffs = NULL;
@@ -108,6 +116,10 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
 
     if (!rrc->coeffs || !rrc->memory) {
         lrpt_demodulator_rrc_filter_deinit(rrc);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "RRC memory and/or coefficient arrays allocation failed");
 
         return NULL;
     }

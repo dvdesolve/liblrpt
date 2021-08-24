@@ -34,6 +34,7 @@
 #include "demodulator.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/error.h"
 #include "../liblrpt/lrpt.h"
 #include "agc.h"
 #include "pll.h"
@@ -185,12 +186,18 @@ lrpt_demodulator_t *lrpt_demodulator_init(
         uint16_t rrc_order,
         double rrc_alpha,
         double pll_locked_threshold,
-        double pll_unlocked_threshold) {
+        double pll_unlocked_threshold,
+        lrpt_error_t *err) {
     /* Allocate our working demodulator */
     lrpt_demodulator_t *demod = malloc(sizeof(lrpt_demodulator_t));
 
-    if (!demod)
+    if (!demod) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Demodulator object allocation failed");
+
         return NULL;
+    }
 
     /* NULL-init internal objects for safe deallocation */
     demod->agc = NULL;
@@ -206,7 +213,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->interp_factor = interp_factor;
 
     /* Initialize AGC object */
-    demod->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET);
+    demod->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET, err);
 
     if (!demod->agc) {
         lrpt_demodulator_deinit(demod);
@@ -217,7 +224,8 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     /* Initialize Costas' PLL object */
     const double pll_bw = LRPT_M_2PI * costas_bandwidth / symbol_rate;
     demod->pll =
-        lrpt_demodulator_pll_init(pll_bw, pll_locked_threshold, pll_unlocked_threshold, offset);
+        lrpt_demodulator_pll_init(pll_bw, pll_locked_threshold, pll_unlocked_threshold,
+                offset, err);
 
     if (!demod->pll) {
         lrpt_demodulator_deinit(demod);
@@ -227,7 +235,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
 
     /* Initialize RRC filter object */
     const double osf = (double)demod_samplerate / symbol_rate;
-    demod->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
+    demod->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha, err);
 
     if (!demod->rrc) {
         lrpt_demodulator_deinit(demod);
@@ -307,14 +315,20 @@ bool lrpt_demodulator_phaseerr(
 bool lrpt_demodulator_exec(
         lrpt_demodulator_t *demod,
         const lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output) {
+        lrpt_qpsk_data_t *output,
+        lrpt_error_t *err) {
     /* Return immediately if no valid input or output were given */
-    if (!input || !output)
+    if (!input || !output) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Input and/or output data objects are corrupted");
+
         return false;
+    }
 
     /* Resize output data structure */
     if (output->len < (2 * input->len * demod->interp_factor))
-        if (!lrpt_qpsk_data_resize(output, 2 * input->len * demod->interp_factor))
+        if (!lrpt_qpsk_data_resize(output, 2 * input->len * demod->interp_factor, err))
             return false;
 
     /* Intermediate result storage */
@@ -340,7 +354,7 @@ bool lrpt_demodulator_exec(
         }
     }
 
-    if (!lrpt_qpsk_data_resize(output, out_len))
+    if (!lrpt_qpsk_data_resize(output, out_len, err))
         return false;
 
     return true;

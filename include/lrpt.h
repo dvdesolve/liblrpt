@@ -219,11 +219,13 @@ typedef enum lrpt_decoder_spacecraft__ {
  *
  * \param len Length of new I/Q data storage. If zero length is requested, empty storage
  * will be allocated but it will be possible to resize it later with #lrpt_iq_data_resize().
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation has failed.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_alloc(
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Free previously allocated I/Q data storage.
  *
@@ -236,7 +238,7 @@ LRPT_API void lrpt_iq_data_free(
  *
  * \param data Pointer to the I/Q data storage object.
  *
- * \return Number of I/Q samples currently stored in \p data.
+ * \return Number of I/Q samples currently stored in \p data or \c 0 if \c NULL \p data is passed.
  */
 LRPT_API size_t lrpt_iq_data_length(
         const lrpt_iq_data_t *data);
@@ -248,13 +250,15 @@ LRPT_API size_t lrpt_iq_data_length(
  *
  * \param data Pointer to the I/Q data storage object.
  * \param new_len Length \p data will be resized to.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
-        size_t new_len);
+        size_t new_len,
+        lrpt_error_t *err);
 
 /** Convert array of I/Q samples into library format.
  *
@@ -264,6 +268,7 @@ LRPT_API bool lrpt_iq_data_resize(
  * \param data Pointer to the I/Q data storage object.
  * \param iq Pointer to the array of I/Q samples.
  * \param len Number of samples to merge into I/Q data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
@@ -273,7 +278,8 @@ LRPT_API bool lrpt_iq_data_resize(
 LRPT_API bool lrpt_iq_data_from_samples(
         lrpt_iq_data_t *data,
         const complex double *iq,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Create I/Q storage object from I/Q samples.
  *
@@ -282,6 +288,7 @@ LRPT_API bool lrpt_iq_data_from_samples(
  *
  * \param iq Pointer to the array of I/Q samples.
  * \param len Number of samples in I and Q arrays to repack into I/Q data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation was
  * unsuccessful.
@@ -291,7 +298,8 @@ LRPT_API bool lrpt_iq_data_from_samples(
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const complex double *iq,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Merge separate arrays of double-typed I/Q samples into library format.
  *
@@ -303,6 +311,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
  * \param i Pointer to the array of I samples.
  * \param q Pointer to the array of Q samples.
  * \param len Number of samples in I and Q arrays to merge into I/Q data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull merging and \c false otherwise.
  *
@@ -313,7 +322,8 @@ LRPT_API bool lrpt_iq_data_from_doubles(
         lrpt_iq_data_t *data,
         const double *i,
         const double *q,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Create I/Q storage object from double-typed I/Q samples.
  *
@@ -323,6 +333,7 @@ LRPT_API bool lrpt_iq_data_from_doubles(
  * \param i Pointer to the array of I samples.
  * \param q Pointer to the array of Q samples.
  * \param len Number of samples in I and Q arrays to repack into I/Q data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data storage object or \c NULL if allocation was
  * unsuccessful.
@@ -333,7 +344,8 @@ LRPT_API bool lrpt_iq_data_from_doubles(
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *i,
         const double *q,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Allocate QPSK data storage object.
  *
@@ -343,11 +355,13 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
  * \param len Length of new QPSK data storage. If zero length is requested,
  * empty storage will be allocated but it's still possible to resize it later with
  * #lrpt_qpsk_data_resize().
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data storage object or \c NULL if allocation has failed.
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Free previously allocated QPSK data storage.
  *
@@ -361,7 +375,7 @@ LRPT_API void lrpt_qpsk_data_free(
  * \param data Pointer to the QPSK data storage object.
  *
  * \return Number of QPSK bytes currently stored in \p data. Actual number of soft symbols is half
- * as much as the number of QPSK bytes.
+ * as much as the number of QPSK bytes or \c 0 if \c NULL \p data is passed.
  */
 LRPT_API size_t lrpt_qpsk_data_length(
         const lrpt_qpsk_data_t *data);
@@ -372,13 +386,14 @@ LRPT_API size_t lrpt_qpsk_data_length(
  *
  * \param data Pointer to the QPSK soft symbol data storage object.
  * \param new_len New length \p data will be resized to.
- *
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  * \return \c true on successfull resize and \c false otherwise (original storage will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_qpsk_data_resize(
         lrpt_qpsk_data_t *data,
-        size_t new_len);
+        size_t new_len,
+        lrpt_error_t *err);
 
 /** Convert array of QPSK symbols into library format.
  *
@@ -388,6 +403,7 @@ LRPT_API bool lrpt_qpsk_data_resize(
  * \param data Pointer to the QPSK data storage object.
  * \param qpsk Pointer to the array of QPSK symbols.
  * \param len Number of symbols to merge into QPSK data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
@@ -397,7 +413,8 @@ LRPT_API bool lrpt_qpsk_data_resize(
 LRPT_API bool lrpt_qpsk_data_from_symbols(
         lrpt_qpsk_data_t *data,
         const int8_t *qpsk,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Create QPSK storage object from QPSK symbols.
  *
@@ -406,6 +423,7 @@ LRPT_API bool lrpt_qpsk_data_from_symbols(
  *
  * \param qpsk Pointer to the array of QPSK symbols.
  * \param len Number of QPSK symbols to repack into QPSK data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data storage object or \c NULL if allocation was
  * unsuccessful.
@@ -415,7 +433,8 @@ LRPT_API bool lrpt_qpsk_data_from_symbols(
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
         const int8_t *qpsk,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Return QPSK data as an int8_t bytes.
  *
@@ -425,13 +444,15 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
  * \param data Pointer to the QPSK data storage object.
  * \param qpsk Pointer to the resulting storage.
  * \param len Number of QPSK symbols to copy.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successful copy and \c false otherwise.
  */
 LRPT_API bool lrpt_qpsk_data_to_ints(
         const lrpt_qpsk_data_t *data,
         int8_t *qpsk,
-        size_t len);
+        size_t len,
+        lrpt_error_t *err);
 
 /** Free resources claimed for error object.
  *
@@ -797,9 +818,12 @@ LRPT_API bool lrpt_dsp_filter_apply(
  *
  * Allocates and initializes dediffcoder object for use with QPSK diffcoded data.
  *
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
  * \return Pointer to the dediffcoder object or \c NULL in case of error.
  */
-LRPT_API lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(void);
+LRPT_API lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
+        lrpt_error_t *err);
 
 /** Free previously allocated dediffcoder object.
  *
@@ -815,23 +839,27 @@ LRPT_API void lrpt_dsp_dediffcoder_deinit(
  *
  * \param dediff Pointer to the dediffcoder object.
  * \param[in,out] data Pointer to the diffcoded QPSK data.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull dediffcoding and \c false otherwise.
  */
 LRPT_API bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
-        lrpt_qpsk_data_t *data);
+        lrpt_qpsk_data_t *data,
+        lrpt_error_t *err);
 
 /** Resynchronize and deinterleave a stream of QPSK soft symbols.
  *
  * Performs resynchronization and deinterleaving of QPSK symbols stream.
  *
  * \param[in,out] data Pointer to the QPSK data storage.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull deinterleaving and \c false otherwise.
  */
 LRPT_API bool lrpt_dsp_deinterleaver_exec(
-        lrpt_qpsk_data_t *data);
+        lrpt_qpsk_data_t *data,
+        lrpt_error_t *err);
 
 /** @} */
 
@@ -854,6 +882,7 @@ LRPT_API bool lrpt_dsp_deinterleaver_exec(
  * \param pll_locked_threshold Costas' PLL locked threshold.
  * \param pll_unlocked_threshold Costas' PLL unlocked threshold. Should be strictly greater than
  * \p pll_locked_threshold!.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the demodulator object or \c NULL in case of error.
  */
@@ -866,7 +895,8 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
         uint16_t rrc_order,
         double rrc_alpha,
         double pll_locked_threshold,
-        double pll_unlocked_threshold);
+        double pll_unlocked_threshold,
+        lrpt_error_t *err);
 
 /** Free previously allocated demodulator object.
  *
@@ -906,7 +936,7 @@ LRPT_API bool lrpt_demodulator_siglvl(
  *
  * \return \c true if valid demodulator object was given and \c false otherwise.
  */
-LRPT_API bool lrpt_demodulator_pllavg(
+LRPT_API bool lrpt_demodulator_phaseerr(
         const lrpt_demodulator_t *demod,
         double *error);
 
@@ -919,13 +949,15 @@ LRPT_API bool lrpt_demodulator_pllavg(
  * \param demod Pointer to the demodulator object.
  * \param input Pointer to the I/Q samples array to demodulate.
  * \param[out] output Demodulated QPSK soft symbols.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull demodulation and \c false in case of error.
  */
 LRPT_API bool lrpt_demodulator_exec(
         lrpt_demodulator_t *demod,
         const lrpt_iq_data_t *input,
-        lrpt_qpsk_data_t *output);
+        lrpt_qpsk_data_t *output,
+        lrpt_error_t *err);
 
 /** @} */
 

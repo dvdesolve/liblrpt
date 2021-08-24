@@ -616,7 +616,7 @@ bool lrpt_iq_data_read_from_file(
         len = (file->data_len - file->current);
 
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, len))
+    if (!lrpt_iq_data_resize(data, len, err))
         return false;
 
     /* Determine required number of block reads */
@@ -1212,7 +1212,7 @@ bool lrpt_qpsk_data_read_from_file(
         len = (file->data_len - file->current);
 
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, len))
+    if (!lrpt_qpsk_data_resize(data, len, err))
         return false;
 
     /* Determine required number of block reads */
