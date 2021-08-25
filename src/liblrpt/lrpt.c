@@ -84,7 +84,7 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(
 
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "I/Q data buffer allocation failed");
+                        "Data buffer allocation for I/Q data object failed");
 
             return NULL;
         }
@@ -114,8 +114,8 @@ size_t lrpt_iq_data_length(
         const lrpt_iq_data_t *data) {
     if (!data)
         return 0;
-    else
-        return data->len;
+
+    return data->len;
 }
 
 /*************************************************************************************************/
@@ -129,7 +129,7 @@ bool lrpt_iq_data_resize(
     if (!data || ((data->len > 0) && !data->iq)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object is corrupted");
+                    "I/Q data object is NULL or corrupted");
 
         return false;
     }
@@ -151,7 +151,7 @@ bool lrpt_iq_data_resize(
         if (!new_iq) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "I/Q data buffer allocation failed");
+                        "Data buffer reallocation for I/Q data object failed");
 
             return false;
         }
@@ -176,10 +176,10 @@ bool lrpt_iq_data_from_samples(
         const complex double *iq,
         size_t len,
         lrpt_error_t *err) {
-    if (!data) {
+    if (!data || !iq) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object is corrupted");
+                    "I/Q data object and/or I/Q samples array are NULL");
 
         return false;
     }
@@ -201,6 +201,14 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         const complex double *iq,
         size_t len,
         lrpt_error_t *err) {
+    if (!iq) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q samples array is NULL");
+
+        return NULL;
+    }
+
     lrpt_iq_data_t *data = lrpt_iq_data_alloc(len, err);
 
     if (!data)
@@ -224,10 +232,10 @@ bool lrpt_iq_data_from_doubles(
         const double *q,
         size_t len,
         lrpt_error_t *err) {
-    if (!data) {
+    if (!data || !i || !q) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object is corrupted");
+                    "I/Q data object and/or I/Q sample arrays are NULL");
 
         return false;
     }
@@ -251,6 +259,14 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *q,
         size_t len,
         lrpt_error_t *err) {
+    if (!i || !q) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I and/or Q sample arrays are NULL");
+
+        return NULL;
+    }
+
     lrpt_iq_data_t *data = lrpt_iq_data_alloc(len, err);
 
     if (!data)
@@ -293,7 +309,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
 
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "QPSK data buffer allocation failed");
+                        "Data buffer allocation for QPSK data object failed");
 
             return NULL;
         }
@@ -323,8 +339,8 @@ size_t lrpt_qpsk_data_length(
         const lrpt_qpsk_data_t *data) {
     if (!data)
         return 0;
-    else
-        return data->len;
+
+    return data->len;
 }
 
 /*************************************************************************************************/
@@ -338,7 +354,7 @@ bool lrpt_qpsk_data_resize(
     if (!data || ((data->len > 0) && !data->qpsk)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object is corrupted");
+                    "QPSK data object is NULL or corrupted");
 
         return false;
     }
@@ -360,7 +376,7 @@ bool lrpt_qpsk_data_resize(
         if (!new_s) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "QPSK data buffer allocation failed");
+                        "Data buffer reallocation for QPSK data object failed");
 
             return false;
         }
@@ -385,10 +401,10 @@ bool lrpt_qpsk_data_from_symbols(
         const int8_t *qpsk,
         size_t len,
         lrpt_error_t *err) {
-    if (!data) {
+    if (!data || !qpsk) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object is corrupted");
+                    "QPSK data object and/or QPSK symbols array are NULL");
 
         return false;
     }
@@ -410,6 +426,14 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
         const int8_t *qpsk,
         size_t len,
         lrpt_error_t *err) {
+    if (!qpsk) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK symbols array is NULL");
+
+        return NULL;
+    }
+
     lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(len, err);
 
     if (!data)
@@ -432,13 +456,16 @@ bool lrpt_qpsk_data_to_ints(
         int8_t *qpsk,
         size_t len,
         lrpt_error_t *err) {
-    if (!data || !data->qpsk || (len > data->len)) {
+    if (!data || !data->qpsk) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object is corrupted");
+                    "QPSK data object is NULL or corrupted");
 
         return false;
     }
+
+    if (len > data->len)
+        len = data->len;
 
     memcpy(qpsk, data->qpsk, sizeof(int8_t) * len);
 

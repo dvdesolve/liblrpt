@@ -32,8 +32,6 @@
 
 #include "agc.h"
 
-#include "../liblrpt/error.h"
-
 #include <complex.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -53,18 +51,12 @@ static const double AGC_BIAS_WINSIZE_1 = AGC_BIAS_WINSIZE - 1.0;
 
 /* lrpt_demodulator_agc_init() */
 lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(
-        double target,
-        lrpt_error_t *err) {
+        double target) {
     /* Try to allocate our AGC */
     lrpt_demodulator_agc_t *agc = malloc(sizeof(lrpt_demodulator_agc_t));
 
-    if (!agc) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "AGC object allocation failed");
-
+    if (!agc)
         return NULL;
-    }
 
     /* Set default parameters */
     agc->target = target;

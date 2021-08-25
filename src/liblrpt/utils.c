@@ -31,7 +31,6 @@
 #include "utils.h"
 
 #include "../../include/lrpt.h"
-#include "error.h"
 
 #include <errno.h>
 #include <math.h>
@@ -336,26 +335,15 @@ int64_t lrpt_utils_ds_int64_t(
 /* lrpt_utils_s_double() */
 bool lrpt_utils_s_double(
         double x,
-        unsigned char *v,
-        lrpt_error_t *err) {
+        unsigned char *v) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
-    if (isnan(x)) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NAN,
-                    "Given double is NaN");
-
+    if (isnan(x))
         return false;
-    }
 
-    if (isinf(x)) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INF,
-                    "Given double is infinity");
-
+    if (isinf(x))
         return false;
-    }
 
     int e;
     double m = frexp(x, &e);
@@ -377,8 +365,7 @@ bool lrpt_utils_s_double(
 /* lrpt_utils_ds_double() */
 bool lrpt_utils_ds_double(
         const unsigned char *x,
-        double *v,
-        lrpt_error_t *err) {
+        double *v) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
@@ -391,31 +378,16 @@ bool lrpt_utils_ds_double(
     int16_t e = lrpt_utils_ds_int16_t(ex);
     double m = (double)lrpt_utils_ds_int64_t(mant) / c_2to53;
 
-    if (isnan(m)) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NAN,
-                    "Resulting double is NaN");
-
+    if (isnan(m))
         return false;
-    }
 
-    if (isinf(m)) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INF,
-                    "Resulting double is infinity");
-
+    if (isinf(m))
         return false;
-    }
 
     double t = ldexp(m, e);
 
-    if (errno == ERANGE) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_MATH,
-                    "Resulting double is too large");
-
+    if (errno == ERANGE)
         return false;
-    }
     else {
         *v = t;
 

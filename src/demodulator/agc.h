@@ -33,8 +33,6 @@
 
 /*************************************************************************************************/
 
-#include "../liblrpt/error.h"
-
 #include <complex.h>
 
 /*************************************************************************************************/
@@ -52,13 +50,11 @@ typedef struct lrpt_demodulator_agc__ {
 /** Allocates and initializes AGC object.
  *
  * \param target Target gain value.
- * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return AGC object or \c NULL in case of error.
  */
 lrpt_demodulator_agc_t *lrpt_demodulator_agc_init(
-        double target,
-        lrpt_error_t *err);
+        double target);
 
 /** Frees allocated AGC object.
  *

@@ -112,13 +112,11 @@ static bool find_sync(
  * should be stitched back together.
  *
  * \param[in,out] data Pointer to the QPSK data storage.
- * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull resyncing and \c false otherwise.
  */
 static bool resync_stream(
-        lrpt_qpsk_data_t *data,
-        lrpt_error_t *err);
+        lrpt_qpsk_data_t *data);
 
 /*************************************************************************************************/
 
@@ -196,26 +194,15 @@ static bool find_sync(
 
 /* resync_stream() */
 static bool resync_stream(
-        lrpt_qpsk_data_t *data,
-        lrpt_error_t *err) {
-    if ((data->len < SYNCD_BUF_MARGIN) || (data->len < INTLV_SYNCDATA)) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATACORR,
-                    "Data length for resync is incorrect");
-
+        lrpt_qpsk_data_t *data) {
+    if ((data->len < SYNCD_BUF_MARGIN) || (data->len < INTLV_SYNCDATA))
         return false;
-    }
 
     /* Allocate temporary buffer for resyncing */
     int8_t *tmp_buf = calloc(data->len, sizeof(int8_t));
 
-    if (!tmp_buf) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Temporary resync buffer allocation failed");
-
+    if (!tmp_buf)
         return false;
-    }
 
     /* Do a copy of the original data */
     memcpy(tmp_buf, data->qpsk, sizeof(int8_t) * data->len);
@@ -279,7 +266,7 @@ static bool resync_stream(
     /* Free temporary buffer */
     free(tmp_buf);
 
-    if (!lrpt_qpsk_data_resize(data, resync_siz, err))
+    if (!lrpt_qpsk_data_resize(data, resync_siz, NULL))
         return false;
 
     return true;
@@ -301,7 +288,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     if (!filter) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "DSP filter object allocation failed");
+                    "Chebyshev filter object allocation failed");
 
         return NULL;
     }
@@ -318,7 +305,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "DSP filter number of poles is incorrect");
+                    "Number of poles for Chebyshev filter is incorrect");
 
         return NULL;
     }
@@ -349,7 +336,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "DSP filter internal arrays allocation failed");
+                    "Internal arrays allocation for Chebyshev filter object failed");
 
         return NULL;
     }
@@ -489,8 +476,8 @@ void lrpt_dsp_filter_deinit(
 bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *filter,
         lrpt_iq_data_t *data) {
-    /* Return immediately if filter is empty */
-    if (!filter)
+    /* Return immediately if filter and/or data are empty */
+    if (!filter || !data)
         return false;
 
     /* For convenient access purposes */
@@ -555,7 +542,7 @@ lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Dediffcoder lookup table allocation failed");
+                    "Lookup table allocation for dediffcoder object failed");
 
         return NULL;
     }
@@ -588,10 +575,10 @@ bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
         lrpt_qpsk_data_t *data,
         lrpt_error_t *err) {
-    if (!data || data->len < 2 || (data->len % 2) != 0) {
+    if (!dediff || !data || data->len < 2 || (data->len % 2) != 0) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object is corrupted");
+                    "Dediffcoder object is NULL or QPSK data object is NULL and/or QPSK data length is incorrect");
 
         return false;
     }
@@ -625,14 +612,27 @@ bool lrpt_dsp_dediffcoder_exec(
 bool lrpt_dsp_deinterleaver_exec(
         lrpt_qpsk_data_t *data,
         lrpt_error_t *err) {
+    if (!data) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK data object is NULL");
+
+        return false;
+    }
+
     size_t old_size = data->len;
     int8_t *res_buf = NULL;
 
     /* Resynchronize raw data at the bottom of the raw buffer after the
      * INTLV_BRANCHES * INTLV_BASE_LEN and up to the end
      */
-    if (!resync_stream(data, err))
+    if (!resync_stream(data)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                    "Can't perform stream resynchronization");
+
         return false;
+    }
 
     /* Allocate resulting buffer */
     if ((data->len > 0) && (data->len < old_size)) {
@@ -641,15 +641,15 @@ bool lrpt_dsp_deinterleaver_exec(
         if (!res_buf) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Resulting buffer allocation failed");
+                        "Deinterleaved data buffer allocation for QPSK data object failed");
 
             return false;
         }
     }
     else {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATACORR,
-                    "Resynced data length is incorrect");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                    "Resynchronized data length is incorrect");
 
         return false;
     }

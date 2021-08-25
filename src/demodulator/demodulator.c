@@ -212,33 +212,23 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->sym_period = (double)demod_samplerate * interp_factor / symbol_rate;
     demod->interp_factor = interp_factor;
 
-    /* Initialize AGC object */
-    demod->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET, err);
-
-    if (!demod->agc) {
-        lrpt_demodulator_deinit(demod);
-
-        return NULL;
-    }
-
-    /* Initialize Costas' PLL object */
+    /* Some initial values for internal objects */
     const double pll_bw = LRPT_M_2PI * costas_bandwidth / symbol_rate;
-    demod->pll =
-        lrpt_demodulator_pll_init(pll_bw, pll_locked_threshold, pll_unlocked_threshold,
-                offset, err);
-
-    if (!demod->pll) {
-        lrpt_demodulator_deinit(demod);
-
-        return NULL;
-    }
-
-    /* Initialize RRC filter object */
     const double osf = (double)demod_samplerate / symbol_rate;
-    demod->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha, err);
 
-    if (!demod->rrc) {
+    /* Initialize internal objects */
+    demod->agc = lrpt_demodulator_agc_init(DEMOD_AGC_TARGET);
+    demod->pll =
+        lrpt_demodulator_pll_init(pll_bw, pll_locked_threshold, pll_unlocked_threshold, offset);
+    demod->rrc = lrpt_demodulator_rrc_filter_init(rrc_order, interp_factor, osf, rrc_alpha);
+
+    /* Check for allocation problems */
+    if (!demod->agc || !demod->pll || !demod->rrc) {
         lrpt_demodulator_deinit(demod);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Internal objects allocation for demodulator object failed");
 
         return NULL;
     }
@@ -270,43 +260,34 @@ void lrpt_demodulator_deinit(
 /*************************************************************************************************/
 
 /* lrpt_demodulator_gain() */
-bool lrpt_demodulator_gain(
-        const lrpt_demodulator_t *demod,
-        double *gain) {
+double lrpt_demodulator_gain(
+        const lrpt_demodulator_t *demod) {
     if (!demod || !demod->agc)
-        return false;
+        return 0;
 
-    *gain = demod->agc->gain;
-
-    return true;
+    return demod->agc->gain;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_siglvl() */
-bool lrpt_demodulator_siglvl(
-        const lrpt_demodulator_t *demod,
-        double *level) {
+double lrpt_demodulator_siglvl(
+        const lrpt_demodulator_t *demod) {
     if (!demod || !demod->agc)
-        return false;
+        return 0;
 
-    *level = demod->agc->average;
-
-    return true;
+    return demod->agc->average;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_demodulator_phaseerr() */
-bool lrpt_demodulator_phaseerr(
-        const lrpt_demodulator_t *demod,
-        double *error) {
+double lrpt_demodulator_phaseerr(
+        const lrpt_demodulator_t *demod) {
     if (!demod || !demod->pll)
-        return false;
+        return 0;
 
-    *error = demod->pll->moving_average;
-
-    return true;
+    return demod->pll->moving_average;
 }
 
 /*************************************************************************************************/
@@ -317,11 +298,11 @@ bool lrpt_demodulator_exec(
         const lrpt_iq_data_t *input,
         lrpt_qpsk_data_t *output,
         lrpt_error_t *err) {
-    /* Return immediately if no valid input or output were given */
-    if (!input || !output) {
+    /* Return immediately if no valid demodulator, input or output were given */
+    if (!demod || !input || !output) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Input and/or output data objects are corrupted");
+                    "Demodulator object is NULL or input and/or output data objects are NULL");
 
         return false;
     }

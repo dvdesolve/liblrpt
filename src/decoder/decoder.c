@@ -33,6 +33,7 @@
 #include "decoder.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/error.h"
 #include "../liblrpt/lrpt.h"
 #include "correlator.h"
 #include "data.h"
@@ -42,6 +43,7 @@
 #include "packet.h"
 #include "viterbi.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -57,12 +59,18 @@ static const uint16_t DECODER_PACKET_BUF_LEN = 2048;
 
 /* lrpt_decoder_init() */
 lrpt_decoder_t *lrpt_decoder_init(
-        lrpt_decoder_spacecraft_t sc) {
+        lrpt_decoder_spacecraft_t sc,
+        lrpt_error_t *err) {
     /* Allocate our working decoder */
     lrpt_decoder_t *decoder = malloc(sizeof(lrpt_decoder_t));
 
-    if (!decoder)
+    if (!decoder) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Decoder object allocation failed");
+
         return NULL;
+    }
 
     /* NULL-init internal objects and arrays for safe deallocation */
     decoder->corr = NULL;
@@ -98,6 +106,10 @@ lrpt_decoder_t *lrpt_decoder_init(
             !decoder->packet_buf) {
         lrpt_decoder_deinit(decoder);
 
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Internal objects allocation for decoder object failed");
+
         return NULL;
     }
 
@@ -120,6 +132,10 @@ lrpt_decoder_t *lrpt_decoder_init(
         default:
             {
                 lrpt_decoder_deinit(decoder);
+
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                            "Spacecraft identifier is incorrect");
 
                 return NULL;
             }
@@ -171,15 +187,20 @@ void lrpt_decoder_deinit(
 
 /*************************************************************************************************/
 
-/* TODO return bool */
 /* lrpt_decoder_exec() */
-void lrpt_decoder_exec(
+bool lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
         lrpt_qpsk_data_t *input,
-        size_t buf_len) { /* TODO may be use input data length and process it accordingly (check for 2 extra SFLs as in do_full_correlate(), e. g.) */
-    /* Return immediately if no valid input was given */
-    if (!input)
-        return;
+        size_t buf_len,
+        lrpt_error_t *err) { /* TODO may be use input data length and process it accordingly (check for 2 extra SFLs as in do_full_correlate(), e. g.) */
+    /* Return immediately if no valid decoder or input was given */
+    if (!decoder || !input) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Decoder object and/or QPSK data object are NULL");
+
+        return false;
+    }
 
     /* Go through data given */
     while (decoder->pos < buf_len) { /* TODO this may be redundant if we'll require SFL-multiples only blocks of data; also see below */
@@ -197,6 +218,8 @@ void lrpt_decoder_exec(
 
     /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */
     decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
+
+    return true;
 }
 
 /*************************************************************************************************/
