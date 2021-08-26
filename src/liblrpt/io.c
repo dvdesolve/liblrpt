@@ -41,6 +41,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* TODO deal with hard and soft QPSK symbols and related stuff in accessor functions (bytes vs symbols */
+
 /*************************************************************************************************/
 
 static const size_t IO_IQ_DATA_N = 1024; /**< Block size for I/O operations with I/Q data */
@@ -106,7 +108,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         return NULL;
     }
 
-    uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
+    const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
 
     /* File position = 12 */
 
@@ -160,17 +162,17 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         return NULL;
     }
 
-    uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
+    const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
 
     /* File position = 21 + name_l */
 
     /* Perform sanity checking - one complex I/Q sample is encoded as two doubles and each double
      * is serialized to the 10 unsigned chars
      */
-    uint64_t cur_pos = ftell(fh);
+    const uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
-    uint64_t n_iq = ((ftell(fh) - cur_pos) / UTILS_COMPLEX_SER_SIZE);
-    uint8_t bytes_rem = ((ftell(fh) - cur_pos) % UTILS_COMPLEX_SER_SIZE);
+    const uint64_t n_iq = ((ftell(fh) - cur_pos) / UTILS_COMPLEX_SER_SIZE);
+    const uint8_t bytes_rem = ((ftell(fh) - cur_pos) % UTILS_COMPLEX_SER_SIZE);
     fseek(fh, cur_pos, SEEK_SET);
 
     if ((bytes_rem > 0) && err)
@@ -581,18 +583,19 @@ bool lrpt_iq_file_goto(
         return false;
     }
 
-    if (fseek(file->fhandle, file->header_len + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET) == 0) {
-        file->current = sample;
+    if (file->version == LRPT_IQ_FILE_VER_1) {
+        if (fseek(file->fhandle, file->header_len + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET) == 0)
+            file->current = sample;
+        else {
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                        "Error during seeking in I/Q file");
 
-        return true;
+            return false;
+        }
     }
-    else {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                    "Error during seeking in I/Q file");
 
-        return false;
-    }
+    return true;
 }
 
 /*************************************************************************************************/
@@ -630,61 +633,63 @@ bool lrpt_iq_data_read_from_file(
     if (!lrpt_iq_data_resize(data, len, err))
         return false;
 
-    /* Determine required number of block reads */
-    const size_t nreads = (len / IO_IQ_DATA_N);
+    if (file->version == LRPT_IQ_FILE_VER_1) { /* Version 1 */
+        /* Determine required number of block reads */
+        const size_t nreads = (len / IO_IQ_DATA_N);
 
-    /* TODO use file version info here! */
-    for (size_t i = 0; i <= nreads; i++) {
-        const size_t toread = (i == nreads) ? (len - nreads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
+        for (size_t i = 0; i <= nreads; i++) {
+            const size_t toread = (i == nreads) ? (len - nreads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
-        if (toread == 0)
-            break;
+            if (toread == 0)
+                break;
 
-        /* Read block */
-        if (fread(file->iobuf, 1, toread * UTILS_COMPLEX_SER_SIZE, file->fhandle) !=
-                (toread * UTILS_COMPLEX_SER_SIZE)) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                        "Error during block read from I/Q file");
-
-            return false;
-        }
-
-        /* Parse block */
-        for (size_t j = 0; j < toread; j++) {
-            unsigned char v_s[10];
-            double i_part, q_part;
-
-            memcpy(v_s,
-                    file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
-                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
-
-            if (!lrpt_utils_ds_double(v_s, &i_part)) {
+            /* Read block */
+            if (fread(file->iobuf, UTILS_COMPLEX_SER_SIZE, toread, file->fhandle) != toread) {
                 if (err)
-                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                            "Can't deserialize double value");
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                            "Error during block read from I/Q file");
 
                 return false;
             }
 
-            memcpy(v_s,
-                    file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
-                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
+            /* Parse block */
+            for (size_t j = 0; j < toread; j++) {
+                unsigned char v_s[10];
+                double i_part, q_part;
 
-            if (!lrpt_utils_ds_double(v_s, &q_part)) {
-                if (err)
-                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                            "Can't deserialize double value");
+                memcpy(v_s,
+                        file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
+                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
 
-                return false;
+                if (!lrpt_utils_ds_double(v_s, &i_part)) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                                "Can't deserialize double value");
+
+                    return false;
+                }
+
+                memcpy(v_s,
+                        file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
+                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
+
+                if (!lrpt_utils_ds_double(v_s, &q_part)) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                                "Can't deserialize double value");
+
+                    return false;
+                }
+
+                data->iq[i * IO_IQ_DATA_N + j] = i_part + q_part * I;
             }
-
-            data->iq[i * IO_IQ_DATA_N + j] = i_part + q_part * I;
         }
     }
 
-    if (rewind) /* TODO check for result */
-        lrpt_iq_file_goto(file, file->current, err);
+    if (rewind) {
+        if (!lrpt_iq_file_goto(file, file->current, err))
+            return false;
+    }
     else
         file->current += len;
 
@@ -707,61 +712,81 @@ bool lrpt_iq_data_write_to_file(
         return false;
     }
 
-    /* Determine required number of block writes */
-    const size_t len = data->len;
-    const size_t nwrites = (len / IO_IQ_DATA_N);
+    if (file->version == LRPT_IQ_FILE_VER_1) { /* Version 1 */
+        /* Determine required number of block writes */
+        const size_t len = data->len;
+        const size_t nwrites = (len / IO_IQ_DATA_N);
 
-    /* TODO use file version info here! */
-    for (size_t i = 0; i <= nwrites; i++) {
-        const size_t towrite = (i == nwrites) ? (len - nwrites * IO_IQ_DATA_N) : IO_IQ_DATA_N;
+        for (size_t i = 0; i <= nwrites; i++) {
+            const size_t towrite = (i == nwrites) ? (len - nwrites * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
-        if (towrite == 0)
-            break;
+            if (towrite == 0)
+                break;
 
-        /* Prepare block */
-        for (size_t j = 0; j < towrite; j++) {
-            unsigned char v_s[10];
+            /* Prepare block */
+            for (size_t j = 0; j < towrite; j++) {
+                unsigned char v_s[10];
 
-            if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s)) {
+                if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s)) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                                "Can't serialize double value");
+
+                    return false;
+                }
+
+                memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
+                        v_s,
+                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
+
+                if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s)) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                                "Can't serialize double value");
+
+                    return false;
+                }
+
+                memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
+                        v_s,
+                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
+            }
+
+            /* Write block */
+            if (fwrite(file->iobuf, 1, towrite * UTILS_COMPLEX_SER_SIZE, file->fhandle) !=
+                    (towrite * UTILS_COMPLEX_SER_SIZE)) {
                 if (err)
-                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                            "Can't serialize double value");
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                            "Error during block write to I/Q file");
 
                 return false;
             }
 
-            memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
-                    v_s,
-                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
+            file->current += towrite;
+            file->data_len += towrite;
 
-            if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s)) {
-                if (err)
-                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                            "Can't serialize double value");
+            /* Flush data length if inplace is requested */
+            if (inplace) {
+                unsigned char v_s[8];
 
-                return false;
+                lrpt_utils_s_uint64_t(file->data_len, v_s);
+                fseek(file->fhandle, file->header_len - 8, SEEK_SET);
+
+                if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                                "I/Q data length write error");
+
+                    return false;
+                }
+
+                if (!lrpt_iq_file_goto(file, file->current, err))
+                    return false;
             }
-
-            memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
-                    v_s,
-                    sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
         }
 
-        /* Write block */
-        if (fwrite(file->iobuf, 1, towrite * UTILS_COMPLEX_SER_SIZE, file->fhandle) !=
-                (towrite * UTILS_COMPLEX_SER_SIZE)) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                        "Error during block write to I/Q file");
-
-            return false;
-        }
-
-        file->current += towrite;
-        file->data_len += towrite;
-
-        /* Flush data length if inplace is requested */
-        if (inplace) {
+        /* Flush data length if inplace isn't requested */
+        if (!inplace) {
             unsigned char v_s[8];
 
             lrpt_utils_s_uint64_t(file->data_len, v_s);
@@ -775,26 +800,9 @@ bool lrpt_iq_data_write_to_file(
                 return false;
             }
 
-            lrpt_iq_file_goto(file, file->current, err); /* TODO check for result */
+            if (!lrpt_iq_file_goto(file, file->current, err))
+                return false;
         }
-    }
-
-    /* Flush data length if inplace isn't requested */
-    if (!inplace) {
-        unsigned char v_s[8];
-
-        lrpt_utils_s_uint64_t(file->data_len, v_s);
-        fseek(file->fhandle, file->header_len - 8, SEEK_SET);
-
-        if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                        "I/Q data length write error");
-
-            return false;
-        }
-
-        lrpt_iq_file_goto(file, file->current, err); /* TODO check for result */
     }
 
     return true;
@@ -836,7 +844,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
         return NULL;
     }
 
-    uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
+    const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
 
     /* File position = 14 */
 
@@ -853,16 +861,15 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
         return NULL;
     }
 
-    uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
+    const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
 
     /* File position = 22 */
 
-    /* Perform sanity checking - one soft QPSK symbol is encoded as one int8_t */
+    /* Perform sanity checking - one QPSK byte is encoded as one int8_t */
     /* TODO add code for hard symbols */
-    /* TODO 1 QPSK soft symbol = 2 bytes. Recheck */
-    uint64_t cur_pos = ftell(fh);
+    const uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
-    uint64_t n_sym = (ftell(fh) - cur_pos);
+    const uint64_t n_sym = (ftell(fh) - cur_pos);
     fseek(fh, cur_pos, SEEK_SET);
 
     if (n_sym != data_l) {
@@ -1187,7 +1194,6 @@ uint64_t lrpt_qpsk_file_length(
     if (!file)
         return 0;
 
-    /* TODO actually one QPSK symbol consist of two bytes. Need to report exactly this number */
     return file->data_len; /* TODO add code for hard symbols */
 }
 
@@ -1207,19 +1213,19 @@ bool lrpt_qpsk_file_goto(
     }
 
     /* TODO add code for hard symbols */
-    /* TODO actually one QPSK symbol consist of two bytes. Deal with it properly */
-    if (fseek(file->fhandle, file->header_len + symbol, SEEK_SET) == 0) {
-        file->current = symbol;
+    if (file->version == LRPT_QPSK_FILE_VER_1) {
+        if (fseek(file->fhandle, file->header_len + symbol, SEEK_SET) == 0)
+            file->current = symbol;
+        else {
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                        "Error during seeking in QPSK file");
 
-        return true;
+            return false;
+        }
     }
-    else {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                    "Error during seeking in QPSK file");
 
-        return false;
-    }
+    return true;
 }
 
 /*************************************************************************************************/
@@ -1257,28 +1263,31 @@ bool lrpt_qpsk_data_read_from_file(
     if (!lrpt_qpsk_data_resize(data, len, err))
         return false;
 
-    /* Determine required number of block reads */
-    const size_t nreads = (len / IO_QPSK_DATA_N);
+    if (file->version == LRPT_QPSK_FILE_VER_1) { /* Version 1 */
+        /* Determine required number of block reads */
+        const size_t nreads = (len / IO_QPSK_DATA_N);
 
-    /* TODO use file version info here! */
-    for (size_t i = 0; i <= nreads; i++) {
-        const size_t toread = (i == nreads) ? (len - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
+        for (size_t i = 0; i <= nreads; i++) {
+            const size_t toread = (i == nreads) ? (len - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
-        if (toread == 0)
-            break;
+            if (toread == 0)
+                break;
 
-        /* Read block */
-        if (fread(data->qpsk + i * IO_QPSK_DATA_N, 1, toread, file->fhandle) != toread) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                        "Error during block read from QPSK file");
+            /* Read block */
+            if (fread(data->qpsk + i * IO_QPSK_DATA_N, 1, toread, file->fhandle) != toread) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                            "Error during block read from QPSK file");
 
-            return false;
+                return false;
+            }
         }
     }
 
-    if (rewind)
-        lrpt_qpsk_file_goto(file, file->current, err); /* TODO check for result */
+    if (rewind) {
+        if (!lrpt_qpsk_file_goto(file, file->current, err))
+            return false;
+    }
     else
         file->current += len;
 
@@ -1301,31 +1310,51 @@ bool lrpt_qpsk_data_write_to_file(
         return false;
     }
 
-    /* Determine required number of block writes */
-    const size_t len = data->len;
-    const size_t nwrites = (len / IO_QPSK_DATA_N);
+    if (file->version == LRPT_QPSK_FILE_VER_1) { /* Version 1 */
+        /* Determine required number of block writes */
+        const size_t len = data->len;
+        const size_t nwrites = (len / IO_QPSK_DATA_N);
 
-    /* TODO use file version info here! */
-    for (size_t i = 0; i <= nwrites; i++) {
-        const size_t towrite = (i == nwrites) ? (len - nwrites * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
+        for (size_t i = 0; i <= nwrites; i++) {
+            const size_t towrite = (i == nwrites) ? (len - nwrites * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
-        if (towrite == 0)
-            break;
+            if (towrite == 0)
+                break;
 
-        /* Write block */
-        if (fwrite(data->qpsk + i * IO_QPSK_DATA_N, 1, towrite, file->fhandle) != towrite) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                        "Error during block write to QPSK file");
+            /* Write block */
+            if (fwrite(data->qpsk + i * IO_QPSK_DATA_N, 1, towrite, file->fhandle) != towrite) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                            "Error during block write to QPSK file");
 
-            return false;
+                return false;
+            }
+
+            file->current += towrite;
+            file->data_len += towrite;
+
+            /* Flush data length if inplace is requested */
+            if (inplace) {
+                unsigned char v_s[8];
+
+                lrpt_utils_s_uint64_t(file->data_len, v_s);
+                fseek(file->fhandle, file->header_len - 8, SEEK_SET);
+
+                if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                                "QPSK data length write error");
+
+                    return false;
+                }
+
+                if (!lrpt_qpsk_file_goto(file, file->current, err))
+                    return false;
+            }
         }
 
-        file->current += towrite;
-        file->data_len += towrite;
-
-        /* Flush data length if inplace is requested */
-        if (inplace) {
+        /* Flush data length if inplace isn't requested */
+        if (!inplace) {
             unsigned char v_s[8];
 
             lrpt_utils_s_uint64_t(file->data_len, v_s);
@@ -1339,26 +1368,9 @@ bool lrpt_qpsk_data_write_to_file(
                 return false;
             }
 
-            lrpt_qpsk_file_goto(file, file->current, err); /* TODO check for result */
+            if (!lrpt_qpsk_file_goto(file, file->current, err))
+                return false;
         }
-    }
-
-    /* Flush data length if inplace isn't requested */
-    if (!inplace) {
-        unsigned char v_s[8];
-
-        lrpt_utils_s_uint64_t(file->data_len, v_s);
-        fseek(file->fhandle, file->header_len - 8, SEEK_SET);
-
-        if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                        "QPSK data length write error");
-
-            return false;
-        }
-
-        lrpt_qpsk_file_goto(file, file->current, err); /* TODO check for result */
     }
 
     return true;

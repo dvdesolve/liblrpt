@@ -66,8 +66,7 @@ struct lrpt_qpsk_file__ {
     uint32_t symrate; /**< Symbol rate */
 
     uint64_t header_len; /**< Length of header data */
-    /* TODO here and everywhere: one QPSK symbol (soft) == 2 bytes! */
-    uint64_t data_len; /**< Number of QPSK samples in file */
+    uint64_t data_len; /**< Number of QPSK bytes in file */
     uint64_t current; /**< Current QPSK sample in file stream */
 };
 

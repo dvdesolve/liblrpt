@@ -190,7 +190,7 @@ void lrpt_decoder_deinit(
 /* lrpt_decoder_exec() */
 bool lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        lrpt_qpsk_data_t *input,
+        lrpt_qpsk_data_t *input, /* TODO rename this to data */
         size_t buf_len,
         lrpt_error_t *err) { /* TODO may be use input data length and process it accordingly (check for 2 extra SFLs as in do_full_correlate(), e. g.) */
     /* Return immediately if no valid decoder or input was given */

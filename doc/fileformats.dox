@@ -98,5 +98,7 @@
  * \subsubsection lrptqpsk_data Data
  * Final section of Version 1 QPSK symbols data file is the symbols itself. As with I/Q data,
  * data length (8-byte unsigned integer) is stored right after symbol rate and followed by actual
- * QPSK symbols data each symbol is 1-byte signed integer).
+ * QPSK bytes data. Each soft symbol is represented as 2 distinct signed integers (1-byte for each
+ * bit of QPSK symbol).
+ * TODO add doc for hard symbols.
  */
