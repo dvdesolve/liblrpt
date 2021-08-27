@@ -222,7 +222,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
     file->fhandle = fh;
     file->write_mode = false;
-    file->version = LRPT_IQ_FILE_VER_1;
+    file->version = LRPT_IQ_FILE_VER1;
     file->flags = flags;
     file->samplerate = sr;
     file->device_name = name;
@@ -291,7 +291,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_r(
     /* File position = 7 */
 
     switch (ver) {
-        case LRPT_IQ_FILE_VER_1:
+        case LRPT_IQ_FILE_VER1:
             return iq_file_open_r_v1(fh, err);
 
             break;
@@ -336,7 +336,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
     /* File position = 0 */
 
-    const uint8_t version = LRPT_IQ_FILE_VER_1;
+    const uint8_t version = LRPT_IQ_FILE_VER1;
 
     /* Write file header and version */
     if (fwrite("lrptiq", 1, 6, fh) != 6) {
@@ -367,7 +367,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     unsigned char flags = 0;
 
     if (offset) /* Offset QPSK */
-        flags |= 0x01;
+        flags |= LRPT_IQ_FILE_FLAGS_VER1_OFFSET;
 
     if (fwrite(&flags, 1, 1, fh) != 1) {
         fclose(fh);
@@ -485,7 +485,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
     file->fhandle = fh;
     file->write_mode = true;
-    file->version = LRPT_IQ_FILE_VER_1;
+    file->version = LRPT_IQ_FILE_VER1;
     file->flags = flags;
     file->samplerate = samplerate;
     file->device_name = name;
@@ -532,7 +532,7 @@ bool lrpt_iq_file_is_offsetted(
     if (!file)
         return false;
 
-    return (file->flags & 0x01);
+    return (file->flags & LRPT_IQ_FILE_FLAGS_VER1_OFFSET);
 }
 
 /*************************************************************************************************/
@@ -583,7 +583,7 @@ bool lrpt_iq_file_goto(
         return false;
     }
 
-    if (file->version == LRPT_IQ_FILE_VER_1) {
+    if (file->version == LRPT_IQ_FILE_VER1) {
         if (fseek(file->fhandle, file->header_len + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET) == 0)
             file->current = sample;
         else {
@@ -616,6 +616,10 @@ bool lrpt_iq_data_read_from_file(
         return false;
     }
 
+    /* In case of empty read just exit */
+    if (len == 0)
+        return true;
+
     /* Check if we have enough data to read */
     if (file->current == file->data_len) {
         if (err)
@@ -633,9 +637,9 @@ bool lrpt_iq_data_read_from_file(
     if (!lrpt_iq_data_resize(data, len, err))
         return false;
 
-    if (file->version == LRPT_IQ_FILE_VER_1) { /* Version 1 */
+    if (file->version == LRPT_IQ_FILE_VER1) { /* Version 1 */
         /* Determine required number of block reads */
-        const size_t nreads = (len / IO_IQ_DATA_N);
+        const size_t nreads = (len / IO_IQ_DATA_N); /* TODO should manipulate bytes, not samples (as with QPSK function) */
 
         for (size_t i = 0; i <= nreads; i++) {
             const size_t toread = (i == nreads) ? (len - nreads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
@@ -712,10 +716,10 @@ bool lrpt_iq_data_write_to_file(
         return false;
     }
 
-    if (file->version == LRPT_IQ_FILE_VER_1) { /* Version 1 */
+    if (file->version == LRPT_IQ_FILE_VER1) { /* Version 1 */
         /* Determine required number of block writes */
-        const size_t len = data->len;
-        const size_t nwrites = (len / IO_IQ_DATA_N);
+        const size_t len = data->len; /* TODO check for empty write */
+        const size_t nwrites = (len / IO_IQ_DATA_N); /* TODO should manipulate bytes, not samples (as with QPSK function) */
 
         for (size_t i = 0; i <= nwrites; i++) {
             const size_t towrite = (i == nwrites) ? (len - nwrites * IO_IQ_DATA_N) : IO_IQ_DATA_N;
@@ -865,19 +869,54 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
     /* File position = 22 */
 
-    /* Perform sanity checking - one QPSK byte is encoded as one int8_t */
-    /* TODO add code for hard symbols */
+    /* Perform sanity checking - one QPSK byte is encoded as one int8_t; one QPSK soft symbol
+     * is two QPSK bytes; four QPSK hard symbols are one QPSK byte (uint8_t)
+     */
     const uint64_t cur_pos = ftell(fh);
     fseek(fh, 0, SEEK_END);
-    const uint64_t n_sym = (ftell(fh) - cur_pos);
+    const uint64_t n_bytes = (ftell(fh) - cur_pos);
     fseek(fh, cur_pos, SEEK_SET);
 
-    if (n_sym != data_l) {
+    if (flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) { /* Checks for hard-symboled file */
+        const uint64_t n_needed = (data_l == 0) ? 0 : ((data_l - 1) / 4 + 1);
+
+        if (n_bytes != n_needed) { /* Incorrect number of bytes in QPSK file */
+            fclose(fh);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FILECORR,
+                        "Actual number of QPSK symbols in file differs from internally stored value");
+
+            return NULL;
+        }
+        else if (((data_l % 4) != 0) && err) /* Extra symbols are possible */
+            lrpt_error_set(err, LRPT_ERR_LVL_WARN, LRPT_ERR_CODE_FILECORR,
+                    "QPSK file may contain extra symbols");
+    }
+    else { /* Checks for soft-symboled file */
+        if ((n_bytes / 2) != data_l) { /* Incorrect number of bytes in QPSK file */
+            fclose(fh);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FILECORR,
+                        "Actual number of QPSK symbols in file differs from internally stored value");
+
+            return NULL;
+        }
+        else if (((n_bytes % 2) != 0) && err)
+            lrpt_error_set(err, LRPT_ERR_LVL_WARN, LRPT_ERR_CODE_FILECORR,
+                    "QPSK file contains not whole number of symbols");
+    }
+
+    /* Try to allocate temporary I/O buffer */
+    unsigned char *iobuf = calloc(IO_QPSK_DATA_N, sizeof(unsigned char));
+
+    if (!iobuf) {
         fclose(fh);
 
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FILECORR,
-                    "Actual number of QPSK symbols in file differs from internally stored value");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Temporary I/O buffer allocation failed");
 
         return NULL;
     }
@@ -886,6 +925,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     lrpt_qpsk_file_t *file = malloc(sizeof(lrpt_qpsk_file_t));
 
     if (!file) {
+        free(iobuf);
         fclose(fh);
 
         if (err)
@@ -897,12 +937,13 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
     file->fhandle = fh;
     file->write_mode = false;
-    file->version = LRPT_QPSK_FILE_VER_1;
+    file->version = LRPT_QPSK_FILE_VER1;
     file->flags = flags;
     file->symrate = sr;
     file->header_len = 22; /* Just a sum of all elements previously read */
-    file->data_len = data_l; /* TODO add code for hard symbols */
+    file->data_len = data_l;
     file->current = 0;
+    file->iobuf = iobuf;
 
     return file;
 }
@@ -964,7 +1005,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
     /* File position = 9 */
 
     switch (ver) {
-        case LRPT_QPSK_FILE_VER_1:
+        case LRPT_QPSK_FILE_VER1:
             return qpsk_file_open_r_v1(fh, err);
 
             break;
@@ -1010,7 +1051,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
     /* File position = 0 */
 
-    const uint8_t version = LRPT_QPSK_FILE_VER_1;
+    const uint8_t version = LRPT_QPSK_FILE_VER1;
 
     /* Write file header and version */
     if (fwrite("lrptqpsk", 1, 8, fh) != 8) {
@@ -1041,13 +1082,13 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
     unsigned char flags = 0;
 
     if (differential) /* Diffcoded QPSK */
-        flags |= 0x01;
+        flags |= LRPT_QPSK_FILE_FLAGS_VER1_DIFFCODED;
 
     if (interleaved) /* Interleaved QPSK */
-        flags |= 0x02;
+        flags |= LRPT_QPSK_FILE_FLAGS_VER1_INTERLEAVED;
 
     if (hard) /* Hard symbols */
-        flags |= 0x04;
+        flags |= LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED;
 
     if (fwrite(&flags, 1, 1, fh) != 1) {
         fclose(fh);
@@ -1093,10 +1134,24 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
     /* File position = 22 */
 
+    /* Try to allocate temporary I/O buffer */
+    unsigned char *iobuf = calloc(IO_QPSK_DATA_N, sizeof(unsigned char));
+
+    if (!iobuf) {
+        fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Temporary I/O buffer allocation failed");
+
+        return NULL;
+    }
+
     /* Create QPSK data file object and return it */
     lrpt_qpsk_file_t *file = malloc(sizeof(lrpt_qpsk_file_t));
 
     if (!file) {
+        free(iobuf);
         fclose(fh);
 
         if (err)
@@ -1108,12 +1163,13 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
     file->fhandle = fh;
     file->write_mode = true;
-    file->version = LRPT_QPSK_FILE_VER_1;
+    file->version = LRPT_QPSK_FILE_VER1;
     file->flags = flags;
     file->symrate = symrate;
     file->header_len = 22; /* Just a sum of all elements previously written */
-    file->data_len = 0; /* TODO add code for hard symbols */
+    file->data_len = 0;
     file->current = 0;
+    file->iobuf = iobuf;
 
     return file;
 }
@@ -1125,6 +1181,8 @@ void lrpt_qpsk_file_close(
         lrpt_qpsk_file_t *file) {
     if (!file)
         return;
+
+    free(file->iobuf);
 
     fclose(file->fhandle);
 
@@ -1150,7 +1208,7 @@ bool lrpt_qpsk_file_is_diffcoded(
     if (!file)
         return false;
 
-    return (file->flags & 0x01);
+    return (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_DIFFCODED);
 }
 
 /*************************************************************************************************/
@@ -1161,7 +1219,7 @@ bool lrpt_qpsk_file_is_interleaved(
     if (!file)
         return false;
 
-    return (file->flags & 0x02);
+    return (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_INTERLEAVED);
 }
 
 /*************************************************************************************************/
@@ -1172,7 +1230,7 @@ bool lrpt_qpsk_file_is_hardsymboled(
     if (!file)
         return false;
 
-    return (file->flags & 0x04);
+    return (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED);
 }
 
 /*************************************************************************************************/
@@ -1212,9 +1270,11 @@ bool lrpt_qpsk_file_goto(
         return false;
     }
 
-    /* TODO add code for hard symbols */
-    if (file->version == LRPT_QPSK_FILE_VER_1) {
-        if (fseek(file->fhandle, file->header_len + symbol, SEEK_SET) == 0)
+    if (file->version == LRPT_QPSK_FILE_VER1) {
+        const uint64_t offset =
+            (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) ? (symbol / 4) : (2 * symbol);
+
+        if (fseek(file->fhandle, file->header_len + offset, SEEK_SET) == 0)
             file->current = symbol;
         else {
             if (err)
@@ -1246,6 +1306,10 @@ bool lrpt_qpsk_data_read_from_file(
         return false;
     }
 
+    /* In case of empty read just exit */
+    if (len == 0)
+        return true;
+
     /* Check if we have enough data to read */
     if (file->current == file->data_len) {
         if (err)
@@ -1259,27 +1323,53 @@ bool lrpt_qpsk_data_read_from_file(
     if ((file->current + len) > file->data_len)
         len = (file->data_len - file->current);
 
-    /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, len, err))
+    /* Resize storage (x2 in length, because 1 QPSK symbol is 2 QPSK bytes) */
+    if (!lrpt_qpsk_data_resize(data, 2 * len, err))
         return false;
 
-    if (file->version == LRPT_QPSK_FILE_VER_1) { /* Version 1 */
+    if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
+        /* Calculate I/O bytes equivalent for requested number of QPSK symbols (len) */
+        const size_t n_bytes =
+            (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) ? ((len - 1) / 4 + 1) : (2 * len);
+
         /* Determine required number of block reads */
-        const size_t nreads = (len / IO_QPSK_DATA_N);
+        const size_t nreads = (n_bytes / IO_QPSK_DATA_N);
 
         for (size_t i = 0; i <= nreads; i++) {
-            const size_t toread = (i == nreads) ? (len - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
+            const size_t toread = (i == nreads) ? (n_bytes - nreads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
             if (toread == 0)
                 break;
 
-            /* Read block */
-            if (fread(data->qpsk + i * IO_QPSK_DATA_N, 1, toread, file->fhandle) != toread) {
-                if (err)
-                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                            "Error during block read from QPSK file");
+            if (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) {
+                /* Read block of QPSK bytes into temporary buffer */
+                if (fread(file->iobuf, 1, toread, file->fhandle) != toread) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                                "Error during block read from QPSK file");
 
-                return false;
+                    return false;
+                }
+
+                /* Parse block */
+                for (size_t j = 0; j < toread; j++) {
+                    for (uint8_t k = 0; k < 8; k++) {
+                        const uint8_t b = ((file->iobuf[j] >> (7 - k)) & 0x01);
+
+                        data->qpsk[8 * (i * IO_QPSK_DATA_N + j) + k] =
+                            (b == 1) ? 127 : -127;
+                    }
+                }
+            }
+            else {
+                /* Read block of QPSK bytes directly */
+                if (fread(data->qpsk + i * IO_QPSK_DATA_N, 1, toread, file->fhandle) != toread) {
+                    if (err)
+                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                                "Error during block read from QPSK file");
+
+                    return false;
+                }
             }
         }
     }
@@ -1310,9 +1400,10 @@ bool lrpt_qpsk_data_write_to_file(
         return false;
     }
 
-    if (file->version == LRPT_QPSK_FILE_VER_1) { /* Version 1 */
+    /* TODO implement new hard and soft samples writing */
+    if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
         /* Determine required number of block writes */
-        const size_t len = data->len;
+        const size_t len = data->len; /* TODO check for empty write */
         const size_t nwrites = (len / IO_QPSK_DATA_N);
 
         for (size_t i = 0; i <= nwrites; i++) {

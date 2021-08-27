@@ -68,6 +68,8 @@ struct lrpt_qpsk_file__ {
     uint64_t header_len; /**< Length of header data */
     uint64_t data_len; /**< Number of QPSK bytes in file */
     uint64_t current; /**< Current QPSK sample in file stream */
+
+    unsigned char *iobuf; /**< Temporary buffer for reading/writing */
 };
 
 /*************************************************************************************************/

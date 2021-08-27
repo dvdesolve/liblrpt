@@ -128,16 +128,28 @@ typedef struct lrpt_iq_file__ lrpt_iq_file_t;
 
 /** Supported I/Q samples file format versions */
 typedef enum lrpt_iq_file_version__ {
-    LRPT_IQ_FILE_VER_1 = 0x01 /**< Version 1 */
+    LRPT_IQ_FILE_VER1 = 0x01 /**< Version 1 */
 } lrpt_iq_file_version_t;
+
+/** Supported flags for Version 1 I/Q file */
+typedef enum lrpt_iq_file_flags_ver1__ {
+    LRPT_IQ_FILE_FLAGS_VER1_OFFSET = 0x01 /**< Offset modulation */
+} lrpt_iq_file_flags_ver1_t;
 
 /** Type for QPSK data file */
 typedef struct lrpt_qpsk_file__ lrpt_qpsk_file_t;
 
 /** Supported QPSK data file format versions */
 typedef enum lrpt_qpsk_file_version__ {
-    LRPT_QPSK_FILE_VER_1 = 0x01 /**< Version 1 */
+    LRPT_QPSK_FILE_VER1 = 0x01 /**< Version 1 */
 } lrpt_qpsk_file_version_t;
+
+/** Supported flags for Version 1 QPSK file */
+typedef enum lrpt_qpsk_file_flags_ver1__ {
+    LRPT_QPSK_FILE_FLAGS_VER1_DIFFCODED = 0x01, /**< Diffcoded QPSK data */
+    LRPT_QPSK_FILE_FLAGS_VER1_INTERLEAVED = 0x02, /**< Interleaved QPSK data */
+    LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED = 0x04 /**< Hard-symboled file */
+} lrpt_qpsk_file_flags_ver1_t;
 
 /** @} */
 
@@ -739,7 +751,7 @@ LRPT_API bool lrpt_qpsk_file_goto(
  *
  * \param[out] data Pointer to the QPSK data object.
  * \param file Pointer to the QPSK data file object.
- * \param len Number of QPSK samples to read.
+ * \param len Number of QPSK symbols to read.
  * \param rewind If true, symbol position in file stream will be preserved after reading.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
