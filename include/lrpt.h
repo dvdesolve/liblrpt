@@ -228,8 +228,9 @@ typedef enum lrpt_decoder_spacecraft__ {
  * Tries to allocate storage for I/Q data of requested \p len. User should free the object with
  * #lrpt_iq_data_free() after use.
  *
- * \param len Length of new I/Q data object. If zero length is requested, empty object will be
- * allocated but it will be possible to resize it later with #lrpt_iq_data_resize().
+ * \param len Length of new I/Q data object in number of I/Q samples. If zero length is
+ * requested, empty object will be allocated but it will be possible to resize it later
+ * with #lrpt_iq_data_resize().
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data object or \c NULL if allocation has failed.
@@ -249,7 +250,7 @@ LRPT_API void lrpt_iq_data_free(
  *
  * \param data Pointer to the I/Q data object.
  *
- * \return Number of I/Q samples currently stored in \p data or \c 0 if \c NULL \p data is passed.
+ * \return Number of I/Q samples currently stored in \p data or \c 0 if \c NULL \p data was passed.
  */
 LRPT_API size_t lrpt_iq_data_length(
         const lrpt_iq_data_t *data);
@@ -385,7 +386,7 @@ LRPT_API void lrpt_qpsk_data_free(
  * \param data Pointer to the QPSK data object.
  *
  * \return Number of QPSK bytes currently stored in \p data. Actual number of soft symbols is half
- * as much as the number of QPSK bytes or \c 0 if \c NULL \p data is passed.
+ * as much as the number of QPSK bytes or \c 0 if \c NULL \p data was passed.
  */
 LRPT_API size_t lrpt_qpsk_data_length(
         const lrpt_qpsk_data_t *data);
@@ -467,12 +468,60 @@ LRPT_API bool lrpt_qpsk_data_to_ints(
         size_t len,
         lrpt_error_t *err);
 
-/** Free resources claimed for error object.
+/** Initialize error object.
+ *
+ * Creates error object with default level and code. Internal string buffer for error message
+ * is set to \c NULL.
+ *
+ * \return Pointer to the allocated error object or \c NULL in case of error.
+ */
+LRPT_API lrpt_error_t *lrpt_error_init(void);
+
+/** Free initialized error object.
+ *
+ * \param err Pointer to the error object.
+ */
+LRPT_API void lrpt_error_deinit(
+        lrpt_error_t *err);
+
+/** Reset resources claimed for error object.
+ *
+ * Resets error level and code and frees internal string buffer (it will be set to \c NULL).
  *
  * \param err Pointer to the error object.
  */
 LRPT_API void lrpt_error_cleanup(
         lrpt_error_t *err);
+
+/** Error level.
+ *
+ * \param err Pointer to the error object.
+ *
+ * \return Error category (see #lrpt_error_level_t) or \c 0 if \c NULL \p err was passed.
+ */
+LRPT_API lrpt_error_level_t lrpt_error_level(
+        const lrpt_error_t *err);
+
+/** Error code.
+ *
+ * \param err Pointer to the error object.
+ *
+ * \return Numerical error code (see #lrpt_error_code_t) or \c 0 if \c NULL \p err was passed.
+ */
+LRPT_API lrpt_error_code_t lrpt_error_code(
+        const lrpt_error_t *err);
+
+/** Error message string.
+ *
+ * \param err Pointer to the error object.
+ *
+ * \return Character error message string or \c NULL if \c NULL \p err was passed.
+ *
+ * \warning Don't try to cast away \c const or free returned string! Use #lrpt_error_deinit()
+ * instead!
+ */
+LRPT_API const char * lrpt_error_message(
+        const lrpt_error_t *err);
 
 /** @} */
 
@@ -526,7 +575,7 @@ LRPT_API void lrpt_iq_file_close(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return File version number info or 0 in case of \c NULL \p file parameter.
+ * \return File version number info or \c 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint8_t lrpt_iq_file_version(
         const lrpt_iq_file_t *file);
@@ -545,7 +594,7 @@ LRPT_API bool lrpt_iq_file_is_offsetted(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return Sampling rate at which file was created or 0 in case of \c NULL \p file parameter.
+ * \return Sampling rate at which file was created or \c 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint32_t lrpt_iq_file_samplerate(
         const lrpt_iq_file_t *file);
@@ -563,7 +612,7 @@ LRPT_API const char *lrpt_iq_file_devicename(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return Number of I/Q samples stored in file or 0 in case of \c NULL \p file parameter.
+ * \return Number of I/Q samples stored in file or \c 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *file);
@@ -675,7 +724,7 @@ LRPT_API void lrpt_qpsk_file_close(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return File version number info or 0 in case of \c NULL \p file parameter.
+ * \return File version number info or \c 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint8_t lrpt_qpsk_file_version(
         const lrpt_qpsk_file_t *file);
@@ -714,7 +763,7 @@ LRPT_API bool lrpt_qpsk_file_is_hardsymboled(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return Symbol rate at which file was created or 0 in case of \c NULL \p file parameter.
+ * \return Symbol rate at which file was created or \c 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint32_t lrpt_qpsk_file_symrate(
         const lrpt_qpsk_file_t *file);
@@ -723,7 +772,7 @@ LRPT_API uint32_t lrpt_qpsk_file_symrate(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return Number of QPSK symbols stored in file or 0 in case of \c NULL \p file parameter.
+ * \return Number of QPSK symbols stored in file or \c 0 in case of \c NULL \p file parameter.
  */
 LRPT_API uint64_t lrpt_qpsk_file_length(
         const lrpt_qpsk_file_t *file);
@@ -813,7 +862,7 @@ LRPT_API lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         lrpt_dsp_filter_type_t type,
         lrpt_error_t *err);
 
-/** Free initialized Chebyshev filter.
+/** Free initialized Chebyshev filter object.
  *
  * \param filter Pointer to the Chebyshev filter object.
  */
@@ -928,7 +977,7 @@ LRPT_API void lrpt_demodulator_deinit(
  *
  * \param demod Pointer to the demodulator object.
  *
- * \return Current gain value or 0 in case of \c NULL \p demod parameter.
+ * \return Current gain value or \c 0 in case of \c NULL \p demod parameter.
  */
 LRPT_API double lrpt_demodulator_gain(
         const lrpt_demodulator_t *demod);
@@ -937,7 +986,7 @@ LRPT_API double lrpt_demodulator_gain(
  *
  * \param demod Pointer to the demodulator object.
  *
- * \return Current signal level value or 0 in case of \c NULL \p demod parameter.
+ * \return Current signal level value or \c 0 in case of \c NULL \p demod parameter.
  */
 LRPT_API double lrpt_demodulator_siglvl(
         const lrpt_demodulator_t *demod);
@@ -946,7 +995,7 @@ LRPT_API double lrpt_demodulator_siglvl(
  *
  * \param demod Pointer to the demodulator object.
  *
- * \return Current Costas PLL average phase error value or 0 in case of \c NULL \p demod parameter.
+ * \return Current PLL average phase error value or \c 0 in case of \c NULL \p demod parameter.
  */
 LRPT_API double lrpt_demodulator_phaseerr(
         const lrpt_demodulator_t *demod);

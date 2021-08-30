@@ -43,10 +43,10 @@
 
 /*************************************************************************************************/
 
-/** Block size for I/O operations with I/Q data (number of samples) */
+/** Block size for I/O operations with I/Q data (in number of samples) */
 static const size_t IO_IQ_DATA_N = 1024;
 
-/** Block size for I/O operations with I/Q data (number of symbols; should be a multiple of 4) */
+/** Block size for I/O operations with I/Q data (in number of symbols; must be a multiple of 4) */
 static const size_t IO_QPSK_DATA_N = 1024;
 
 /*************************************************************************************************/

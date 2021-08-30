@@ -51,7 +51,7 @@ struct lrpt_error__ {
  * \param code Numeric error code (see #lrpt_error_code_t for full list of codes).
  * \param msg Pointer to the character string (null-terminated) containing optional message.
  *
- * \warning If non-empty \c msg was passed user must free claimed resources with
+ * \warning If non-empty \c msg was passed user must free claimed resources later with
  * #lrpt_error_cleanup() explicitly!
  */
 void lrpt_error_set(

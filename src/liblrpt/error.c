@@ -38,6 +38,34 @@
 
 /*************************************************************************************************/
 
+/* lrpt_error_init() */
+lrpt_error_t *lrpt_error_init(void) {
+    lrpt_error_t *err = malloc(sizeof(lrpt_error_t));
+
+    if (!err)
+        return NULL;
+
+    err->level = LRPT_ERR_LVL_NONE;
+    err->code = LRPT_ERR_CODE_NONE;
+    err->msg = NULL;
+
+    return err;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_error_deinit() */
+void lrpt_error_deinit(
+        lrpt_error_t *err) {
+    if (!err)
+        return;
+
+    free(err->msg);
+    free(err);
+}
+
+/*************************************************************************************************/
+
 /* lrpt_error_set() */
 void lrpt_error_set(
         lrpt_error_t *err,
@@ -69,6 +97,40 @@ void lrpt_error_cleanup(
     err->code = LRPT_ERR_CODE_NONE;
 
     free(err->msg);
+    err->msg = NULL;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_error_level() */
+lrpt_error_level_t lrpt_error_level(
+        const lrpt_error_t *err) {
+    if (!err)
+        return 0;
+
+    return err->level;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_error_code() */
+lrpt_error_code_t lrpt_error_code(
+        const lrpt_error_t *err) {
+    if (!err)
+        return 0;
+
+    return err->code;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_error_message() */
+const char * lrpt_error_message(
+        const lrpt_error_t *err) {
+    if (!err)
+        return NULL;
+
+    return err->msg;
 }
 
 /*************************************************************************************************/
