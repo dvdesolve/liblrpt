@@ -76,7 +76,7 @@ void lrpt_error_set(
         const size_t len = strlen(msg);
 
         err->msg = calloc(len + 1, sizeof(char));
-        strncpy(err->msg, msg, len + 1);
+        strcpy(err->msg, msg);
     }
     else
         err->msg = NULL;
@@ -125,12 +125,24 @@ lrpt_error_code_t lrpt_error_code(
 /*************************************************************************************************/
 
 /* lrpt_error_message() */
-const char * lrpt_error_message(
+char * lrpt_error_message(
         const lrpt_error_t *err) {
-    if (!err)
+    if (!err || !err->msg)
         return NULL;
 
-    return err->msg;
+    size_t len = strlen(err->msg);
+
+    if (len == 0)
+        return NULL;
+
+    char *msg = calloc(len + 1, sizeof(char));
+
+    if (!msg)
+        return NULL;
+
+    strcpy(msg, err->msg);
+
+    return msg;
 }
 
 /*************************************************************************************************/

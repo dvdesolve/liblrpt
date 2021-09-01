@@ -272,90 +272,66 @@ LRPT_API bool lrpt_iq_data_resize(
         size_t new_len,
         lrpt_error_t *err);
 
-/** Convert array of I/Q samples into library format.
+/** Convert array of complex I/Q samples into library format.
  *
- * Converts array of I/Q samples \p iq of size \p len into library format of I/Q data storage.
- * Object given with \p data will be auto-resized to fit requested data length.
+ * Converts array of complex I/Q samples \p samples of size \p len into library format of
+ * I/Q data storage. Object given with \p data will be auto-resized to fit requested
+ * data length.
  *
  * \param data Pointer to the I/Q data object.
- * \param iq Pointer to the array of I/Q samples.
- * \param len Number of samples to merge into I/Q data.
+ * \param samples Pointer to the array of complex I/Q samples.
+ * \param len Number of samples to convert to I/Q data.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
- * \warning It's the user's responsibility to be sure that \p iq array contain at least
+ * \warning It's the user's responsibility to be sure that \p samples array contain at least
  * \p len samples!
  */
-LRPT_API bool lrpt_iq_data_from_samples(
+LRPT_API bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
-        const complex double *iq,
+        const complex double *samples,
         size_t len,
         lrpt_error_t *err);
 
-/** Create I/Q data object from I/Q samples.
+/** Create I/Q data object from complex I/Q samples.
  *
- * This function behaves much like #lrpt_iq_data_from_samples(), however, it allocates I/Q
+ * This function behaves much like #lrpt_iq_data_from_complex(), however, it allocates I/Q
  * data object automatically.
  *
- * \param iq Pointer to the array of I/Q samples.
- * \param len Number of samples in I and Q arrays to repack into I/Q data.
+ * \param samples Pointer to the array of complex I/Q samples.
+ * \param len Number of samples to convert to I/Q data.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data object or \c NULL if allocation was unsuccessful or
- * \c NULL \p iq samples array was passed.
+ * \c NULL \p samples samples array was passed.
  *
- * \warning Because code logic is the same as with #lrpt_iq_data_from_samples(), the same
- * caution about \p iq array length is actual.
+ * \warning Because code logic is the same as with #lrpt_iq_data_from_complex(), the same
+ * caution about \p samples array length is actual.
  */
-LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
-        const complex double *iq,
+LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
+        const complex double *samples,
         size_t len,
         lrpt_error_t *err);
 
-/** Merge separate arrays of double-typed I/Q samples into library format.
+/** Convert I/Q data object to complex samples.
  *
- * Merges arrays of I and Q samples (\p i and \p q) of size \p len each into library format
- * of I/Q data storage. Object given with \p data will be auto-resized to fit requested data
- * length.
+ * Converts \p len I/Q samples to the resulting \p samples array. Caller should be responsible
+ * that \p samples is large enough to hold at least \p len elements!
  *
  * \param data Pointer to the I/Q data object.
- * \param i Pointer to the array of I samples.
- * \param q Pointer to the array of Q samples.
- * \param len Number of samples in I and Q arrays to merge into I/Q data.
+ * \param samples Pointer to the resulting storage.
+ * \param len Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull merging and \c false otherwise.
+ * \return \c true on successful copy and \c false otherwise.
  *
- * \warning It's the user's responsibility to be sure that \p i and \p q arrays contain at least
- * \p len samples!
+ * \note If more samples than I/Q data object contains was requested then all samples will be
+ * converted.
  */
-LRPT_API bool lrpt_iq_data_from_doubles(
-        lrpt_iq_data_t *data,
-        const double *i,
-        const double *q,
-        size_t len,
-        lrpt_error_t *err);
-
-/** Create I/Q data object from double-typed I/Q samples.
- *
- * This function behaves much like #lrpt_iq_data_from_doubles(), however, it allocates
- * I/Q data object automatically.
- *
- * \param i Pointer to the array of I samples.
- * \param q Pointer to the array of Q samples.
- * \param len Number of samples in I and Q arrays to repack into I/Q data.
- * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
- *
- * \return Pointer to the allocated I/Q data object or \c NULL if allocation was unsuccessful or
- * \c NULL \p i and/or \p q sample arrays were passed.
- *
- * \warning Because code logic is the same as with #lrpt_iq_data_from_doubles(), the same
- * caution about \p i and \p q array lengths is actual.
- */
-LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
-        const double *i,
-        const double *q,
+LRPT_API bool lrpt_iq_data_to_complex(
+        const lrpt_iq_data_t *data,
+        complex double *samples,
         size_t len,
         lrpt_error_t *err);
 
@@ -515,12 +491,12 @@ LRPT_API lrpt_error_code_t lrpt_error_code(
  *
  * \param err Pointer to the error object.
  *
- * \return Character error message string or \c NULL if \c NULL \p err was passed.
+ * \return Character error message string or \c NULL if \c NULL \p err was passed or message is
+ * empty.
  *
- * \warning Don't try to cast away \c const or free returned string! Use #lrpt_error_deinit()
- * instead!
+ * \warning User should free returned string by hand.
  */
-LRPT_API const char * lrpt_error_message(
+LRPT_API char * lrpt_error_message(
         const lrpt_error_t *err);
 
 /** @} */

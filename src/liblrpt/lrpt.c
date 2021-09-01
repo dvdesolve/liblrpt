@@ -170,13 +170,13 @@ bool lrpt_iq_data_resize(
 
 /*************************************************************************************************/
 
-/* lrpt_iq_data_from_samples() */
-bool lrpt_iq_data_from_samples(
+/* lrpt_iq_data_from_complex() */
+bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
-        const complex double *iq,
+        const complex double *samples,
         size_t len,
         lrpt_error_t *err) {
-    if (!data || !iq) {
+    if (!data || !samples) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
                     "I/Q data object and/or I/Q samples array are NULL");
@@ -188,20 +188,20 @@ bool lrpt_iq_data_from_samples(
     if (!lrpt_iq_data_resize(data, len, err))
         return false;
 
-    /* Merge samples into I/Q data */
-    memcpy(data->iq, iq, sizeof(complex double) * len);
+    /* Just copy samples */
+    memcpy(data->iq, samples, sizeof(complex double) * len);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* lrpt_iq_data_create_from_samples() */
-lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
-        const complex double *iq,
+/* lrpt_iq_data_create_from_complex() */
+lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
+        const complex double *samples,
         size_t len,
         lrpt_error_t *err) {
-    if (!iq) {
+    if (!samples) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
                     "I/Q samples array is NULL");
@@ -209,12 +209,14 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
         return NULL;
     }
 
+    /* Allocate new storage */
     lrpt_iq_data_t *data = lrpt_iq_data_alloc(len, err);
 
     if (!data)
         return NULL;
 
-    if (!lrpt_iq_data_from_samples(data, iq, len, err)) {
+    /* Convert samples */
+    if (!lrpt_iq_data_from_complex(data, samples, len, err)) {
         lrpt_iq_data_free(data);
 
         return NULL;
@@ -225,60 +227,27 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_samples(
 
 /*************************************************************************************************/
 
-/* lrpt_iq_data_from_doubles() */
-bool lrpt_iq_data_from_doubles(
-        lrpt_iq_data_t *data,
-        const double *i,
-        const double *q,
+/* lrpt_iq_data_to_complex() */
+bool lrpt_iq_data_to_complex(
+        const lrpt_iq_data_t *data,
+        complex double *samples,
         size_t len,
         lrpt_error_t *err) {
-    if (!data || !i || !q) {
+    if (!data || !data->iq) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object and/or I/Q sample arrays are NULL");
+                    "I/Q data object is NULL or corrupted");
 
         return false;
     }
 
-    /* Resize storage */
-    if (!lrpt_iq_data_resize(data, len, err))
-        return false;
+    if (len > data->len)
+        len = data->len;
 
-    /* Repack doubles into I/Q data */
-    for (size_t k = 0; k < len; k++)
-        data->iq[k] = i[k] + q[k] * I;
+    /* Just copy samples */
+    memcpy(samples, data->iq, sizeof(complex double) * len);
 
     return true;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_iq_data_create_from_doubles() */
-lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
-        const double *i,
-        const double *q,
-        size_t len,
-        lrpt_error_t *err) {
-    if (!i || !q) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I and/or Q sample arrays are NULL");
-
-        return NULL;
-    }
-
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(len, err);
-
-    if (!data)
-        return NULL;
-
-    if (!lrpt_iq_data_from_doubles(data, i, q, len, err)) {
-        lrpt_iq_data_free(data);
-
-        return NULL;
-    }
-
-    return data;
 }
 
 /*************************************************************************************************/
