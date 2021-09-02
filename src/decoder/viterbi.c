@@ -128,7 +128,7 @@ static void history_buffer_process_skip(
 /** Viterbi inner code.
  *
  * \param vit Pointer to the Viterbi decoder object.
- * \param input Encoded soft-symbols data.
+ * \param input Encoded soft symbols data.
  */
 static void viterbi_inner(
         lrpt_decoder_viterbi_t *vit,
@@ -137,7 +137,7 @@ static void viterbi_inner(
 /** Viterbi tail code.
  *
  * \param vit Pointer to the Viterbi decoder object.
- * \param input Encoded soft-symbols data.
+ * \param input Encoded soft symbols data.
  */
 static void viterbi_tail(
         lrpt_decoder_viterbi_t *vit,
@@ -146,7 +146,7 @@ static void viterbi_tail(
 /** Perform convolutional Viterbi decoding.
  *
  * \param vit Pointer to the Viterbi decoder.
- * \param input Encoded soft-symbols data.
+ * \param input Encoded soft symbols data.
  * \param output Decoded data destination.
  */
 static void convolutional_decode(

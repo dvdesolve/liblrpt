@@ -364,16 +364,16 @@ bool lrpt_qpsk_data_resize(
 
 /*************************************************************************************************/
 
-/* lrpt_qpsk_data_from_symbols() */
-bool lrpt_qpsk_data_from_symbols(
+/* lrpt_qpsk_data_from_soft() */
+bool lrpt_qpsk_data_from_soft(
         lrpt_qpsk_data_t *data,
-        const int8_t *qpsk,
+        const int8_t *symbols,
         size_t len,
         lrpt_error_t *err) {
-    if (!data || !qpsk) {
+    if (!data || !symbols) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object and/or QPSK symbols array are NULL");
+                    "QPSK data object and/or QPSK soft symbols array are NULL");
 
         return false;
     }
@@ -382,33 +382,35 @@ bool lrpt_qpsk_data_from_symbols(
     if (!lrpt_qpsk_data_resize(data, len, err))
         return false;
 
-    /* Merge symbols into QPSK data */
-    memcpy(data->qpsk, qpsk, sizeof(int8_t) * len);
+    /* Just copy symbols */
+    memcpy(data->qpsk, symbols, sizeof(int8_t) * len);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* lrpt_qpsk_data_create_from_symbols() */
-lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
-        const int8_t *qpsk,
+/* lrpt_qpsk_data_create_from_soft() */
+lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
+        const int8_t *symbols,
         size_t len,
         lrpt_error_t *err) {
-    if (!qpsk) {
+    if (!symbols) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK symbols array is NULL");
+                    "QPSK soft symbols array is NULL");
 
         return NULL;
     }
 
+    /* Allocate new storage */
     lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(len, err);
 
     if (!data)
         return NULL;
 
-    if (!lrpt_qpsk_data_from_symbols(data, qpsk, len, err)) {
+    /* Convert symbols */
+    if (!lrpt_qpsk_data_from_soft(data, symbols, len, err)) {
         lrpt_qpsk_data_free(data);
 
         return NULL;
@@ -419,10 +421,10 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_symbols(
 
 /*************************************************************************************************/
 
-/* lrpt_qpsk_data_to_ints() */
-bool lrpt_qpsk_data_to_ints(
+/* lrpt_qpsk_data_to_soft() */
+bool lrpt_qpsk_data_to_soft(
         const lrpt_qpsk_data_t *data,
-        int8_t *qpsk,
+        int8_t *symbols,
         size_t len,
         lrpt_error_t *err) {
     if (!data || !data->qpsk) {
@@ -436,7 +438,108 @@ bool lrpt_qpsk_data_to_ints(
     if (len > data->len)
         len = data->len;
 
-    memcpy(qpsk, data->qpsk, sizeof(int8_t) * len);
+    /* Just copy symbols */
+    memcpy(symbols, data->qpsk, sizeof(int8_t) * len);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_from_hard() */
+bool lrpt_qpsk_data_from_hard(
+        lrpt_qpsk_data_t *data,
+        const unsigned char *symbols,
+        size_t len,
+        lrpt_error_t *err) {
+    if (!data || !symbols) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK data object and/or QPSK hard symbols array are NULL");
+
+        return false;
+    }
+
+    /* Resize storage */
+    if (!lrpt_qpsk_data_resize(data, 8 * len, err))
+        return false;
+
+    /* Convert hard to soft and store in QPSK data object */
+    for (size_t i = 0; i < len; i++) {
+        for (uint8_t j = 0; j < 8; j++) {
+            const unsigned char b = ((symbols[i] >> (7 - j)) & 0x01);
+
+            data->qpsk[8 * i + j] = (b == 0x01) ? 127 : -127;
+        }
+    }
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_create_from_hard() */
+lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
+        const unsigned char *symbols,
+        size_t len,
+        lrpt_error_t *err) {
+    if (!symbols) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK hard symbols array is NULL");
+
+        return NULL;
+    }
+
+    /* Allocate new storage */
+    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(8 * len, err);
+
+    if (!data)
+        return NULL;
+
+    /* Convert symbols */
+    if (!lrpt_qpsk_data_from_hard(data, symbols, len, err)) {
+        lrpt_qpsk_data_free(data);
+
+        return NULL;
+    }
+
+    return data;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_to_hard() */
+bool lrpt_qpsk_data_to_hard(
+        const lrpt_qpsk_data_t *data,
+        unsigned char *symbols,
+        size_t len,
+        lrpt_error_t *err) {
+    if (!data || !data->qpsk) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK data object is NULL or corrupted");
+
+        return false;
+    }
+
+    if (len > data->len)
+        len = data->len;
+
+    /* Convert symbols */
+    for (size_t i = 0; i <= (len / 8); i++) {
+        unsigned char b = 0x00;
+
+        for (uint8_t j = 0; j < 8; j++) {
+            if ((i == (len / 8)) && ((8 * i + j) == len))
+                break;
+
+            if (data->qpsk[8 * i + j] >= 0)
+                b |= (1 << (7 - j));
+        }
+
+        symbols[i] = b;
+    }
 
     return true;
 }

@@ -55,7 +55,7 @@ struct lrpt_iq_file__ {
     unsigned char *iobuf; /**< Temporary buffer for reading/writing */
 };
 
-/** Storage type for QPSK soft symbols data file */
+/** Storage type for QPSK data file */
 struct lrpt_qpsk_file__ {
     FILE *fhandle; /**< File object handle */
 

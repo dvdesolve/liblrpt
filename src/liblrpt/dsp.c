@@ -76,7 +76,7 @@ static inline int8_t lut_isqrt(
 /** Make byte from QPSK data stream.
  *
  * Uses hard decision technique (thresholding) to produce an 8-bit byte for given QPSK data:
- * (only 8 consecutive QPSK soft symbols are used therefore \p data length should be at least 8).
+ * (only 8 consecutive QPSK bytes are used therefore \p data length should be at least 8).
  * Usually used to find a sync word for the resynchronizing function.
  *
  * \param data Pointer to the QPSK data.
@@ -137,10 +137,11 @@ static uint8_t qpsk_to_byte(
         const int8_t *data) {
     uint8_t b = 0;
 
+    /* Assume little-endian conversion */
     for (uint8_t i = 0; i < 8; i++) {
         uint8_t bit = (data[i] < 0) ? 0 : 1;
 
-        b |= bit << i;
+        b |= (bit << i);
     }
 
     return b;

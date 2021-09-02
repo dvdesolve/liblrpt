@@ -316,7 +316,7 @@ bool lrpt_demodulator_exec(
     qpsk_sym_t sym;
     size_t out_len = 0;
 
-    /* Now we're ready to process filtered I/Q data and get soft-symbols */
+    /* Now we're ready to process filtered I/Q data and get symbols */
     for (size_t i = 0; i < input->len; i++) {
         /* Make complex variable from filtered sample */
         complex double cdata = input->iq[i];
