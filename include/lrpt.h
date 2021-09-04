@@ -668,9 +668,13 @@ LRPT_API uint64_t lrpt_iq_file_length(
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull positioning and \c false otherwise (if \p file is \c NULL,
- * position setting was unsuccessful or \p sample exceeds current number of samples).
+ * position setting was unsuccessful).
  *
  * \note If repositioning failed internal I/Q sample pointer will not be changed.
+ *
+ * \note If seekable sample index exceeds file length file pointer will be set to the end.
+ *
+ * \note Seeking is prohibited for files opened with write mode.
  */
 LRPT_API bool lrpt_iq_file_goto(
         lrpt_iq_file_t *file,

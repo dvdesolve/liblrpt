@@ -574,13 +574,24 @@ bool lrpt_iq_file_goto(
         lrpt_iq_file_t *file,
         uint64_t sample,
         lrpt_error_t *err) {
-    if (!file || (sample > file->data_len)) {
+    if (!file) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q file object is NULL or sample index exceeds data length");
+                    "I/Q file object is NULL");
 
         return false;
     }
+
+    if (file->write_mode) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                    "Can't goto in write mode");
+
+        return false;
+    }
+
+    if (sample > file->data_len)
+        sample = file->data_len;
 
     if (file->version == LRPT_IQ_FILE_VER1) {
         if (fseek(file->fhandle, file->header_len + sample * UTILS_COMPLEX_SER_SIZE, SEEK_SET) == 0)
@@ -790,8 +801,10 @@ bool lrpt_iq_data_write_to_file(
                     return false;
                 }
 
-                if (!lrpt_iq_file_goto(file, file->current, err))
-                    return false;
+                fseek(
+                        file->fhandle,
+                        file->header_len + file->current * UTILS_COMPLEX_SER_SIZE,
+                        SEEK_SET);
             }
         }
 
@@ -810,8 +823,10 @@ bool lrpt_iq_data_write_to_file(
                 return false;
             }
 
-            if (!lrpt_iq_file_goto(file, file->current, err))
-                return false;
+            fseek(
+                    file->fhandle,
+                    file->header_len + file->current * UTILS_COMPLEX_SER_SIZE,
+                    SEEK_SET);
         }
     }
 
