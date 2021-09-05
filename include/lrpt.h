@@ -832,9 +832,13 @@ LRPT_API uint64_t lrpt_qpsk_file_length(
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull positioning and \c false otherwise (if \p file is \c NULL,
- * position setting was unsuccessful or \p symbol exceeds current number of symbols).
+ * position setting was unsuccessful.
  *
  * \note If repositioning failed internal QPSK symbol pointer will not be changed.
+ *
+ * \note If seekable symbol index exceeds file length file pointer will be set to the end.
+ *
+ * \note Seeking is prohibited for files opened with write mode.
  */
 LRPT_API bool lrpt_qpsk_file_goto(
         lrpt_qpsk_file_t *file,
@@ -866,7 +870,9 @@ LRPT_API bool lrpt_qpsk_data_read_from_file(
 
 /** Write QPSK data to file.
  *
- * Writes QPSK data pointed by \p data to file \p file.
+ * Writes QPSK data pointed by \p data to file \p file. If \p data contains not whole number of
+ * QPSK symbols (half of the number of QPSK bytes - object length) then remaining QPSK byte will
+ * not be written.
  *
  * \param data Pointer to the QPSK data object.
  * \param file Pointer to the QPSK file object to write QPSK data to.
@@ -876,8 +882,8 @@ LRPT_API bool lrpt_qpsk_data_read_from_file(
  *
  * \return \c true on successfull writing and \c false otherwise.
  *
- * \note Resulting file maintains internal library format. For more details see
- * \ref lrptqpsk section.
+ * \note Resulting file maintains internal library format. For more details see \ref lrptqpsk
+ * section.
  */
 LRPT_API bool lrpt_qpsk_data_write_to_file(
         const lrpt_qpsk_data_t *data,

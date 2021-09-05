@@ -801,6 +801,7 @@ bool lrpt_iq_data_write_to_file(
                     return false;
                 }
 
+                /* TODO error checking */
                 fseek(
                         file->fhandle,
                         file->header_len + file->current * UTILS_COMPLEX_SER_SIZE,
@@ -1289,17 +1290,28 @@ bool lrpt_qpsk_file_goto(
         lrpt_qpsk_file_t *file,
         uint64_t symbol,
         lrpt_error_t *err) {
-    if (!file || (symbol > file->data_len)) {
+    if (!file) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK file object is NULL or symbol index exceeds data length");
+                    "QPSK file object is NULL");
 
         return false;
     }
 
+    if (file->write_mode) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                    "Can't goto in write mode");
+
+        return false;
+    }
+
+    if (symbol > file->data_len)
+        symbol = file->data_len;
+
     if (file->version == LRPT_QPSK_FILE_VER1) {
         const uint64_t offset =
-            (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) ? (symbol / 4) : (2 * symbol);
+            lrpt_qpsk_file_is_hardsymboled(file) ? (symbol / 4) : (2 * symbol);
 
         if (fseek(file->fhandle, file->header_len + offset, SEEK_SET) == 0)
             file->current = symbol;
@@ -1355,6 +1367,8 @@ bool lrpt_qpsk_data_read_from_file(
         return false;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
+        /* TODO recheck when file pointer is not the multiple of 4 - may be we should do
+         * something extra in that case, e. g. step back one byte, read some data again and so on. */
         /* Determine required number of reads */
         const size_t n_reads = (len / IO_QPSK_DATA_N);
 
@@ -1365,7 +1379,7 @@ bool lrpt_qpsk_data_read_from_file(
             if (toread == 0)
                 break;
 
-            if (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) {
+            if (lrpt_qpsk_file_is_hardsymboled(file)) {
                 /* Number of bytes to read */
                 const size_t n_bytes = ((toread - 1) / 4 + 1);
 
@@ -1435,13 +1449,19 @@ bool lrpt_qpsk_data_write_to_file(
         return false;
     }
 
+    /* Get number of QPSK symbols */
+    const size_t len = (data->len / 2);
+
     /* In case of empty write just exit */
-    if (data->len == 0)
+    if (len == 0)
         return true;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
+        /* TODO we should handle case when current symbol is not the multiple of 4.
+         * In that case we should recall last written byte (perhaps from file structure),
+         * convert it to the QPSK bytes and then merge with given data. After that we should
+         * reduce current pointer by the number of extra symbols and write combined chunk. */
         /* Determine required number of block writes */
-        const size_t len = data->len;
         const size_t n_writes = (len / IO_QPSK_DATA_N);
 
         for (size_t i = 0; i <= n_writes; i++) {
@@ -1450,7 +1470,7 @@ bool lrpt_qpsk_data_write_to_file(
             if (towrite == 0)
                 break;
 
-            if (file->flags & LRPT_QPSK_FILE_FLAGS_VER1_HARDSYMBOLED) {
+            if (lrpt_qpsk_file_is_hardsymboled(file)) {
                 /* Number of bytes to write */
                 const size_t n_bytes = ((towrite - 1) / 4 + 1);
 
@@ -1512,8 +1532,12 @@ bool lrpt_qpsk_data_write_to_file(
                     return false;
                 }
 
-                if (!lrpt_qpsk_file_goto(file, file->current, err))
-                    return false;
+                fseek(
+                        file->fhandle,
+                        file->header_len + (lrpt_qpsk_file_is_hardsymboled(file) ?
+                            (file->current / 4) :
+                            (2 * file->current)),
+                        SEEK_SET);
             }
         }
 
@@ -1532,8 +1556,12 @@ bool lrpt_qpsk_data_write_to_file(
                 return false;
             }
 
-            if (!lrpt_qpsk_file_goto(file, file->current, err))
-                return false;
+            fseek(
+                    file->fhandle,
+                    file->header_len + (lrpt_qpsk_file_is_hardsymboled(file) ?
+                        (file->current / 4) :
+                        (2 * file->current)),
+                    SEEK_SET);
         }
     }
 
