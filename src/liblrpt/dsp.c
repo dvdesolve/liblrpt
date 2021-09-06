@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
+ * Author: Artem Litvinovich
  * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
@@ -51,8 +52,8 @@
 static const uint8_t INTLV_BRANCHES = 36;
 static const uint16_t INTLV_DELAY = 2048;
 static const uint32_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
-static const uint8_t INTLV_DATA_LEN = 72; /* Number of interleaved symbols */
-static const uint8_t INTLV_SYNC_LEN = 8; /* The length of sync word */
+static const uint8_t INTLV_DATA_LEN = 72; /* Number of interleaved bits */
+static const uint8_t INTLV_SYNC_LEN = 8; /* The length of sync word (in bits) */
 static const uint8_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
 
 static const uint8_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
@@ -196,23 +197,23 @@ static bool find_sync(
 /* resync_stream() */
 static bool resync_stream(
         lrpt_qpsk_data_t *data) {
-    if ((data->len < SYNCD_BUF_MARGIN) || (data->len < INTLV_SYNCDATA))
+    if (((2 * data->len) < SYNCD_BUF_MARGIN) || ((2 * data->len) < INTLV_SYNCDATA))
         return false;
 
     /* Allocate temporary buffer for resyncing */
-    int8_t *tmp_buf = calloc(data->len, sizeof(int8_t));
+    int8_t *tmp_buf = calloc(2 * data->len, sizeof(int8_t));
 
     if (!tmp_buf)
         return false;
 
     /* Do a copy of the original data */
-    memcpy(tmp_buf, data->qpsk, sizeof(int8_t) * data->len);
+    memcpy(tmp_buf, data->qpsk, sizeof(int8_t) * 2 * data->len);
 
-    size_t resync_siz = 0;
+    size_t resync_size = 0;
     size_t posn = 0;
     uint8_t offset = 0;
-    size_t limit1 = data->len - SYNCD_BUF_MARGIN;
-    size_t limit2 = data->len - INTLV_SYNCDATA;
+    size_t limit1 = (2 * data->len - SYNCD_BUF_MARGIN);
+    size_t limit2 = (2 * data->len - INTLV_SYNCDATA);
 
     /* Do while there is a room in the raw buffer for the find_sync() to search for
      * sync candidates
@@ -256,8 +257,8 @@ static bool resync_stream(
             /* Copy the actual data after the sync train and update total number of
              * copied symbols
              */
-            memcpy(data->qpsk + resync_siz, tmp_buf + posn + 8, sizeof(int8_t) * INTLV_DATA_LEN);
-            resync_siz += INTLV_DATA_LEN;
+            memcpy(data->qpsk + resync_size, tmp_buf + posn + 8, sizeof(int8_t) * INTLV_DATA_LEN);
+            resync_size += INTLV_DATA_LEN;
 
             /* Move on to the next sync train position */
             posn += INTLV_SYNCDATA;
@@ -267,7 +268,7 @@ static bool resync_stream(
     /* Free temporary buffer */
     free(tmp_buf);
 
-    if (!lrpt_qpsk_data_resize(data, resync_siz, NULL))
+    if (!lrpt_qpsk_data_resize(data, resync_size / 2, NULL))
         return false;
 
     return true;
@@ -576,10 +577,10 @@ bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
         lrpt_qpsk_data_t *data,
         lrpt_error_t *err) {
-    if (!dediff || !data || data->len < 2 || (data->len % 2) != 0) {
+    if (!dediff || !data || data->len == 0) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Dediffcoder object is NULL or QPSK data object is NULL and/or QPSK data length is incorrect");
+                    "Dediffcoder object is NULL or QPSK data object is NULL");
 
         return false;
     }
@@ -590,7 +591,7 @@ bool lrpt_dsp_dediffcoder_exec(
     data->qpsk[0] = lut_isqrt(dediff->lut, data->qpsk[0] * dediff->pr_I);
     data->qpsk[1] = lut_isqrt(dediff->lut, -(data->qpsk[1]) * dediff->pr_Q);
 
-    for (size_t i = 2; i <= (data->len - 2); i += 2) {
+    for (size_t i = 2; i <= (2 * data->len - 2); i += 2) {
         int8_t x = data->qpsk[i];
         int8_t y = data->qpsk[i + 1];
 
@@ -637,7 +638,7 @@ bool lrpt_dsp_deinterleaver_exec(
 
     /* Allocate resulting buffer */
     if ((data->len > 0) && (data->len < old_size)) {
-        res_buf = calloc(data->len, sizeof(int8_t));
+        res_buf = calloc(2 * data->len, sizeof(int8_t));
 
         if (!res_buf) {
             if (err)
@@ -657,7 +658,7 @@ bool lrpt_dsp_deinterleaver_exec(
 
     /* Perform convolutional deinterleaving */
     /* https://en.wikipedia.org/wiki/Burst_error-correcting_code#Convolutional_interleaver */
-    for (size_t i = 0; i < data->len; i++) {
+    for (size_t i = 0; i < (2 * data->len); i++) {
         /* Offset by half a message to include leading and trailing fuzz */
         int64_t pos =
             i +
@@ -665,7 +666,7 @@ bool lrpt_dsp_deinterleaver_exec(
             (i % INTLV_BRANCHES) * INTLV_BASE_LEN +
             (INTLV_BRANCHES / 2) * INTLV_BASE_LEN;
 
-        if ((pos >= 0) && (pos < data->len))
+        if ((pos >= 0) && (pos < (2 * data->len)))
             res_buf[pos] = data->qpsk[i];
     }
 

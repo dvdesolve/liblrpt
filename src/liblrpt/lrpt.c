@@ -174,7 +174,7 @@ bool lrpt_iq_data_resize(
 bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
         const complex double *samples,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!data || !samples) {
         if (err)
@@ -185,11 +185,11 @@ bool lrpt_iq_data_from_complex(
     }
 
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, len, err))
+    if (!lrpt_iq_data_resize(data, n, err))
         return false;
 
     /* Just copy samples */
-    memcpy(data->iq, samples, sizeof(complex double) * len);
+    memcpy(data->iq, samples, sizeof(complex double) * n);
 
     return true;
 }
@@ -199,7 +199,7 @@ bool lrpt_iq_data_from_complex(
 /* lrpt_iq_data_create_from_complex() */
 lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         const complex double *samples,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!samples) {
         if (err)
@@ -210,13 +210,13 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
     }
 
     /* Allocate new storage */
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(len, err);
+    lrpt_iq_data_t *data = lrpt_iq_data_alloc(n, err);
 
     if (!data)
         return NULL;
 
     /* Convert samples */
-    if (!lrpt_iq_data_from_complex(data, samples, len, err)) {
+    if (!lrpt_iq_data_from_complex(data, samples, n, err)) {
         lrpt_iq_data_free(data);
 
         return NULL;
@@ -231,7 +231,7 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
 bool lrpt_iq_data_to_complex(
         const lrpt_iq_data_t *data,
         complex double *samples,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!data || !data->iq) {
         if (err)
@@ -241,11 +241,11 @@ bool lrpt_iq_data_to_complex(
         return false;
     }
 
-    if (len > data->len)
-        len = data->len;
+    if (n > data->len)
+        n = data->len;
 
     /* Just copy samples */
-    memcpy(samples, data->iq, sizeof(complex double) * len);
+    memcpy(samples, data->iq, sizeof(complex double) * n);
 
     return true;
 }
@@ -266,11 +266,12 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
         return NULL;
     }
 
-    /* Set requested length and allocate storage for soft symbols if length is not zero */
+    /* Set requested length and allocate storage for symbols if length is not zero */
     data->len = len;
 
     if (len > 0) {
-        data->qpsk = calloc(len, sizeof(int8_t));
+        /* Twice a length because 1 symbol consists of two bytes */
+        data->qpsk = calloc(2 * len, sizeof(int8_t));
 
         /* Return NULL only if allocation attempt has failed */
         if (!data->qpsk) {
@@ -340,7 +341,7 @@ bool lrpt_qpsk_data_resize(
         data->qpsk = NULL;
     }
     else {
-        int8_t *new_s = reallocarray(data->qpsk, new_len, sizeof(int8_t));
+        int8_t *new_s = reallocarray(data->qpsk, 2 * new_len, sizeof(int8_t));
 
         if (!new_s) {
             if (err)
@@ -352,7 +353,7 @@ bool lrpt_qpsk_data_resize(
         else {
             /* Zero out newly allocated portion */
             if (new_len > data->len)
-                memset(new_s + data->len, 0, sizeof(int8_t) * (new_len - data->len));
+                memset(new_s + 2 * data->len, 0, sizeof(int8_t) * 2 * (new_len - data->len));
 
             data->len = new_len;
             data->qpsk = new_s;
@@ -368,7 +369,7 @@ bool lrpt_qpsk_data_resize(
 bool lrpt_qpsk_data_from_soft(
         lrpt_qpsk_data_t *data,
         const int8_t *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!data || !symbols) {
         if (err)
@@ -379,11 +380,11 @@ bool lrpt_qpsk_data_from_soft(
     }
 
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, len, err))
+    if (!lrpt_qpsk_data_resize(data, n, err))
         return false;
 
     /* Just copy symbols */
-    memcpy(data->qpsk, symbols, sizeof(int8_t) * len);
+    memcpy(data->qpsk, symbols, sizeof(int8_t) * 2 * n);
 
     return true;
 }
@@ -393,7 +394,7 @@ bool lrpt_qpsk_data_from_soft(
 /* lrpt_qpsk_data_create_from_soft() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
         const int8_t *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!symbols) {
         if (err)
@@ -404,13 +405,13 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
     }
 
     /* Allocate new storage */
-    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(len, err);
+    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(n, err);
 
     if (!data)
         return NULL;
 
     /* Convert symbols */
-    if (!lrpt_qpsk_data_from_soft(data, symbols, len, err)) {
+    if (!lrpt_qpsk_data_from_soft(data, symbols, n, err)) {
         lrpt_qpsk_data_free(data);
 
         return NULL;
@@ -425,7 +426,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
 bool lrpt_qpsk_data_to_soft(
         const lrpt_qpsk_data_t *data,
         int8_t *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!data || !data->qpsk) {
         if (err)
@@ -435,11 +436,11 @@ bool lrpt_qpsk_data_to_soft(
         return false;
     }
 
-    if (len > data->len)
-        len = data->len;
+    if (n > data->len)
+        n = data->len;
 
     /* Just copy symbols */
-    memcpy(symbols, data->qpsk, sizeof(int8_t) * len);
+    memcpy(symbols, data->qpsk, sizeof(int8_t) * 2 * n);
 
     return true;
 }
@@ -450,7 +451,7 @@ bool lrpt_qpsk_data_to_soft(
 bool lrpt_qpsk_data_from_hard(
         lrpt_qpsk_data_t *data,
         const unsigned char *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!data || !symbols) {
         if (err)
@@ -461,16 +462,21 @@ bool lrpt_qpsk_data_from_hard(
     }
 
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, 8 * len, err))
+    if (!lrpt_qpsk_data_resize(data, n, err))
         return false;
 
     /* Convert hard to soft and store in QPSK data object */
-    for (size_t i = 0; i < len; i++) {
-        for (uint8_t j = 0; j < 8; j++) {
-            const unsigned char b = ((symbols[i] >> (7 - j)) & 0x01);
+    size_t i = 0;
+    uint8_t j = 0;
 
-            data->qpsk[8 * i + j] = (b == 0x01) ? 127 : -127;
-        }
+    while (i < n) {
+        const unsigned char b = ((symbols[i / 4] >> (7 - j)) & 0x01);
+
+        data->qpsk[2 * i + j % 2] = (b == 0x01) ? 127 : -127;
+        j = (j + 1) % 8;
+
+        if ((j % 2) == 0)
+            i++;
     }
 
     return true;
@@ -481,7 +487,7 @@ bool lrpt_qpsk_data_from_hard(
 /* lrpt_qpsk_data_create_from_hard() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!symbols) {
         if (err)
@@ -492,13 +498,13 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
     }
 
     /* Allocate new storage */
-    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(8 * len, err);
+    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(n, err);
 
     if (!data)
         return NULL;
 
     /* Convert symbols */
-    if (!lrpt_qpsk_data_from_hard(data, symbols, len, err)) {
+    if (!lrpt_qpsk_data_from_hard(data, symbols, n, err)) {
         lrpt_qpsk_data_free(data);
 
         return NULL;
@@ -513,7 +519,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
 bool lrpt_qpsk_data_to_hard(
         const lrpt_qpsk_data_t *data,
         unsigned char *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err) {
     if (!data || !data->qpsk) {
         if (err)
@@ -523,22 +529,31 @@ bool lrpt_qpsk_data_to_hard(
         return false;
     }
 
-    if (len > data->len)
-        len = data->len;
+    if (n > data->len)
+        n = data->len;
 
     /* Convert symbols */
-    for (size_t i = 0; i <= (len / 8); i++) {
-        unsigned char b = 0x00;
+    size_t i = 0;
+    uint8_t j = 0;
+    unsigned char b = 0x00;
 
-        for (uint8_t j = 0; j < 8; j++) {
-            if ((i == (len / 8)) && ((8 * i + j) == len))
-                break;
+    while (i < n) {
+        if (data->qpsk[2 * i + j % 2] >= 0)
+            b |= (1 << (7 - j));
 
-            if (data->qpsk[8 * i + j] >= 0)
-                b |= (1 << (7 - j));
+        j++;
+
+        if (j == 8) {
+            symbols[i / 4] = b;
+            b = 0x00;
+            j = 0;
         }
 
-        symbols[i] = b;
+        if ((j % 2) == 0)
+            i++;
+
+        if ((i == n) && ((j % 2) == 0))
+            symbols[i / 4] = b;
     }
 
     return true;

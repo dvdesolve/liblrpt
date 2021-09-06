@@ -70,6 +70,7 @@ struct lrpt_qpsk_file__ {
     uint64_t current; /**< Current QPSK sample in file stream */
 
     unsigned char *iobuf; /**< Temporary buffer for reading/writing */
+    unsigned char last_hardsym; /**< Last hard symbol that was written */
 };
 
 /*************************************************************************************************/

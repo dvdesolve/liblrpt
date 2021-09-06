@@ -272,25 +272,26 @@ LRPT_API bool lrpt_iq_data_resize(
         size_t new_len,
         lrpt_error_t *err);
 
-/** Convert array of complex I/Q samples to library format.
+/** Convert array of complex I/Q samples to the library format.
  *
- * Converts array of complex I/Q samples \p samples of size \p len to the library format of
- * I/Q data storage. Object given with \p data will be auto-resized to fit requested length.
+ * Converts \p n samples from array of complex I/Q samples \p samples to the library format of
+ * I/Q data storage. Object given with \p data will be auto-resized to fit requested number of
+ * samples.
  *
  * \param data Pointer to the I/Q data object.
  * \param samples Pointer to the array of complex I/Q samples.
- * \param len Number of samples to convert to I/Q data.
+ * \param n Number of samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
- * \warning It's the user's responsibility to be sure that \p samples array contain at least
- * \p len samples!
+ * \warning It's the user's responsibility to be sure that \p samples array contains at least
+ * \p n elements!
  */
 LRPT_API bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
         const complex double *samples,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
 /** Create I/Q data object from complex I/Q samples.
@@ -299,28 +300,25 @@ LRPT_API bool lrpt_iq_data_from_complex(
  * data object automatically.
  *
  * \param samples Pointer to the array of complex I/Q samples.
- * \param len Number of samples to convert to I/Q data.
+ * \param n Number of samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data object or \c NULL if allocation was unsuccessful or
  * \c NULL \p samples data array was passed.
- *
- * \warning Because code logic is the same as with #lrpt_iq_data_from_complex(), the same
- * caution about \p samples array length is actual.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         const complex double *samples,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
-/** Convert I/Q data object to complex samples.
+/** Convert I/Q data to complex samples.
  *
- * Converts \p len I/Q samples to the resulting \p samples array. Caller should be responsible
- * that \p samples is large enough to hold at least \p len elements!
+ * Saves \p n I/Q samples to the resulting \p samples array. Caller should be responsible that
+ * \p samples is large enough to hold at least \p n elements!
  *
  * \param data Pointer to the I/Q data object.
  * \param samples Pointer to the resulting storage.
- * \param len Number of I/Q samples to convert.
+ * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successful conversion and \c false otherwise.
@@ -331,17 +329,16 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
 LRPT_API bool lrpt_iq_data_to_complex(
         const lrpt_iq_data_t *data,
         complex double *samples,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
 /** Allocate QPSK data object.
  *
- * Tries to allocate storage for QPSK data of requested \p len bytes. User should free
+ * Tries to allocate storage for QPSK data of requested \p len symbols. User should free
  * the object with #lrpt_qpsk_data_free() after use.
  *
- * \param len Length of new QPSK data object in bytes. Two QPSK bytes (2 x \c int8_t) form
- * one symbol. If zero length is requested, empty object will be allocated but it will be
- * possible to resize it later with #lrpt_qpsk_data_resize().
+ * \param len Length of new QPSK data object in symbols. If zero length is requested, empty object
+ * will be allocated but it will be possible to resize it later with #lrpt_qpsk_data_resize().
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data object or \c NULL if allocation has failed.
@@ -357,22 +354,22 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
 LRPT_API void lrpt_qpsk_data_free(
         lrpt_qpsk_data_t *data);
 
-/** Length of QPSK data (in bytes).
+/** Length of QPSK data.
  *
  * \param data Pointer to the QPSK data object.
  *
- * \return Number of QPSK bytes currently stored in \p data or \c 0 if \c NULL \p data
- * was passed. Actual number of soft symbols is half as much of the number of QPSK bytes.
+ * \return Number of QPSK symbols currently stored in \p data or \c 0 if \c NULL \p data
+ * was passed.
  */
 LRPT_API size_t lrpt_qpsk_data_length(
         const lrpt_qpsk_data_t *data);
 
 /** Resize existing QPSK data.
  *
- * If valid \p data is provided it will be resized to accomodate \p new_len QPSK bytes.
+ * If valid \p data is provided it will be resized to accomodate \p new_len QPSK symbols.
  *
  * \param data Pointer to the QPSK data object.
- * \param new_len New length \p data will be resized to (in number of bytes).
+ * \param new_len New length \p data will be resized to.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  * \return \c true on successfull resize and \c false otherwise (original object will not be
  * modified in that case).
@@ -384,27 +381,24 @@ LRPT_API bool lrpt_qpsk_data_resize(
 
 /** Convert array of QPSK soft symbols to the library format.
  *
- * Converts array of QPSK soft symbols \p symbols of size \p len to the library format of
- * QPSK data storage. Object given with \p data will be auto-resized to fit requested length.
+ * Converts \p n symbols from array of QPSK soft symbols \p symbols to the library format of
+ * QPSK data storage. Object given with \p data will be auto-resized to fit requested number of
+ * symbols.
  *
  * \param data Pointer to the QPSK data object.
  * \param symbols Pointer to the array of QPSK soft symbols.
- * \param len Number of bytes to convert to QPSK data.
+ * \param n Number of symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
- * \note User should keep in mind that one QPSK soft symbol consists of two QPSK bytes.
- * If not even number of bytes was requested for conversion then resulting QPSK data object
- * will contain not whole number of QPSK soft symbols.
- *
- * \warning It's the user's responsibility to be sure that \p symbols array contain at least
- * \p len bytes!
+ * \warning It's the user's responsibility to be sure that \p symbols array contains at least
+ * twice of \p n elements (1 QPSK symbol equals to 2 \c int8_t bytes)!
  */
 LRPT_API bool lrpt_qpsk_data_from_soft(
         lrpt_qpsk_data_t *data,
         const int8_t *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
 /** Create QPSK data object from QPSK soft symbols.
@@ -413,62 +407,59 @@ LRPT_API bool lrpt_qpsk_data_from_soft(
  * data object automatically.
  *
  * \param symbols Pointer to the array of QPSK soft symbols.
- * \param len Number of bytes to convert to QPSK data.
+ * \param n Number of symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data object or \c NULL if allocation was
  * unsuccessful or \c NULL \p symbols data array was passed.
- *
- * \warning Because code logic is the same as with #lrpt_qpsk_data_from_soft(), the same
- * caution about \p symbols array length is actual.
- */
+  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
         const int8_t *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
-/** Convert QPSK data object to QPSK soft symbols.
+/** Convert QPSK data to soft symbols.
  *
- * Converts \p len bytes to the resulting \p symbols array. Caller should be responsible that
- * \p symbols is large enough to hold at least \p len elements!
+ * Saves \p n QPSK symbols to the resulting \p symbols array. Caller should be responsible that
+ * \p symbols is large enough to hold at least twice of \p n elements (1 QPSK symbol equals to
+ * 2 \c int8_t bytes)!
  *
  * \param data Pointer to the QPSK data object.
  * \param symbols Pointer to the resulting storage.
- * \param len Number of bytes to convert.
+ * \param n Number of QPSK symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successful conversion and \c false otherwise.
  *
- * \note If more bytes than QPSK data object contains was requested then all bytes will be
+ * \note If more symbols than QPSK data object contains was requested then all symbols will be
  * converted.
  */
 LRPT_API bool lrpt_qpsk_data_to_soft(
         const lrpt_qpsk_data_t *data,
         int8_t *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
 /** Convert array of QPSK hard symbols to the library format.
  *
- * Converts array of QPSK hard symbols \p symbols of size \p len to the library format of
- * QPSK data storage. Object given with \p data will be auto-resized to fit requested length.
+ * Converts \p n symbols from array of QPSK hard symbols \p symbols to the library format of
+ * QPSK data storage. Object given with \p data will be auto-resized to fit requested number of
+ * symbols.
  *
  * \param data Pointer to the QPSK data object.
  * \param symbols Pointer to the array of QPSK hard symbols.
- * \param len Number of bytes to convert to QPSK data.
+ * \param n Number of symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false otherwise.
  *
- * \note User should keep in mind that one QPSK hard symbol consists of eight QPSK bytes.
- *
  * \warning It's the user's responsibility to be sure that \p symbols array contain at least
- * \p len bytes!
+ * one fourth of \p n elements (4 QPSK symbols equal to 1 \c unsigned \c char byte)!
  */
 LRPT_API bool lrpt_qpsk_data_from_hard(
         lrpt_qpsk_data_t *data,
         const unsigned char *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
 /** Create QPSK data object from QPSK hard symbols.
@@ -477,39 +468,37 @@ LRPT_API bool lrpt_qpsk_data_from_hard(
  * data object automatically.
  *
  * \param symbols Pointer to the array of QPSK hard symbols.
- * \param len Number of bytes to convert to QPSK data.
+ * \param n Number of symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data object or \c NULL if allocation was
  * unsuccessful or \c NULL \p symbols data array was passed.
- *
- * \warning Because code logic is the same as with #lrpt_qpsk_data_from_hard(), the same
- * caution about \p symbols array length is actual.
- */
+  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
-/** Convert QPSK data object to QPSK hard symbols.
+/** Convert QPSK data to hard symbols.
  *
- * Converts \p len bytes to the resulting \p symbols array. Caller should be responsible that
- * \p symbols is large enough to hold at least \p len / 8 elements!
+ * Saves \p n QPSK symbols to the resulting \p symbols array. Caller should be responsible that
+ * \p symbols is large enough to hold at least one fourth of \p n elements (4 QPSK symbols equal to
+ * 1 \c unsigned \c char byte)!
  *
  * \param data Pointer to the QPSK data object.
  * \param symbols Pointer to the resulting storage.
- * \param len Number of bytes to convert.
+ * \param n Number of QPSK symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successful conversion and \c false otherwise.
  *
- * \note If more bytes than QPSK data object contains was requested then all bytes will be
+ * \note If more symbols than QPSK data object contains was requested then all symbols will be
  * converted.
  */
 LRPT_API bool lrpt_qpsk_data_to_hard(
         const lrpt_qpsk_data_t *data,
         unsigned char *symbols,
-        size_t len,
+        size_t n,
         lrpt_error_t *err);
 
 /** Initialize error object.

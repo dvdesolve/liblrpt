@@ -308,8 +308,8 @@ bool lrpt_demodulator_exec(
     }
 
     /* Resize output data structure */
-    if (output->len < (2 * input->len * demod->interp_factor))
-        if (!lrpt_qpsk_data_resize(output, 2 * input->len * demod->interp_factor, err))
+    if (output->len < (input->len * demod->interp_factor))
+        if (!lrpt_qpsk_data_resize(output, input->len * demod->interp_factor, err))
             return false;
 
     /* Intermediate result storage */
@@ -335,7 +335,7 @@ bool lrpt_demodulator_exec(
         }
     }
 
-    if (!lrpt_qpsk_data_resize(output, out_len, err))
+    if (!lrpt_qpsk_data_resize(output, out_len / 2, err))
         return false;
 
     return true;

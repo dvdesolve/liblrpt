@@ -1362,8 +1362,8 @@ bool lrpt_qpsk_data_read_from_file(
     if ((file->current + len) > file->data_len)
         len = (file->data_len - file->current);
 
-    /* Resize storage (x2 in length, because 1 QPSK symbol is 2 QPSK bytes) */
-    if (!lrpt_qpsk_data_resize(data, 2 * len, err))
+    /* Resize storage */
+    if (!lrpt_qpsk_data_resize(data, len, err))
         return false;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
@@ -1457,6 +1457,9 @@ bool lrpt_qpsk_data_write_to_file(
         return true;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
+        /* Check if we're in the middle of the byte */
+        if ((file->current % 4) != 0) {
+        }
         /* TODO we should handle case when current symbol is not the multiple of 4.
          * In that case we should recall last written byte (perhaps from file structure),
          * convert it to the QPSK bytes and then merge with given data. After that we should
@@ -1492,6 +1495,10 @@ bool lrpt_qpsk_data_write_to_file(
                     }
 
                     file->iobuf[j] = b;
+
+                    /* On the very last write save the value of hard symbol byte */
+                    if ((i == n_writes) && (j == (n_bytes - 1)))
+                        file->last_hardsym = b;
                 }
 
                 /* Write block */
