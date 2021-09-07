@@ -272,6 +272,25 @@ LRPT_API bool lrpt_iq_data_resize(
         size_t new_len,
         lrpt_error_t *err);
 
+/** Append I/Q data to existing data object.
+ *
+ * Adds \p n I/Q samples from I/Q data object \p add to the end of \p data object. If \p n
+ * exceeds current number of samples in \p add then all samples will be copied.
+ *
+ * \param data Pointer to the I/Q data object which will be enlarged.
+ * \param add Pointer to the I/Q data object which contents will be added to the \p data.
+ * \param n Number of samples to append.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull append and \c false otherwise (original object will not be
+ * modified in that case).
+ */
+LRPT_API bool lrpt_iq_data_append(
+        lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *add,
+        size_t n,
+        lrpt_error_t *err);
+
 /** Convert array of complex I/Q samples to the library format.
  *
  * Converts \p n samples from array of complex I/Q samples \p samples to the library format of
@@ -371,12 +390,32 @@ LRPT_API size_t lrpt_qpsk_data_length(
  * \param data Pointer to the QPSK data object.
  * \param new_len New length \p data will be resized to.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
  * \return \c true on successfull resize and \c false otherwise (original object will not be
  * modified in that case).
  */
 LRPT_API bool lrpt_qpsk_data_resize(
         lrpt_qpsk_data_t *data,
         size_t new_len,
+        lrpt_error_t *err);
+
+/** Append QPSK data to existing data object.
+ *
+ * Adds \p n QPSK symbols from QPSK data object \p add to the end of \p data object. If \p n
+ * exceeds current number of symbols in \p add then all symbols will be copied.
+ *
+ * \param data Pointer to the QPSK data object which will be enlarged.
+ * \param add Pointer to the QPSK data object which contents will be added to the \p data.
+ * \param n Number of symbols to append.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull append and \c false otherwise (original object will not be
+ * modified in that case).
+ */
+LRPT_API bool lrpt_qpsk_data_append(
+        lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *add,
+        size_t n,
         lrpt_error_t *err);
 
 /** Convert array of QPSK soft symbols to the library format.
@@ -859,9 +898,7 @@ LRPT_API bool lrpt_qpsk_data_read_from_file(
 
 /** Write QPSK data to file.
  *
- * Writes QPSK data pointed by \p data to file \p file. If \p data contains not whole number of
- * QPSK symbols (half of the number of QPSK bytes - object length) then remaining QPSK byte will
- * not be written.
+ * Writes QPSK data pointed by \p data to file \p file.
  *
  * \param data Pointer to the QPSK data object.
  * \param file Pointer to the QPSK file object to write QPSK data to.

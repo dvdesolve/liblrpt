@@ -713,6 +713,7 @@ bool lrpt_iq_data_read_from_file(
 
 /*************************************************************************************************/
 
+/* TODO implement custom length writing (perhaps with start offset) */
 /* lrpt_iq_data_write_to_file() */
 bool lrpt_iq_data_write_to_file(
         const lrpt_iq_data_t *data,
@@ -1435,6 +1436,7 @@ bool lrpt_qpsk_data_read_from_file(
 
 /*************************************************************************************************/
 
+/* TODO implement custom length writing (perhaps with start offset) */
 /* lrpt_qpsk_data_write_to_file() */
 bool lrpt_qpsk_data_write_to_file(
         const lrpt_qpsk_data_t *data,
@@ -1450,20 +1452,47 @@ bool lrpt_qpsk_data_write_to_file(
     }
 
     /* Get number of QPSK symbols */
-    const size_t len = (data->len / 2);
+    size_t len = data->len;
 
     /* In case of empty write just exit */
     if (len == 0)
         return true;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
-        /* Check if we're in the middle of the byte */
-        if ((file->current % 4) != 0) {
+        /* Final buffer for combined write */
+        lrpt_qpsk_data_t *fin = NULL;
+
+        /* Check if we're in the middle of the byte in hardsymboled file */
+        if (lrpt_qpsk_file_is_hardsymboled(file) && ((file->current % 4) != 0)) {
+            /* Offset from the start of hard symbol byte */
+            const uint8_t hardsym_off =
+                lrpt_qpsk_file_is_hardsymboled(file) ? (file->current % 4) : 0;
+
+            fin = lrpt_qpsk_data_create_from_hard(&file->last_hardsym, file->current % 4, err);
+
+            if (!fin) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                            "Can't allocate temporary buffer for hanging hard symbols");
+
+                return false;
+            }
+
+            if (!lrpt_qpsk_data_append(fin, data, data->len, err)) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
+                            "Can't append symbols to temporary buffer");
+
+                return false;
+            }
+
+            data = fin;
+            len += hardsym_off;
+
+            file->current -= hardsym_off;
+            file->data_len -= hardsym_off;
         }
-        /* TODO we should handle case when current symbol is not the multiple of 4.
-         * In that case we should recall last written byte (perhaps from file structure),
-         * convert it to the QPSK bytes and then merge with given data. After that we should
-         * reduce current pointer by the number of extra symbols and write combined chunk. */
+
         /* Determine required number of block writes */
         const size_t n_writes = (len / IO_QPSK_DATA_N);
 
@@ -1570,6 +1599,8 @@ bool lrpt_qpsk_data_write_to_file(
                         (2 * file->current)),
                     SEEK_SET);
         }
+
+        lrpt_qpsk_data_free(fin);
     }
 
     return true;

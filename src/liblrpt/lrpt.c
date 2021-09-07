@@ -170,6 +170,42 @@ bool lrpt_iq_data_resize(
 
 /*************************************************************************************************/
 
+/* TODO implement start offset for append */
+/* lrpt_iq_data_append() */
+bool lrpt_iq_data_append(
+        lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *add,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!data || !add || (data == add)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Original and/or added I/Q data objects are NULL or the same");
+
+        return false;
+    }
+
+    /* Silently ignore empty added data */
+    if (add->len == 0)
+        return true;
+
+    if (n > add->len)
+        n = add->len;
+
+    const size_t old_len = data->len;
+
+    /* Resize original storage */
+    if (!lrpt_iq_data_resize(data, old_len + n, err))
+        return false;
+
+    /* Just copy extra samples */
+    memcpy(data->iq + old_len, add->iq, sizeof(complex double) * n);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_iq_data_from_complex() */
 bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
@@ -359,6 +395,42 @@ bool lrpt_qpsk_data_resize(
             data->qpsk = new_s;
         }
     }
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* TODO implement start offset for append */
+/* lrpt_qpsk_data_append() */
+bool lrpt_qpsk_data_append(
+        lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *add,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!data || !add || (data == add)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Original and/or added QPSK data objects are NULL or the same");
+
+        return false;
+    }
+
+    /* Silently ignore empty added data */
+    if (add->len == 0)
+        return true;
+
+    if (n > add->len)
+        n = add->len;
+
+    const size_t old_len = data->len;
+
+    /* Resize original storage */
+    if (!lrpt_qpsk_data_resize(data, old_len + n, err))
+        return false;
+
+    /* Just copy extra symbols */
+    memcpy(data->qpsk + 2 * old_len, add->qpsk, sizeof(int8_t) * 2 * n);
 
     return true;
 }
