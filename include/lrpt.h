@@ -274,11 +274,13 @@ LRPT_API bool lrpt_iq_data_resize(
 
 /** Append I/Q data to existing data object.
  *
- * Adds \p n I/Q samples from I/Q data object \p add to the end of \p data object. If \p n
- * exceeds current number of samples in \p add then all samples will be copied.
+ * Adds \p n I/Q samples from I/Q data object \p add starting with position \p offset to the end
+ * of \p data object. If \p n exceeds available number of samples in \p add (accounting for offset)
+ * then all samples will be copied.
  *
  * \param data Pointer to the I/Q data object which will be enlarged.
  * \param add Pointer to the I/Q data object which contents will be added to the \p data.
+ * \param offset How much samples should be skipped from the beginning of \p add.
  * \param n Number of samples to append.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -288,6 +290,7 @@ LRPT_API bool lrpt_iq_data_resize(
 LRPT_API bool lrpt_iq_data_append(
         lrpt_iq_data_t *data,
         const lrpt_iq_data_t *add,
+        size_t offset,
         size_t n,
         lrpt_error_t *err);
 
@@ -401,11 +404,13 @@ LRPT_API bool lrpt_qpsk_data_resize(
 
 /** Append QPSK data to existing data object.
  *
- * Adds \p n QPSK symbols from QPSK data object \p add to the end of \p data object. If \p n
- * exceeds current number of symbols in \p add then all symbols will be copied.
+ * Adds \p n QPSK symbols from QPSK data object \p add starting with position \p offset to the end
+ * of \p data object. If \p n exceeds available number of symbols in \p add (accounting for offset)
+ * then all symbols will be copied.
  *
  * \param data Pointer to the QPSK data object which will be enlarged.
  * \param add Pointer to the QPSK data object which contents will be added to the \p data.
+ * \param offset How much symbols should be skipped from the beginning of \p add.
  * \param n Number of symbols to append.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -415,6 +420,7 @@ LRPT_API bool lrpt_qpsk_data_resize(
 LRPT_API bool lrpt_qpsk_data_append(
         lrpt_qpsk_data_t *data,
         const lrpt_qpsk_data_t *add,
+        size_t offset,
         size_t n,
         lrpt_error_t *err);
 

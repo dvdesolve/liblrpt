@@ -170,11 +170,11 @@ bool lrpt_iq_data_resize(
 
 /*************************************************************************************************/
 
-/* TODO implement start offset for append */
 /* lrpt_iq_data_append() */
 bool lrpt_iq_data_append(
         lrpt_iq_data_t *data,
         const lrpt_iq_data_t *add,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!data || !add || (data == add)) {
@@ -189,8 +189,8 @@ bool lrpt_iq_data_append(
     if (add->len == 0)
         return true;
 
-    if (n > add->len)
-        n = add->len;
+    if (n > (add->len - offset))
+        n = (add->len - offset);
 
     const size_t old_len = data->len;
 
@@ -199,7 +199,7 @@ bool lrpt_iq_data_append(
         return false;
 
     /* Just copy extra samples */
-    memcpy(data->iq + old_len, add->iq, sizeof(complex double) * n);
+    memcpy(data->iq + old_len, add->iq + offset, sizeof(complex double) * n);
 
     return true;
 }
@@ -401,11 +401,11 @@ bool lrpt_qpsk_data_resize(
 
 /*************************************************************************************************/
 
-/* TODO implement start offset for append */
 /* lrpt_qpsk_data_append() */
 bool lrpt_qpsk_data_append(
         lrpt_qpsk_data_t *data,
         const lrpt_qpsk_data_t *add,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!data || !add || (data == add)) {
@@ -420,8 +420,8 @@ bool lrpt_qpsk_data_append(
     if (add->len == 0)
         return true;
 
-    if (n > add->len)
-        n = add->len;
+    if (n > (add->len - offset))
+        n = (add->len - offset);
 
     const size_t old_len = data->len;
 
@@ -430,7 +430,7 @@ bool lrpt_qpsk_data_append(
         return false;
 
     /* Just copy extra symbols */
-    memcpy(data->qpsk + 2 * old_len, add->qpsk, sizeof(int8_t) * 2 * n);
+    memcpy(data->qpsk + 2 * old_len, add->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
 
     return true;
 }

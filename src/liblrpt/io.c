@@ -802,7 +802,6 @@ bool lrpt_iq_data_write_to_file(
                     return false;
                 }
 
-                /* TODO error checking */
                 fseek(
                         file->fhandle,
                         file->header_len + file->current * UTILS_COMPLEX_SER_SIZE,
@@ -1323,6 +1322,24 @@ bool lrpt_qpsk_file_goto(
 
             return false;
         }
+
+        if (lrpt_qpsk_file_is_hardsymboled(file) && ((symbol % 4) != 0)) {
+            if (fread(&file->last_hardsym, 1, 1, file->fhandle) != 1) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                            "Can't get last hard symbol");
+
+                return false;
+            }
+
+            if (fseek(file->fhandle, -1, SEEK_CUR) != 0) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                            "Error during seeking in QPSK file");
+
+                return false;
+            }
+        }
     }
 
     return true;
@@ -1359,23 +1376,44 @@ bool lrpt_qpsk_data_read_from_file(
         return false;
     }
 
+    /* Partial index in current hard symbol byte */
+    const uint8_t hardsym_off = (lrpt_qpsk_file_is_hardsymboled(file)) ? (file->current % 4) : 0;
+
+    /* Remaining number of hard symbols to read */
+    const uint8_t hardsym_rem = (hardsym_off == 0) ? 0 : (4 - hardsym_off);
+
     /* Read up to the end if requested length is bigger than remaining data */
     if ((file->current + len) > file->data_len)
         len = (file->data_len - file->current);
 
-    /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, len, err))
-        return false;
-
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
-        /* TODO recheck when file pointer is not the multiple of 4 - may be we should do
-         * something extra in that case, e. g. step back one byte, read some data again and so on. */
-        /* Determine required number of reads */
-        const size_t n_reads = (len / IO_QPSK_DATA_N);
+        /* If we're in the middle of the byte in hardsymboled file restore remnants */
+        if (lrpt_qpsk_file_is_hardsymboled(file) && (hardsym_off != 0)) {
+            /* Offset from the start of hard symbol byte */
+            const unsigned char hardsyms = (file->last_hardsym << (2 * hardsym_off));
+
+            /* Use previously stored hard symbol byte */
+            if (!lrpt_qpsk_data_from_hard(data, &hardsyms, hardsym_rem, err)) {
+                if (err)
+                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                            "Can't convert hanging hard symbols");
+
+                return false;
+            }
+        }
+
+        /* Resize storage */
+        if (!lrpt_qpsk_data_resize(data, len, err))
+            return false;
+
+        /* Determine required number of block reads */
+        const size_t len_corr = (len - hardsym_rem); /* Account for the remnants */
+        const size_t n_reads = (len_corr / IO_QPSK_DATA_N);
 
         for (size_t i = 0; i <= n_reads; i++) {
             /* Determine required number of symbols for current read */
-            const size_t toread = (i == n_reads) ? (len - n_reads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
+            const size_t toread =
+                (i == n_reads) ? (len_corr - n_reads * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
 
             if (toread == 0)
                 break;
@@ -1406,9 +1444,13 @@ bool lrpt_qpsk_data_read_from_file(
 
                         const unsigned char b = ((file->iobuf[j] >> (7 - k)) & 0x01);
 
-                        data->qpsk[2 * i * IO_QPSK_DATA_N + 8 * j + k] =
+                        data->qpsk[2 * hardsym_rem + 2 * i * IO_QPSK_DATA_N + 8 * j + k] =
                             (b == 0x01) ? 127 : -127;
                     }
+
+                    /* On the very last read save the value of hard symbol byte */
+                    if ((i == n_reads) && (j == (n_bytes - 1)))
+                        file->last_hardsym = file->iobuf[j];
                 }
             }
             else {
@@ -1465,8 +1507,7 @@ bool lrpt_qpsk_data_write_to_file(
         /* Check if we're in the middle of the byte in hardsymboled file */
         if (lrpt_qpsk_file_is_hardsymboled(file) && ((file->current % 4) != 0)) {
             /* Offset from the start of hard symbol byte */
-            const uint8_t hardsym_off =
-                lrpt_qpsk_file_is_hardsymboled(file) ? (file->current % 4) : 0;
+            const uint8_t hardsym_off = (file->current % 4);
 
             fin = lrpt_qpsk_data_create_from_hard(&file->last_hardsym, file->current % 4, err);
 
@@ -1478,7 +1519,7 @@ bool lrpt_qpsk_data_write_to_file(
                 return false;
             }
 
-            if (!lrpt_qpsk_data_append(fin, data, data->len, err)) {
+            if (!lrpt_qpsk_data_append(fin, data, 0, data->len, err)) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                             "Can't append symbols to temporary buffer");
