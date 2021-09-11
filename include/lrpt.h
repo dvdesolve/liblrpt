@@ -596,9 +596,9 @@ LRPT_API lrpt_error_code_t lrpt_error_code(
  * \return Character error message string or \c NULL if \c NULL \p err was passed or message is
  * empty.
  *
- * \warning User should free returned string by hand.
+ * \warning User should never free returned string!
  */
-LRPT_API char * lrpt_error_message(
+LRPT_API const char * lrpt_error_message(
         const lrpt_error_t *err);
 
 /** @} */
@@ -682,6 +682,8 @@ LRPT_API uint32_t lrpt_iq_file_samplerate(
  * \param file Pointer to the I/Q data file object.
  *
  * \return Pointer to the device name string or \c NULL in case of \c NULL \p file parameter.
+ *
+ * \warning User should never free returned string!
  */
 LRPT_API const char *lrpt_iq_file_devicename(
         const lrpt_iq_file_t *file);
@@ -958,7 +960,7 @@ LRPT_API void lrpt_dsp_filter_deinit(
 /** Apply recursive Chebyshev filter to the I/Q data.
  *
  * \param filter Pointer to the Chebyshev filter object.
- * \param data Pointer to the I/Q data object.
+ * \param[in,out] data Pointer to the I/Q data object.
  *
  * \return \c false if \p filter and/or \p data are empty and \c true otherwise.
  */
@@ -986,19 +988,14 @@ LRPT_API void lrpt_dsp_dediffcoder_deinit(
 
 /** Perform dediffcoding of QPSK data.
  *
- * Performs dediffcoding of given QPSK data. Data length should be at least 2 QPSK symbols long and
- * be an even.
- *
  * \param dediff Pointer to the dediffcoder object.
- * \param[in,out] data Pointer to the diffcoded QPSK data.
- * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ * \param[in,out] data Pointer to the QPSK data object.
  *
- * \return \c true on successfull dediffcoding and \c false otherwise.
+ * \return \c false if \p dediff and/or \p data are empty and \c true otherwise.
  */
 LRPT_API bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
-        lrpt_qpsk_data_t *data,
-        lrpt_error_t *err);
+        lrpt_qpsk_data_t *data);
 
 /** Resynchronize and deinterleave a stream of QPSK symbols.
  *

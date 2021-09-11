@@ -125,24 +125,12 @@ lrpt_error_code_t lrpt_error_code(
 /*************************************************************************************************/
 
 /* lrpt_error_message() */
-char * lrpt_error_message(
+const char * lrpt_error_message(
         const lrpt_error_t *err) {
     if (!err || !err->msg)
         return NULL;
 
-    size_t len = strlen(err->msg);
-
-    if (len == 0)
-        return NULL;
-
-    char *msg = calloc(len + 1, sizeof(char));
-
-    if (!msg)
-        return NULL;
-
-    strcpy(msg, err->msg);
-
-    return msg;
+    return err->msg;
 }
 
 /*************************************************************************************************/

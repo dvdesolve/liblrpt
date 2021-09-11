@@ -479,7 +479,7 @@ bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *filter,
         lrpt_iq_data_t *data) {
     /* Return immediately if filter and/or data are empty */
-    if (!filter || !data)
+    if (!filter || !data || data->len == 0)
         return false;
 
     /* For convenient access purposes */
@@ -575,15 +575,10 @@ void lrpt_dsp_dediffcoder_deinit(
 /* lrpt_dsp_dediffcoder_exec() */
 bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
-        lrpt_qpsk_data_t *data,
-        lrpt_error_t *err) {
-    if (!dediff || !data || data->len == 0) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Dediffcoder object is NULL or QPSK data object is NULL");
-
+        lrpt_qpsk_data_t *data) {
+    /* Return immediately if dediffcoder and/or data are empty */
+    if (!dediff || !data || data->len == 0)
         return false;
-    }
 
     int8_t t1 = data->qpsk[0];
     int8_t t2 = data->qpsk[1];
