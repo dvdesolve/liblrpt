@@ -259,6 +259,7 @@ void lrpt_demodulator_deinit(
 
 /*************************************************************************************************/
 
+/* TODO may be return decibels, percents or similar */
 /* lrpt_demodulator_gain() */
 double lrpt_demodulator_gain(
         const lrpt_demodulator_t *demod) {
@@ -270,6 +271,7 @@ double lrpt_demodulator_gain(
 
 /*************************************************************************************************/
 
+/* TODO may be return percentage as gain * level / target */
 /* lrpt_demodulator_siglvl() */
 double lrpt_demodulator_siglvl(
         const lrpt_demodulator_t *demod) {
