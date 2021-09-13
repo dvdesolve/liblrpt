@@ -41,9 +41,12 @@
 
 static const uint8_t CORR_PATTERN_SIZE = 64; /**< Pattern size for correlator */
 static const uint8_t CORR_PATTERN_COUNT = 8; /**< Number of patterns */
+
 /** CCSDS synchronization word (0x1ACFFC1D) in Viterbi-encoded form */
 static const uint64_t CORR_SYNC_WORD_ENC = 0xFCA2B63DB00D9794;
+
 static const uint32_t CORR_LIMIT = 55; /**< Correlation limit */
+
 const uint16_t CORR_IQ_TBL_SIZE = 256;
 
 /*************************************************************************************************/

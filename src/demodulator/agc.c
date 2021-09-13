@@ -42,10 +42,10 @@
 static const double AGC_WINSIZE = 65536.0; /* 1024 * 64 */
 static const double AGC_WINSIZE_1 = AGC_WINSIZE - 1.0;
 
-static const double AGC_MAX_GAIN = 20.0;
-
 static const double AGC_BIAS_WINSIZE = 262144.0; /* 1024 * 256 */
 static const double AGC_BIAS_WINSIZE_1 = AGC_BIAS_WINSIZE - 1.0;
+
+const double AGC_MAX_GAIN = 20.0;
 
 /*************************************************************************************************/
 

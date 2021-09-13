@@ -1054,15 +1054,22 @@ LRPT_API lrpt_demodulator_t *lrpt_demodulator_init(
 LRPT_API void lrpt_demodulator_deinit(
         lrpt_demodulator_t *demod);
 
-/** Gain applied by demodulator.
- *
- * Returns current gain applied by demodulator's AGC.
+/** Gain applied by demodulator (in dB).
  *
  * \param demod Pointer to the demodulator object.
  *
- * \return Current gain value or \c 0 in case of \c NULL \p demod parameter.
+ * \return Current gain value (in dB) or \c 0 in case of \c NULL \p demod parameter.
  */
 LRPT_API double lrpt_demodulator_gain(
+        const lrpt_demodulator_t *demod);
+
+/** Maximum possible AGC gain (in dB).
+ *
+ * \param demod Pointer to the demodulator object.
+ *
+ * \return Maximum possible AGC gain value (in dB) or \c 0 in case of \c NULL \p demod parameter.
+ */
+LRPT_API double lrpt_demodulator_maxgain(
         const lrpt_demodulator_t *demod);
 
 /** Signal level.

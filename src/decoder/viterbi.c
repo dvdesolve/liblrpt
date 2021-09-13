@@ -570,7 +570,7 @@ static void convolutional_encode(
     uint8_t sh = 0;
 
     for (uint16_t i = 0; i < VITERBI_FRAME_BITS; i++) {
-        sh = ((sh << 1) | lrpt_decoder_bitop_fetch_n_bits(&b, 1)) & 0x7F;
+        sh = ((sh << 1) | lrpt_decoder_bitop_pop_n_bits(&b, 1)) & 0x7F;
 
         if ((vit->table[sh] & 0x01) != 0)
             output[i * 2 + 0] = 0;

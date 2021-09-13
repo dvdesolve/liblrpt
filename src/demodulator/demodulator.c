@@ -41,6 +41,7 @@
 #include "rrc.h"
 
 #include <complex.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -259,19 +260,30 @@ void lrpt_demodulator_deinit(
 
 /*************************************************************************************************/
 
-/* TODO may be return decibels, percents or similar */
 /* lrpt_demodulator_gain() */
 double lrpt_demodulator_gain(
         const lrpt_demodulator_t *demod) {
     if (!demod || !demod->agc)
         return 0;
 
-    return demod->agc->gain;
+    /* Multiply by 20 because it's amplitude gain */
+    return 20 * log10(demod->agc->gain);
 }
 
 /*************************************************************************************************/
 
-/* TODO may be return percentage as gain * level / target */
+/* lrpt_demodulator_maxgain() */
+double lrpt_demodulator_maxgain(
+        const lrpt_demodulator_t *demod) {
+    if (!demod || !demod->agc)
+        return 0;
+
+    /* Multiply by 20 because it's amplitude gain */
+    return 20 * log10(AGC_MAX_GAIN);
+}
+
+/*************************************************************************************************/
+
 /* lrpt_demodulator_siglvl() */
 double lrpt_demodulator_siglvl(
         const lrpt_demodulator_t *demod) {
@@ -329,15 +341,15 @@ bool lrpt_demodulator_exec(
 
             /* Demodulate using appropriate function */
             if (demod_qpsk(demod, fdata, &sym)) {
-                output->qpsk[out_len] = sym.f;
-                output->qpsk[out_len + 1] = sym.s;
+                output->qpsk[2 * out_len] = sym.f;
+                output->qpsk[2 * out_len + 1] = sym.s;
 
-                out_len += 2;
+                out_len++;
             }
         }
     }
 
-    if (!lrpt_qpsk_data_resize(output, out_len / 2, err))
+    if (!lrpt_qpsk_data_resize(output, out_len, err))
         return false;
 
     return true;

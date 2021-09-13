@@ -225,7 +225,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     file->flags = flags;
     file->samplerate = sr;
     file->device_name = name;
-    file->header_len = 21 + name_l; /* Just a sum of all elements previously read */
+    file->header_len = 21 + name_l; /* Just a sum of all elements previously read */ /* TODO summate during reading */
     file->data_len = data_l;
     file->current = 0;
     file->iobuf = iobuf;
@@ -488,7 +488,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     file->flags = flags;
     file->samplerate = samplerate;
     file->device_name = name;
-    file->header_len = 21 + name_l; /* Just a sum of all elements previously written */
+    file->header_len = 21 + name_l; /* Just a sum of all elements previously written */ /* TODO summate during writing */
     file->data_len = 0;
     file->current = 0;
     file->iobuf = iobuf;
@@ -965,7 +965,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     file->version = LRPT_QPSK_FILE_VER1;
     file->flags = flags;
     file->symrate = sr;
-    file->header_len = 22; /* Just a sum of all elements previously read */
+    file->header_len = 22; /* Just a sum of all elements previously read */ /* TODO summate during reading */
     file->data_len = data_l;
     file->current = 0;
     file->iobuf = iobuf;
@@ -1194,7 +1194,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
     file->version = LRPT_QPSK_FILE_VER1;
     file->flags = flags;
     file->symrate = symrate;
-    file->header_len = 22; /* Just a sum of all elements previously written */
+    file->header_len = 22; /* Just a sum of all elements previously written */ /* TODO summate during writing */
     file->data_len = 0;
     file->current = 0;
     file->iobuf = iobuf;

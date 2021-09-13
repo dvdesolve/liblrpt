@@ -210,9 +210,8 @@ uint32_t lrpt_decoder_bitop_peek_n_bits(
 
 /*************************************************************************************************/
 
-/* TODO may be rename to pop instead */
-/* lrpt_decoder_bitop_fetch_n_bits() */
-uint32_t lrpt_decoder_bitop_fetch_n_bits(
+/* lrpt_decoder_bitop_pop_n_bits() */
+uint32_t lrpt_decoder_bitop_pop_n_bits(
         lrpt_decoder_bitop_t *b,
         uint8_t n) {
     uint32_t result = lrpt_decoder_bitop_peek_n_bits(b, n);

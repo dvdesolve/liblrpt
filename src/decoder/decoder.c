@@ -190,11 +190,11 @@ void lrpt_decoder_deinit(
 /* lrpt_decoder_exec() */
 bool lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        lrpt_qpsk_data_t *input, /* TODO rename this to data */
+        lrpt_qpsk_data_t *data,
         size_t buf_len,
         lrpt_error_t *err) { /* TODO may be use input data length and process it accordingly (check for 2 extra SFLs as in do_full_correlate(), e. g.) */
     /* Return immediately if no valid decoder or input was given */
-    if (!decoder || !input) {
+    if (!decoder || !data) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
                     "Decoder object and/or QPSK data object are NULL");
@@ -204,7 +204,7 @@ bool lrpt_decoder_exec(
 
     /* Go through data given */
     while (decoder->pos < buf_len) { /* TODO this may be redundant if we'll require SFL-multiples only blocks of data; also see below */
-        if (lrpt_decoder_data_process_frame(decoder, input->qpsk)) {
+        if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) {
             lrpt_decoder_packet_parse_cvcdu(decoder);
 
             decoder->ok_cnt++; /* TODO count frames, CVCDUs and packets separately */

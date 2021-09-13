@@ -373,7 +373,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
 
         lrpt_decoder_bitop_advance_n_bits(&b, JPEG_DC_CAT_OFFSET[dc_cat]);
 
-        uint16_t n = lrpt_decoder_bitop_fetch_n_bits(&b, dc_cat);
+        uint16_t n = lrpt_decoder_bitop_pop_n_bits(&b, dc_cat);
 
         zdct[0] = lrpt_decoder_huffman_map_range(dc_cat, n) + prev_dc;
         prev_dc = zdct[0];
@@ -406,7 +406,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
             }
 
             if (ac_size != 0) {
-                n = lrpt_decoder_bitop_fetch_n_bits(&b, ac_size);
+                n = lrpt_decoder_bitop_pop_n_bits(&b, ac_size);
                 zdct[k] = lrpt_decoder_huffman_map_range(ac_size, n);
             }
             else if (ac_run == 15)
