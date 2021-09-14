@@ -103,7 +103,7 @@ static void fix_packet(
  */
 static void do_next_correlate(
         lrpt_decoder_t *decoder,
-        int8_t *data);
+        const int8_t *data);
 
 /** Perform full correlation.
  *
@@ -115,7 +115,7 @@ static void do_next_correlate(
  */
 static void do_full_correlate(
         lrpt_decoder_t *decoder,
-        int8_t *data);
+        const int8_t *data);
 
 /** Decode frame.
  *
@@ -182,7 +182,7 @@ static void fix_packet(
 /* do_next_correlate() */
 static void do_next_correlate(
         lrpt_decoder_t *decoder,
-        int8_t *data) {
+        const int8_t *data) {
     /* Just copy new part of data to the aligned buffer */
     memcpy(decoder->aligned, (data + decoder->pos), sizeof(int8_t) * LRPT_DECODER_SOFT_FRAME_LEN);
 
@@ -197,7 +197,7 @@ static void do_next_correlate(
 /* do_full_correlate() */
 static void do_full_correlate(
         lrpt_decoder_t *decoder,
-        int8_t *data) {
+        const int8_t *data) {
     decoder->corr_word = lrpt_decoder_correlator_correlate(
             decoder->corr, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
     decoder->corr_pos = decoder->corr->position[decoder->corr_word];
@@ -275,7 +275,7 @@ static bool decode_frame(
 /* lrpt_decoder_data_process_frame() */
 bool lrpt_decoder_data_process_frame(
         lrpt_decoder_t *decoder,
-        int8_t *data) {
+        const int8_t *data) {
     bool ok = false;
 
     /* Try to correlate next block */

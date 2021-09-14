@@ -206,6 +206,73 @@ bool lrpt_iq_data_append(
 
 /*************************************************************************************************/
 
+/* TODO add subset helper to extract part of the self samples */
+/* lrpt_iq_data_from_iq() */
+bool lrpt_iq_data_from_iq(
+        lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *samples,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!data || !samples || (samples->len == 0)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q data object and/or I/Q source data are NULL or I/Q source data is empty");
+
+        return false;
+    }
+
+    if (n > (samples->len - offset))
+        n = (samples->len - offset);
+
+    /* Resize storage */
+    if (!lrpt_iq_data_resize(data, n, err))
+        return false;
+
+    /* Just copy samples */
+    memcpy(data->iq, samples->iq + offset, sizeof(complex double) * n);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_data_create_from_iq() */
+lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
+        const lrpt_iq_data_t *samples,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!samples || (samples->len == 0)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q source data is NULL or empty");
+
+        return NULL;
+    }
+
+    if (n > (samples->len - offset))
+        n = (samples->len - offset);
+
+    /* Allocate new storage */
+    lrpt_iq_data_t *data = lrpt_iq_data_alloc(n, err);
+
+    if (!data)
+        return NULL;
+
+    /* Convert samples */
+    if (!lrpt_iq_data_from_iq(data, samples, offset, n, err)) {
+        lrpt_iq_data_free(data);
+
+        return NULL;
+    }
+
+    return data;
+}
+
+/*************************************************************************************************/
+
+/* TODO add offset */
 /* lrpt_iq_data_from_complex() */
 bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
@@ -232,6 +299,7 @@ bool lrpt_iq_data_from_complex(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_iq_data_create_from_complex() */
 lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         const complex double *samples,
@@ -263,6 +331,7 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_iq_data_to_complex() */
 bool lrpt_iq_data_to_complex(
         const lrpt_iq_data_t *data,
@@ -437,6 +506,73 @@ bool lrpt_qpsk_data_append(
 
 /*************************************************************************************************/
 
+/* TODO add subset helper to extract part of the self symbols */
+/* lrpt_qpsk_data_from_qpsk() */
+bool lrpt_qpsk_data_from_qpsk(
+        lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *symbols,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!data || !symbols || (symbols->len == 0)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK data object and/or QPSK source data are NULL or QPSK source data is empty");
+
+        return false;
+    }
+
+    if (n > (symbols->len - offset))
+        n = (symbols->len - offset);
+
+    /* Resize storage */
+    if (!lrpt_qpsk_data_resize(data, n, err))
+        return false;
+
+    /* Just copy symbols */
+    memcpy(data->qpsk, symbols->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_data_create_from_qpsk() */
+lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_qpsk(
+        const lrpt_qpsk_data_t *symbols,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!symbols || (symbols->len == 0)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK source data is NULL or empty");
+
+        return NULL;
+    }
+
+    if (n > (symbols->len - offset))
+        n = (symbols->len - offset);
+
+    /* Allocate new storage */
+    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(n, err);
+
+    if (!data)
+        return NULL;
+
+    /* Convert symbols */
+    if (!lrpt_qpsk_data_from_qpsk(data, symbols, offset, n, err)) {
+        lrpt_qpsk_data_free(data);
+
+        return NULL;
+    }
+
+    return data;
+}
+
+/*************************************************************************************************/
+
+/* TODO add offset */
 /* lrpt_qpsk_data_from_soft() */
 bool lrpt_qpsk_data_from_soft(
         lrpt_qpsk_data_t *data,
@@ -463,6 +599,7 @@ bool lrpt_qpsk_data_from_soft(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_qpsk_data_create_from_soft() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
         const int8_t *symbols,
@@ -494,6 +631,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_qpsk_data_to_soft() */
 bool lrpt_qpsk_data_to_soft(
         const lrpt_qpsk_data_t *data,
@@ -519,6 +657,7 @@ bool lrpt_qpsk_data_to_soft(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_qpsk_data_from_hard() */
 bool lrpt_qpsk_data_from_hard(
         lrpt_qpsk_data_t *data,
@@ -556,6 +695,7 @@ bool lrpt_qpsk_data_from_hard(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_qpsk_data_create_from_hard() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
@@ -587,6 +727,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
 /* lrpt_qpsk_data_to_hard() */
 bool lrpt_qpsk_data_to_hard(
         const lrpt_qpsk_data_t *data,

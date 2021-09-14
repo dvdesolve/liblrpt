@@ -204,9 +204,11 @@ typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 /** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
 
+/* TODO may be return via func */
 /** Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
 LRPT_API extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
 
+/* TODO may be return via func */
 /** Length of hard frame in bytes (produced after Viterbi decoding) */
 LRPT_API extern const size_t LRPT_DECODER_HARD_FRAME_LEN;
 
@@ -290,6 +292,52 @@ LRPT_API bool lrpt_iq_data_resize(
 LRPT_API bool lrpt_iq_data_append(
         lrpt_iq_data_t *data,
         const lrpt_iq_data_t *add,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Copy part of I/Q samples to another I/Q data object.
+ *
+ * Copies \p n samples from I/Q data object \p samples starting with position \p offset to the
+ * I/Q data object \p data which will be auto-resized to fit requested number of samples.
+ * If \p n exceed available number of samples in \p samples (accounting for offset) then all
+ * samples will be copied.
+ *
+ * \param data Pointer to the I/Q data object.
+ * \param samples Pointer to the source I/Q data object.
+ * \param offset How much samples should be skipped from the beginning of \p samples.
+ * \param n Number of samples to copy.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull copying and \c false otherwise (original object will not be
+ * modified in that case).
+ *
+ * \warning \p data and \p samples can't be the same object!
+ */
+LRPT_API bool lrpt_iq_data_from_iq(
+        lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *samples,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Create I/Q data object from a part of another I/Q data object.
+ *
+ * This function behaves much like #lrpt_iq_data_from_iq(), however, it allocates I/Q
+ * data object automatically.
+ *
+ * \param samples Pointer to the source I/Q data object.
+ * \param offset How much sampels should be skipped from the beginning of \p samples.
+ * \param n Number of samples to copy.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the allocated I/Q data object or \c NULL if allocation was unsuccessful or
+ * \c NULL \p samples source I/Q data object was passed.
+ *
+ * \warning \p data and \p samples can't be the same object!
+ */
+LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
+        const lrpt_iq_data_t *samples,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
@@ -420,6 +468,52 @@ LRPT_API bool lrpt_qpsk_data_resize(
 LRPT_API bool lrpt_qpsk_data_append(
         lrpt_qpsk_data_t *data,
         const lrpt_qpsk_data_t *add,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Copy part of QPSK symbols to another QPSK data object.
+ *
+ * Copies \p n symbols from QPSK data object \p symbols starting with position \p offset to the
+ * QPSK data object \p data which will be auto-resized to fit requested number of symbols.
+ * If \p n exceed available number of symbols in \p symbols (accounting for offset) then all
+ * symbols will be copied.
+ *
+ * \param data Pointer to the QPSK data object.
+ * \param symbols Pointer to the source QPSK data object.
+ * \param offset How much symbols should be skipped from the beginning of \p symbols.
+ * \param n Number of symbols to copy.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull copying and \c false otherwise (original object will not be
+ * modified in that case).
+ *
+ * \warning \p data and \p symbols can't be the same object!
+ */
+LRPT_API bool lrpt_qpsk_data_from_qpsk(
+        lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *symbols,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Create QPSK data object from a part of another QPSK data object.
+ *
+ * This function behaves much like #lrpt_qpsk_data_from_qpsk(), however, it allocates QPSK
+ * data object automatically.
+ *
+ * \param samples Pointer to the source QPSK data object.
+ * \param offset How much symbols should be skipped from the beginning of \p symbols.
+ * \param n Number of symbols to copy.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the allocated QPSK data object or \c NULL if allocation was unsuccessful or
+ * \c NULL \p symbols source QPSK data object was passed.
+ *
+ * \warning \p data and \p symbols can't be the same object!
+ */
+LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_qpsk(
+        const lrpt_qpsk_data_t *symbols,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
@@ -1136,21 +1230,20 @@ LRPT_API lrpt_decoder_t *lrpt_decoder_init(
 LRPT_API void lrpt_decoder_deinit(
         lrpt_decoder_t *decoder);
 
-/** Perform LRPT decoding for given data block.
- *
- * Performs full decoding for given QPSK symbols data chunk.
+/** Perform LRPT decoding for given QPSK data.
  *
  * \param decoder Pointer to the decoder object.
- * \param input QPSK symbols to decode.
- * \param buf_len Length of given data chunk.
+ * \param data QPSK symbols to decode.
+ * \param syms_proc Pointer to the number of processed QPSK symbols. If \c NULL, no info about
+ * the number of processed symbols will be stored.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull decoding and \c false otherwise.
  */
 LRPT_API bool lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        lrpt_qpsk_data_t *input,
-        size_t buf_len,
+        const lrpt_qpsk_data_t *data,
+        size_t *syms_proc,
         lrpt_error_t *err);
 
 /** @} */

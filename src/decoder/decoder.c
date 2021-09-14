@@ -190,20 +190,23 @@ void lrpt_decoder_deinit(
 /* lrpt_decoder_exec() */
 bool lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
-        lrpt_qpsk_data_t *data,
-        size_t buf_len,
-        lrpt_error_t *err) { /* TODO may be use input data length and process it accordingly (check for 2 extra SFLs as in do_full_correlate(), e. g.) */
+        const lrpt_qpsk_data_t *data,
+        size_t *syms_proc,
+        lrpt_error_t *err) {
     /* Return immediately if no valid decoder or input was given */
-    if (!decoder || !data) {
+    if (!decoder || !data || (data->len < (3 * LRPT_DECODER_SOFT_FRAME_LEN / 2))) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Decoder object and/or QPSK data object are NULL");
+                    "Decoder object and/or QPSK data object are NULL or QPSK data contains less then 3x soft frame length symbols");
 
         return false;
     }
 
-    /* Go through data given */
-    while (decoder->pos < buf_len) { /* TODO this may be redundant if we'll require SFL-multiples only blocks of data; also see below */
+    /* Count up SFLs */
+    size_t n_sfls = 0;
+
+    /* Go through data given keeping at least 2 SFLs for forward correlation */
+    while (decoder->pos < (data->len * 2 - 2 * LRPT_DECODER_SOFT_FRAME_LEN)) {
         if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) {
             lrpt_decoder_packet_parse_cvcdu(decoder);
 
@@ -214,10 +217,15 @@ bool lrpt_decoder_exec(
             decoder->framing_ok = false;
 
         decoder->tot_cnt++;  /* TODO count frames, CVCDUs and packets separately */
+        n_sfls++;
     }
 
-    /* TODO that should be optional and passed via parameter flag. Difference should depend on the number of data processed (may be not one frame at once) */
-    decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
+    decoder->pos -=
+        (n_sfls == 0) ? LRPT_DECODER_SOFT_FRAME_LEN : (n_sfls * LRPT_DECODER_SOFT_FRAME_LEN);
+
+    /* Return number of processed QPSK symbols (1 QPSK symbol is 2 bits in lenth) */
+    if (syms_proc)
+        *syms_proc = (n_sfls * LRPT_DECODER_SOFT_FRAME_LEN / 2);
 
     return true;
 }

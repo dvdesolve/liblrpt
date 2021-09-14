@@ -49,7 +49,7 @@
  */
 bool lrpt_decoder_data_process_frame(
         lrpt_decoder_t *decoder,
-        int8_t *data);
+        const int8_t *data);
 
 /*************************************************************************************************/
 
