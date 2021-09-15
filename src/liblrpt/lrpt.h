@@ -53,6 +53,14 @@ struct lrpt_qpsk_data__ {
     size_t len; /**< Total number of QPSK bytes */
 };
 
+/** Storage type for LRPT images */
+struct lrpt_image__ {
+    size_t width; /**< Width of the image (in px) */
+    size_t height; /**< Height of the image (in px) */
+
+    uint8_t *channels[6]; /**< Per-channel image storage */
+};
+
 /*************************************************************************************************/
 
 #endif

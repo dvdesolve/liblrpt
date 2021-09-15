@@ -62,19 +62,17 @@ struct lrpt_decoder__ {
     size_t pos; /**< Decoder position */
 
     /** @{ */
-    /** Correlator state variables (for shortcut) */
+    /** Correlator state variables (for shortcut access) */
     uint16_t corr_val;
     size_t corr_pos;
     uint8_t corr_word;
     /** @} */
 
-    /* TODO we should use special data type here because of future image manipulation */
-    uint8_t *channel_image[6]; /**< Per-channel image representation for all six APIDs (64-69) */
+    lrpt_image_t *image; /**< Per-channel image representation for all possible APIDs (64-69) */
 
     /** @{ */
     /** Image dimensions */
     size_t channel_image_size, channel_image_width;
-    size_t prev_len;
     /** @} */
 
     /** @{ */

@@ -164,7 +164,7 @@ static void parse_apid(
     uint16_t pck_len = ((p[4] << 8) | p[5]);
 
     /* 14 is an offset to get "User data" block directly */
-    if ((apid >= 64) && (apid <= 69))
+    if ((apid >= 64) && (apid <= 69)) /* TODO use named constants */
         parse_img(decoder, p + 14, apid, pck_cnt);
     else if (apid == 70)
         parse_70(decoder, p + 14);

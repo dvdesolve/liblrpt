@@ -84,14 +84,12 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->ecc_buf = NULL;
     decoder->packet_buf = NULL;
 
-    for (uint8_t i = 0; i < 6; i++)
-        decoder->channel_image[i] = NULL; /* (Re)allocation will happen during progressing */
-
     /* Initialize internal objects */
     decoder->corr = lrpt_decoder_correlator_init(); /* Correlator */
     decoder->vit = lrpt_decoder_viterbi_init(); /* Viterbi decoder */
     decoder->huff = lrpt_decoder_huffman_init(); /* Huffman decoder */
     decoder->jpeg = lrpt_decoder_jpeg_init(); /* JPEG decoder */
+    decoder->image = lrpt_image_alloc(0, 12000, NULL); /* LRPT image object */
 
     /* Allocate internal data arrays */
     decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
@@ -101,7 +99,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->packet_buf = calloc(DECODER_PACKET_BUF_LEN, sizeof(uint8_t)); /* Packet buffer */
 
     /* Check for allocation problems */
-    if (!decoder->corr || !decoder->vit || !decoder->huff || !decoder->jpeg ||
+    if (!decoder->corr || !decoder->vit || !decoder->huff || !decoder->jpeg || !decoder->image ||
             !decoder->aligned || !decoder->decoded || !decoder->ecced || !decoder->ecc_buf ||
             !decoder->packet_buf) {
         lrpt_decoder_deinit(decoder);
@@ -143,9 +141,13 @@ lrpt_decoder_t *lrpt_decoder_init(
             break;
     }
 
-    decoder->sc = sc;
+    if (!lrpt_image_set_width(decoder->image, decoder->channel_image_width, err)) {
+        lrpt_decoder_deinit(decoder);
 
-    decoder->prev_len = 0;
+        return NULL;
+    }
+
+    decoder->sc = sc;
 
     decoder->ok_cnt = 0;
     decoder->tot_cnt = 0;
@@ -168,8 +170,6 @@ void lrpt_decoder_deinit(
     if (!decoder)
         return;
 
-    for (uint8_t i = 0; i < 6; i++)
-        free(decoder->channel_image[i]);
 
     free(decoder->packet_buf);
     free(decoder->ecc_buf);
@@ -177,6 +177,7 @@ void lrpt_decoder_deinit(
     free(decoder->decoded);
     free(decoder->aligned);
 
+    lrpt_image_free(decoder->image);
     lrpt_decoder_jpeg_deinit(decoder->jpeg);
     lrpt_decoder_huffman_deinit(decoder->huff);
     lrpt_decoder_viterbi_deinit(decoder->vit);

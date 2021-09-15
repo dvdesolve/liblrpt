@@ -197,9 +197,11 @@ static bool progress_image(
         jpeg->prev_pck = pck_cnt;
         jpeg->first_pck = pck_cnt;
 
-        /* TODO seems like there is some kind of mess. That should be retested well. It's even
+        /* TODO seems like there is some kind of mess and it is based on most common modes
+         * 1-2-3 (64, 65, 66) and 1-2-5 (64, 65, 68). That should be retested well. It's even
          * better to pass current active APIDs by hand so we can do right things here.
-         * Or may be we can decide proper APIDs on the pre-analysis...
+         * Or may be we can decide proper APIDs on the pre-analysis... Also it can depend on the
+         * spacecraft (the order of APIDs in packet).
          */
         /* Realign */
         switch (decoder->sc) {
@@ -243,22 +245,14 @@ static bool progress_image(
 
         decoder->channel_image_size = decoder->channel_image_width * channel_image_height;
 
-        /* TODO realloc is costly. May be pre-alloc big enough array is a better idea? */
-        for (uint8_t i = 0; i < 6; i++)
-            decoder->channel_image[i] = /* TODO add error checking */
-                reallocarray(decoder->channel_image[i],
-                        decoder->channel_image_size,
-                        sizeof(uint8_t));
+        /* TODO test it well on model height */
+        /* Grow image if we have (for whatever reason) reached upper limit of its height */
+        if (channel_image_height > lrpt_image_height(decoder->image)) {
+            if (!lrpt_image_set_height(decoder->image, channel_image_height, NULL))
+                return false;
+        }
 
         jpeg->progressed = true;
-
-        /* Clear new allocation */
-        size_t delta_len = decoder->channel_image_size - decoder->prev_len;
-
-        for (uint8_t i = 0; i < 6; i++)
-            memset(decoder->channel_image[i] + decoder->prev_len, 0, sizeof(uint8_t) * delta_len);
-
-        decoder->prev_len = decoder->channel_image_size;
     }
 
     jpeg->last_y = jpeg->cur_y;
@@ -288,7 +282,7 @@ static void fill_pix(
         uint16_t y = (decoder->jpeg->cur_y + i / 8);
         size_t off = (x + y * decoder->channel_image_width);
 
-        decoder->channel_image[apid - 64][off] = t;
+        lrpt_image_set_px(decoder->image, apid, off, t);
         /* DEBUG */
         fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %zu; t = %" PRId32 "\n", apid, off, t);
         /* DEBUG */
@@ -365,6 +359,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
      * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
      */
     for (uint8_t m = 0; m < 14; m++) { /* Each packet has 14 MCUs */
+        /* TODO use true/false and pass by pointer */
         int32_t dc_cat =
             lrpt_decoder_huffman_get_dc(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 
@@ -381,6 +376,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
         uint8_t k = 1;
 
         while (k < 64) {
+            /* TODO use true/false and pass by pointer */
             int32_t ac =
                 lrpt_decoder_huffman_get_ac(decoder->huff, lrpt_decoder_bitop_peek_n_bits(&b, 16));
 

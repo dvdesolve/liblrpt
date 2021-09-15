@@ -774,4 +774,121 @@ bool lrpt_qpsk_data_to_hard(
 
 /*************************************************************************************************/
 
+/* lrpt_image_alloc() */
+lrpt_image_t *lrpt_image_alloc(
+        size_t width,
+        size_t height,
+        lrpt_error_t *err) {
+    lrpt_image_t *image = malloc(sizeof(lrpt_image_t));
+
+    if (!image) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "LRPT image allocation failed");
+
+        return NULL;
+    }
+
+    /* NULL-init all channel images before doing actual allocation */
+    for (uint8_t i = 0; i < 6; i++)
+        image->channels[i] = NULL;
+
+    bool ok = true;
+
+    if ((width * height) > 0) {
+        for (uint8_t i = 0; i < 6; i++) {
+            image->channels[i] = calloc(width * height, sizeof(uint8_t));
+
+            if (!image->channels[i]) {
+                ok = false;
+
+                break;
+            }
+        }
+    }
+
+    if (!ok) {
+        lrpt_image_free(image);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "LRPT image buffer allocation failed");
+
+        return NULL;
+    }
+
+    image->width = width;
+    image->height = height;
+
+    return image;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_free() */
+void lrpt_image_free(
+        lrpt_image_t *image) {
+    if (!image)
+        return;
+
+    for (uint8_t i = 0; i < 6; i++)
+        free(image->channels[i]);
+
+    free(image);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_width() */
+size_t lrpt_image_width(
+        const lrpt_image_t *image) {
+    if (!image)
+        return 0;
+
+    return image->width;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_height() */
+size_t lrpt_image_height(
+        const lrpt_image_t *image) {
+    if (!image)
+        return 0;
+
+    return image->height;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_set_width() */
+bool lrpt_image_set_width(
+        lrpt_image_t *image,
+        size_t new_width,
+        lrpt_error_t *err) {
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_set_height() */
+bool lrpt_image_set_height(
+        lrpt_image_t *image,
+        size_t new_height,
+        lrpt_error_t *err) {
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_set_px() */
+void lrpt_image_set_px(
+        lrpt_image_t *image,
+        uint8_t apid,
+        size_t pos,
+        uint8_t val) {
+}
+
+/*************************************************************************************************/
+
 /** \endcond */

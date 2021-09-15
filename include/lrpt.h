@@ -86,6 +86,9 @@ typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 /** Type for QPSK symbols storage */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
+/** Type for LRPT image storage */
+typedef struct lrpt_image__ lrpt_image_t;
+
 /** Error levels */
 typedef enum lrpt_error_level__ {
     LRPT_ERR_LVL_NONE = 0,
@@ -639,6 +642,28 @@ LRPT_API bool lrpt_qpsk_data_to_hard(
         unsigned char *symbols,
         size_t n,
         lrpt_error_t *err);
+
+/** Allocate LRPT image object.
+ *
+ * If \p width or \p height are \c 0 then empty image will be allocated.
+ *
+ * \param width Width of the image (in px).
+ * \param height Height of the image (in px).
+ * \err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the allocated LRPT image object or \c NULL in case of error.
+ */
+LRPT_API lrpt_image_t *lrpt_image_alloc(
+        size_t width,
+        size_t height,
+        lrpt_error_t *err);
+
+/** Free allocated LRPT image object.
+ *
+ * \param image Pointer to the LRPT image object.
+ */
+LRPT_API void lrpt_image_free(
+        lrpt_image_t *image);
 
 /** Initialize error object.
  *
