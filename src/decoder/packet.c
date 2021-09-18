@@ -233,7 +233,7 @@ void lrpt_decoder_packet_parse_cvcdu(
     /* We're subtracting 132 because of 4 bytes of Reed-Solomon coding with interleaving
      * depth of 4 and 128 bytes of CVCDU check symbols inside CVCDU
      */
-    const uint16_t len = (LRPT_DECODER_HARD_FRAME_LEN - 132);
+    const uint16_t len = (DECODER_HARD_FRAME_LEN - 132);
 
     /* Subtract 10 octets because of CVCDU structure to get pointer to the M_PDU packet zone */
     uint16_t data_len = (len - 10);

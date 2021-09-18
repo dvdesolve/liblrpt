@@ -50,8 +50,8 @@
 
 /*************************************************************************************************/
 
-const size_t LRPT_DECODER_SOFT_FRAME_LEN = 16384;
-const size_t LRPT_DECODER_HARD_FRAME_LEN = LRPT_DECODER_SOFT_FRAME_LEN / (2 * 8);
+const size_t DECODER_SOFT_FRAME_LEN = 16384;
+const size_t DECODER_HARD_FRAME_LEN = DECODER_SOFT_FRAME_LEN / (2 * 8);
 
 static const uint16_t DECODER_PACKET_BUF_LEN = 2048;
 
@@ -92,9 +92,9 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->image = lrpt_image_alloc(0, 12000, NULL); /* LRPT image object */
 
     /* Allocate internal data arrays */
-    decoder->aligned = calloc(LRPT_DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
-    decoder->decoded = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
-    decoder->ecced = calloc(LRPT_DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
+    decoder->aligned = calloc(DECODER_SOFT_FRAME_LEN, sizeof(int8_t)); /* Aligned data */
+    decoder->decoded = calloc(DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* Decoded data */
+    decoder->ecced = calloc(DECODER_HARD_FRAME_LEN, sizeof(uint8_t)); /* ECCed data */
     decoder->ecc_buf = calloc(ECC_BUF_LEN, sizeof(uint8_t)); /* ECC buffer */
     decoder->packet_buf = calloc(DECODER_PACKET_BUF_LEN, sizeof(uint8_t)); /* Packet buffer */
 
@@ -195,7 +195,7 @@ bool lrpt_decoder_exec(
         size_t *syms_proc,
         lrpt_error_t *err) {
     /* Return immediately if no valid decoder or input was given */
-    if (!decoder || !data || (data->len < (3 * LRPT_DECODER_SOFT_FRAME_LEN / 2))) {
+    if (!decoder || !data || (data->len < (3 * DECODER_SOFT_FRAME_LEN / 2))) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
                     "Decoder object and/or QPSK data object are NULL or QPSK data contains less then 3x soft frame length symbols");
@@ -207,7 +207,7 @@ bool lrpt_decoder_exec(
     size_t n_sfls = 0;
 
     /* Go through data given keeping at least 2 SFLs for forward correlation */
-    while (decoder->pos < (data->len * 2 - 2 * LRPT_DECODER_SOFT_FRAME_LEN)) {
+    while (decoder->pos < (data->len * 2 - 2 * DECODER_SOFT_FRAME_LEN)) {
         if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) {
             lrpt_decoder_packet_parse_cvcdu(decoder);
 
@@ -222,13 +222,27 @@ bool lrpt_decoder_exec(
     }
 
     decoder->pos -=
-        (n_sfls == 0) ? LRPT_DECODER_SOFT_FRAME_LEN : (n_sfls * LRPT_DECODER_SOFT_FRAME_LEN);
+        (n_sfls == 0) ? DECODER_SOFT_FRAME_LEN : (n_sfls * DECODER_SOFT_FRAME_LEN);
 
     /* Return number of processed QPSK symbols (1 QPSK symbol is 2 bits in lenth) */
     if (syms_proc)
-        *syms_proc = (n_sfls * LRPT_DECODER_SOFT_FRAME_LEN / 2);
+        *syms_proc = (n_sfls * DECODER_SOFT_FRAME_LEN / 2);
 
     return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_sfl() */
+size_t lrpt_decoder_sfl(void) {
+    return DECODER_SOFT_FRAME_LEN;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_hfl() */
+size_t lrpt_decoder_hfl(void) {
+    return DECODER_HARD_FRAME_LEN;
 }
 
 /*************************************************************************************************/

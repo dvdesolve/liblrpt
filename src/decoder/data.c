@@ -110,7 +110,7 @@ static void do_next_correlate(
  * \param decoder Pointer to the decoder object.
  * \param data Data array.
  *
- * \warning \p data should contain at least two extra #LRPT_DECODER_SOFT_FRAME_LEN blocks
+ * \warning \p data should contain at least two extra #DECODER_SOFT_FRAME_LEN blocks
  * so correlator will be able to perform full correlation run without violating memory access!
  */
 static void do_full_correlate(
@@ -135,7 +135,7 @@ static void fix_packet(
     switch (shift) {
         case 4:
             {
-                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
+                for (size_t i = 0; i < (DECODER_SOFT_FRAME_LEN / 2); i++) {
                     /* Swap adjacent elements */
                     int8_t b = data[i * 2 + 0];
                     data[i * 2 + 0] = data[i * 2 + 1];
@@ -147,7 +147,7 @@ static void fix_packet(
 
         case 5:
             {
-                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
+                for (size_t i = 0; i < (DECODER_SOFT_FRAME_LEN / 2); i++)
                     /* Invert odd elements */
                     data[i * 2 + 0] = -data[i * 2 + 0];
             }
@@ -156,7 +156,7 @@ static void fix_packet(
 
         case 6:
             {
-                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++) {
+                for (size_t i = 0; i < (DECODER_SOFT_FRAME_LEN / 2); i++) {
                     /* Swap and invert adjacent elements */
                     int8_t b = data[i * 2 + 0];
                     data[i * 2 + 0] = -data[i * 2 + 1];
@@ -168,7 +168,7 @@ static void fix_packet(
 
         case 7:
             {
-                for (size_t i = 0; i < (LRPT_DECODER_SOFT_FRAME_LEN / 2); i++)
+                for (size_t i = 0; i < (DECODER_SOFT_FRAME_LEN / 2); i++)
                     /* Invert even elements */
                     data[i * 2 + 1] = -data[i * 2 + 1];
             }
@@ -184,10 +184,10 @@ static void do_next_correlate(
         lrpt_decoder_t *decoder,
         const int8_t *data) {
     /* Just copy new part of data to the aligned buffer */
-    memcpy(decoder->aligned, (data + decoder->pos), sizeof(int8_t) * LRPT_DECODER_SOFT_FRAME_LEN);
+    memcpy(decoder->aligned, (data + decoder->pos), sizeof(int8_t) * DECODER_SOFT_FRAME_LEN);
 
     /* Advance decoder position */
-    decoder->pos += LRPT_DECODER_SOFT_FRAME_LEN;
+    decoder->pos += DECODER_SOFT_FRAME_LEN;
 
     fix_packet(decoder->aligned, decoder->corr_word);
 }
@@ -199,7 +199,7 @@ static void do_full_correlate(
         lrpt_decoder_t *decoder,
         const int8_t *data) {
     decoder->corr_word = lrpt_decoder_correlator_correlate(
-            decoder->corr, (data + decoder->pos), LRPT_DECODER_SOFT_FRAME_LEN);
+            decoder->corr, (data + decoder->pos), DECODER_SOFT_FRAME_LEN);
     decoder->corr_pos = decoder->corr->position[decoder->corr_word];
     decoder->corr_val = decoder->corr->correlation[decoder->corr_word];
 
@@ -207,21 +207,21 @@ static void do_full_correlate(
     if (decoder->corr_val < DATA_CORRELATION_MIN) {
         memcpy(decoder->aligned,
                 (data + decoder->pos),
-                sizeof(int8_t) * LRPT_DECODER_SOFT_FRAME_LEN);
+                sizeof(int8_t) * DECODER_SOFT_FRAME_LEN);
 
         /* Advance decoder position by a quarter of soft frame length */
-        decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN / 4);
+        decoder->pos += (DECODER_SOFT_FRAME_LEN / 4);
     }
     else { /* Otherwise we just combine data from two sections into aligned array */
         memcpy(decoder->aligned,
                 (data + decoder->pos + decoder->corr_pos),
-                sizeof(int8_t) * (LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
-        memcpy((decoder->aligned + LRPT_DECODER_SOFT_FRAME_LEN - decoder->corr_pos),
-                (data + decoder->pos + LRPT_DECODER_SOFT_FRAME_LEN),
+                sizeof(int8_t) * (DECODER_SOFT_FRAME_LEN - decoder->corr_pos));
+        memcpy((decoder->aligned + DECODER_SOFT_FRAME_LEN - decoder->corr_pos),
+                (data + decoder->pos + DECODER_SOFT_FRAME_LEN),
                 sizeof(int8_t) * decoder->corr_pos);
 
         /* Advance decoder position */
-        decoder->pos += (LRPT_DECODER_SOFT_FRAME_LEN + decoder->corr_pos);
+        decoder->pos += (DECODER_SOFT_FRAME_LEN + decoder->corr_pos);
 
         fix_packet(decoder->aligned, decoder->corr_word);
     }
@@ -246,7 +246,7 @@ static bool decode_frame(
     /* You can flip all bits in a packet and get a correct ECC anyway. Check for that case */
     if (lrpt_decoder_bitop_count(decoder->last_sync ^ DATA_SYNC_WORD_FLIP) <
             lrpt_decoder_bitop_count(decoder->last_sync ^ DATA_SYNC_WORD)) {
-        for (size_t i = 0; i < LRPT_DECODER_HARD_FRAME_LEN; i++)
+        for (size_t i = 0; i < DECODER_HARD_FRAME_LEN; i++)
             decoder->decoded[i] ^= 0xFF;
 
         tmp =
@@ -258,7 +258,7 @@ static bool decode_frame(
     }
 
     /* 4 is an offset because of sync word */
-    for (size_t i = 0; i < (LRPT_DECODER_HARD_FRAME_LEN - 4); i++)
+    for (size_t i = 0; i < (DECODER_HARD_FRAME_LEN - 4); i++)
         decoder->decoded[4 + i] ^= DATA_PRAND_TBL[i % 255];
 
     for (uint8_t i = 0; i < 4; i++) {
@@ -285,7 +285,7 @@ bool lrpt_decoder_data_process_frame(
 
         /* In case of failed decoding attempt jump one frame back in data buffer */
         if (!ok)
-            decoder->pos -= LRPT_DECODER_SOFT_FRAME_LEN;
+            decoder->pos -= DECODER_SOFT_FRAME_LEN;
     }
 
     if (!ok) {

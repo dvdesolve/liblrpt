@@ -134,7 +134,7 @@ bool lrpt_iq_data_resize(
         return false;
     }
 
-    /* Is sizes are the same just return true */
+    /* If sizes are the same just return true */
     if (data->len == new_len)
         return true;
 
@@ -866,6 +866,74 @@ bool lrpt_image_set_width(
         lrpt_image_t *image,
         size_t new_width,
         lrpt_error_t *err) {
+    bool good = true;
+
+    if (image && (image->width > 0)) {
+        for (uint8_t i = 0; i < 6; i++)
+            if (!image->channels[i]) {
+                good = false;
+
+                break;
+            }
+    }
+
+    if (!image || !good) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "LRPT image object is NULL or corrupted");
+
+        return false;
+    }
+
+    /* For the same widthes just return true */
+    if (image->width == new_width)
+        return true;
+
+    if (new_width == 0) {
+        for (uint8_t i = 0; i < 6; i++) {
+            free(image->channels[i]);
+            image->channels[i] = NULL;
+        }
+
+        image->width = 0;
+    }
+    else {
+        uint8_t *new_bufs[6];
+
+        for (uint8_t i = 0; i < 6; i++) {
+            new_bufs[i] =
+                reallocarray(image->channels[i], image->height * new_width, sizeof(uint8_t));
+
+            if (!new_bufs[i]) {
+                good = false;
+
+                break;
+            }
+        }
+
+        if (!good) {
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                        "LRPT image buffer reallocation failed");
+
+            return false;
+        }
+        else {
+            for (uint8_t i = 0; i < 6; i++) {
+                /* Zero out newly allocated portions */
+                if (new_width > image->width)
+                    memset(
+                            new_bufs[i] + image->height * image->width,
+                            0,
+                            sizeof(uint8_t) * (image->height * (new_width - image->width)));
+
+                image->channels[i] = new_bufs[i];
+            }
+
+            image->width = new_width;
+        }
+    }
+
     return true;
 }
 
@@ -876,7 +944,89 @@ bool lrpt_image_set_height(
         lrpt_image_t *image,
         size_t new_height,
         lrpt_error_t *err) {
+    bool good = true;
+
+    if (image && (image->height > 0)) {
+        for (uint8_t i = 0; i < 6; i++)
+            if (!image->channels[i]) {
+                good = false;
+
+                break;
+            }
+    }
+
+    if (!image || !good) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "LRPT image object is NULL or corrupted");
+
+        return false;
+    }
+
+    /* For the same heights just return true */
+    if (image->height == new_height)
+        return true;
+
+    if (new_height == 0) {
+        for (uint8_t i = 0; i < 6; i++) {
+            free(image->channels[i]);
+            image->channels[i] = NULL;
+        }
+
+        image->height = 0;
+    }
+    else {
+        uint8_t *new_bufs[6];
+
+        for (uint8_t i = 0; i < 6; i++) {
+            new_bufs[i] =
+                reallocarray(image->channels[i], image->width * new_height, sizeof(uint8_t));
+
+            if (!new_bufs[i]) {
+                good = false;
+
+                break;
+            }
+        }
+
+        if (!good) {
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                        "LRPT image buffer reallocation failed");
+
+            return false;
+        }
+        else {
+            for (uint8_t i = 0; i < 6; i++) {
+                /* Zero out newly allocated portions */
+                if (new_height > image->height)
+                    memset(
+                            new_bufs[i] + image->height * image->width,
+                            0,
+                            sizeof(uint8_t) * (image->width * (new_height - image->height)));
+
+                image->channels[i] = new_bufs[i];
+            }
+
+            image->height = new_height;
+        }
+    }
+
     return true;
+
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_get_px() */
+uint8_t lrpt_image_get_px(
+        lrpt_image_t *image,
+        uint8_t apid,
+        size_t pos) {
+    if (!image || (pos > (image->height * image->width)) || (apid < 64) || (apid > 69))
+        return 0;
+
+    return image->channels[apid - 64][pos];
 }
 
 /*************************************************************************************************/
@@ -887,6 +1037,10 @@ void lrpt_image_set_px(
         uint8_t apid,
         size_t pos,
         uint8_t val) {
+    if (!image || (pos > (image->height * image->width)) || (apid < 64) || (apid > 69))
+        return;
+
+    image->channels[apid - 64][pos] = val;
 }
 
 /*************************************************************************************************/

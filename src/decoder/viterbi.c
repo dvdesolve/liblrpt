@@ -49,7 +49,7 @@ static const uint8_t VITERBI_TRACEBACK_MIN = 35; /* (5 * 7) */
 static const uint8_t VITERBI_TRACEBACK_LENGTH = 105; /* (15 * 7) */
 static const uint8_t VITERBI_POLYA = 0x4F; /* Viterbi polynomial A (G1), 01001111 */
 static const uint8_t VITERBI_POLYB = 0x6D; /* Viterbi polynomial B (G2), 01101101 */
-static const uint16_t VITERBI_FRAME_BITS = 8192; /* (LRPT_DECODER_SOFT_FRAME_LEN / rate), rate = 2 */
+static const uint16_t VITERBI_FRAME_BITS = 8192; /* (DECODER_SOFT_FRAME_LEN / rate), rate = 2 */
 static const uint8_t VITERBI_HIGH_BIT = 64;
 static const uint8_t VITERBI_NUM_ITER = (VITERBI_HIGH_BIT * 2);
 static const uint8_t VITERBI_RENORM_INTERVAL = 128; /* 65536 / (2 * 256) */

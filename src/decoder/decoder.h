@@ -45,6 +45,14 @@
 
 /*************************************************************************************************/
 
+/** Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
+extern const size_t DECODER_SOFT_FRAME_LEN;
+
+/** Length of hard frame in bytes (produced by Viterbi decoder, rate = 2) */
+extern const size_t DECODER_HARD_FRAME_LEN;
+
+/*************************************************************************************************/
+
 /** Decoder object */
 struct lrpt_decoder__ {
     lrpt_decoder_spacecraft_t sc; /**< Spacecraft */

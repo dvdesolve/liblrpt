@@ -207,14 +207,6 @@ typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 /** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
 
-/* TODO may be return via func */
-/** Length of soft frame in bits (produced by convolutional encoder, r = 1/2) */
-LRPT_API extern const size_t LRPT_DECODER_SOFT_FRAME_LEN;
-
-/* TODO may be return via func */
-/** Length of hard frame in bytes (produced after Viterbi decoding) */
-LRPT_API extern const size_t LRPT_DECODER_HARD_FRAME_LEN;
-
 /** Supported spacecrafts */
 typedef enum lrpt_decoder_spacecraft__ {
     LRPT_DECODER_SC_METEORM2  /**< Meteor-M2 */
@@ -664,6 +656,84 @@ LRPT_API lrpt_image_t *lrpt_image_alloc(
  */
 LRPT_API void lrpt_image_free(
         lrpt_image_t *image);
+
+/** Width of LRPT image (in px).
+ *
+ * \param image Pointer to the LRPT image object.
+ *
+ * \return Width of LRPT image (in px) or \c 0 if \c NULL \p image was passed.
+ */
+LRPT_API size_t lrpt_image_width(
+        const lrpt_image_t *image);
+
+/** Height of LRPT image (in px).
+ *
+ * \param image Pointer to the LRPT image object.
+ *
+ * \return Height of LRPT image (in px) or \c 0 if \c NULL \p image was passed.
+ */
+LRPT_API size_t lrpt_image_height(
+        const lrpt_image_t *image);
+
+/** Resize LRPT image object and set new width (in px).
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param new_width New image width (in px).
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull resize and \c false otherwise (original object will not be
+ * modified in that case).
+ */
+LRPT_API bool lrpt_image_set_width(
+        lrpt_image_t *image,
+        size_t new_width,
+        lrpt_error_t *err);
+
+/** Resize LRPT image object and set new height (in px).
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param new_height New image height (in px).
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull resize and \c false otherwise (original object will not be
+ * modified in that case).
+ */
+LRPT_API bool lrpt_image_set_height(
+        lrpt_image_t *image,
+        size_t new_height,
+        lrpt_error_t *err);
+
+/** Get pixel value for specified position and APID channel.
+ *
+ * Gets pixel value for specified position and selected APID channel. APIDs that are outside of
+ * 64-69 range are not supported.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param apid APID number (must be within 64-69 range).
+ * \param pos Position of pixel to get value of.
+ *
+ * \return Pixel value or \c 0 in case of error.
+ */
+LRPT_API uint8_t lrpt_image_get_px(
+        lrpt_image_t *image,
+        uint8_t apid,
+        size_t pos);
+
+/** Set pixel value for specified position and APID channel.
+ *
+ * Sets pixel value for specified position and selected APID channel. APIDs that are outside of
+ * 64-69 range are not supported.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param apid APID number (must be within 64-69 range).
+ * \param pos Position of pixel to set value of.
+ * \param val Value of pixel.
+ */
+LRPT_API void lrpt_image_set_px(
+        lrpt_image_t *image,
+        uint8_t apid,
+        size_t pos,
+        uint8_t val);
 
 /** Initialize error object.
  *
@@ -1270,6 +1340,18 @@ LRPT_API bool lrpt_decoder_exec(
         const lrpt_qpsk_data_t *data,
         size_t *syms_proc,
         lrpt_error_t *err);
+
+/** LRPT decoder soft frame length.
+ *
+ * \return Length of decoder's soft frame (in bits).
+ */
+LRPT_API size_t lrpt_decoder_sfl(void);
+
+/** LRPT decoder hard frame length.
+ *
+ * \return Length of decoder's hard frame (in bytes).
+ */
+LRPT_API size_t lrpt_decoder_hfl(void);
 
 /** @} */
 
