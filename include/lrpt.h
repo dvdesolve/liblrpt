@@ -715,7 +715,7 @@ LRPT_API bool lrpt_image_set_height(
  * \return Pixel value or \c 0 in case of error.
  */
 LRPT_API uint8_t lrpt_image_get_px(
-        lrpt_image_t *image,
+        const lrpt_image_t *image,
         uint8_t apid,
         size_t pos);
 
@@ -734,6 +734,50 @@ LRPT_API void lrpt_image_set_px(
         uint8_t apid,
         size_t pos,
         uint8_t val);
+
+/** Dump single channel as PGM file.
+ *
+ * Saves specified APID channel image to the PGM file format.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param fname Name of file to save PGM image to.
+ * \param apid Number of APID channel to save image to.
+ * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PGM file will
+ * be saved.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull saving and \c false otherwise.
+ */
+LRPT_API bool lrpt_image_dump_pgm(
+        const lrpt_image_t *image,
+        const char *fname,
+        uint8_t apid,
+        bool corr,
+        lrpt_error_t *err);
+
+/** Dump red, green and blue channels as PPM file.
+ *
+ * Saves specified APID channel images to the PPM file format.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param fname Name of file to save PPM image to.
+ * \param apid_red Number of APID channel to use as red channel.
+ * \param apid_green Number of APID channel to use as green channel.
+ * \param apid_blue Number of APID channel to use as blue channel.
+ * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PPM file will
+ * be saved.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull saving and \c false otherwise.
+ */
+LRPT_API bool lrpt_image_dump_ppm(
+        const lrpt_image_t *image,
+        const char *fname,
+        uint8_t apid_red,
+        uint8_t apid_green,
+        uint8_t apid_blue,
+        bool corr,
+        lrpt_error_t *err);
 
 /** Initialize error object.
  *
