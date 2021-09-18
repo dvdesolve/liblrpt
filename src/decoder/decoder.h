@@ -80,7 +80,7 @@ struct lrpt_decoder__ {
 
     /** @{ */
     /** Image dimensions */
-    size_t channel_image_size, channel_image_width;
+    size_t channel_image_width, channel_image_height;
     /** @} */
 
     /** @{ */

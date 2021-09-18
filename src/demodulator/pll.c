@@ -33,7 +33,6 @@
 #include "pll.h"
 
 #include "../../include/lrpt.h"
-#include "../liblrpt/lrpt.h"
 
 #include <complex.h>
 #include <math.h>
@@ -230,7 +229,7 @@ complex double lrpt_demodulator_pll_mix(
     const complex double retval = sample * nco_out;
 
     pll->nco_phase += pll->nco_freq;
-    pll->nco_phase = fmod(pll->nco_phase, LRPT_M_2PI);
+    pll->nco_phase = fmod(pll->nco_phase, 2 * M_PI);
 
     return retval;
 }
@@ -262,7 +261,7 @@ void lrpt_demodulator_pll_correct_phase(
     pll->moving_average /= pll->avg_winsize;
 
     pll->nco_phase += pll->alpha * error;
-    pll->nco_phase = fmod(pll->nco_phase, LRPT_M_2PI);
+    pll->nco_phase = fmod(pll->nco_phase, 2 * M_PI);
 
     /* Calculate sliding window average of phase error */
     if (pll->locked)

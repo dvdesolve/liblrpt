@@ -33,8 +33,8 @@
 #include "dsp.h"
 
 #include "../../include/lrpt.h"
+#include "datatype.h"
 #include "error.h"
-#include "lrpt.h"
 
 #include <complex.h>
 #include <math.h>
@@ -351,7 +351,7 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     const double t = (2.0 * tan(0.5));
 
     /* Cutoff frequency (as a fraction of sample rate) */
-    const double w = (LRPT_M_2PI * (bandwidth / 2.0 / samplerate));
+    const double w = ((2 * M_PI) * (bandwidth / 2.0 / samplerate));
 
     /* Low Pass to Low Pass or Low Pass to High Pass transform */
     double k;

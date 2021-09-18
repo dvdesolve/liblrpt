@@ -21,37 +21,20 @@
 
 /** \file
  *
- * Public internal API for basic data types and memory management.
+ * Public internal API for basic image manipulation.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_LRPT_H
-#define LRPT_LIBLRPT_LRPT_H
+#ifndef LRPT_LIBLRPT_IMAGE_H
+#define LRPT_LIBLRPT_IMAGE_H
 
 /*************************************************************************************************/
 
-#include <complex.h>
 #include <stddef.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
-
-extern const double LRPT_M_2PI;
-
-/*************************************************************************************************/
-
-/** Storage type for I/Q data */
-struct lrpt_iq_data__ {
-    complex double *iq; /**< Array of I/Q pairs */
-    size_t len; /**< Total number of I/Q pairs */
-};
-
-/** Storage type for QPSK data */
-struct lrpt_qpsk_data__ {
-    int8_t *qpsk; /**< Array of QPSK bytes */
-    size_t len; /**< Total number of QPSK bytes */
-};
 
 /** Storage type for LRPT images */
 struct lrpt_image__ {

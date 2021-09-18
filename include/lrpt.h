@@ -1341,6 +1341,21 @@ LRPT_API bool lrpt_decoder_exec(
         size_t *syms_proc,
         lrpt_error_t *err);
 
+/** Dump current image stored in decoder.
+ *
+ * Creates new LRPT image object which reflects current state of image stored in decoder object.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the LRPT image object or \c NULL in case of error.
+ *
+ * \warning User should manually free resulting object with #lrpt_image_free()!
+ */
+LRPT_API lrpt_image_t *lrpt_decoder_dump_image(
+        lrpt_decoder_t *decoder,
+        lrpt_error_t *err);
+
 /** LRPT decoder soft frame length.
  *
  * \return Length of decoder's soft frame (in bits).

@@ -29,8 +29,8 @@
 #include "io.h"
 
 #include "../../include/lrpt.h"
+#include "datatype.h"
 #include "error.h"
-#include "lrpt.h"
 #include "utils.h"
 
 #include <complex.h>

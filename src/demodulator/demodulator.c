@@ -34,8 +34,8 @@
 #include "demodulator.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/datatype.h"
 #include "../liblrpt/error.h"
-#include "../liblrpt/lrpt.h"
 #include "agc.h"
 #include "pll.h"
 #include "rrc.h"
@@ -214,7 +214,7 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->interp_factor = interp_factor;
 
     /* Some initial values for internal objects */
-    const double pll_bw = LRPT_M_2PI * costas_bandwidth / symbol_rate;
+    const double pll_bw = (2 * M_PI * costas_bandwidth / symbol_rate);
     const double osf = (double)demod_samplerate / symbol_rate;
 
     /* Initialize internal objects */

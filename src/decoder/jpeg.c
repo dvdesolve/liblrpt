@@ -241,14 +241,12 @@ static bool progress_image(
     jpeg->cur_y = 8 * ((pck_cnt - jpeg->first_pck) / 43);
 
     if ((jpeg->cur_y > jpeg->last_y) || !jpeg->progressed) {
-        uint16_t channel_image_height = jpeg->cur_y + 8;
-
-        decoder->channel_image_size = decoder->channel_image_width * channel_image_height;
+        decoder->channel_image_height = (jpeg->cur_y + 8);
 
         /* TODO test it well on model height */
         /* Grow image if we have (for whatever reason) reached upper limit of its height */
-        if (channel_image_height > lrpt_image_height(decoder->image)) {
-            if (!lrpt_image_set_height(decoder->image, channel_image_height, NULL))
+        if (decoder->channel_image_height > lrpt_image_height(decoder->image)) {
+            if (!lrpt_image_set_height(decoder->image, decoder->channel_image_height, NULL))
                 return false;
         }
 

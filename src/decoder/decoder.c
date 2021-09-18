@@ -33,8 +33,9 @@
 #include "decoder.h"
 
 #include "../../include/lrpt.h"
+#include "../liblrpt/datatype.h"
 #include "../liblrpt/error.h"
-#include "../liblrpt/lrpt.h"
+#include "../liblrpt/image.h"
 #include "correlator.h"
 #include "data.h"
 #include "ecc.h"
@@ -47,6 +48,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*************************************************************************************************/
 
@@ -118,7 +120,7 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->corr_word = 0;
     decoder->corr_val = 64;
 
-    decoder->channel_image_size = 0;
+    decoder->channel_image_height = 0;
 
     /* Each MCU is 8x8 block */
     switch (sc) {
@@ -229,6 +231,48 @@ bool lrpt_decoder_exec(
         *syms_proc = (n_sfls * DECODER_SOFT_FRAME_LEN / 2);
 
     return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_dump_image() */
+lrpt_image_t *lrpt_decoder_dump_image(
+        lrpt_decoder_t *decoder,
+        lrpt_error_t *err) {
+    /* Return immediately if no valid decoder or input was given */
+    if (!decoder || !decoder->image) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Decoder object and/or internal image object are NULL");
+
+        return NULL;
+    }
+
+    /* Resize internal image to the actual height first */
+    if (!lrpt_image_set_height(decoder->image, decoder->channel_image_height, err))
+        return NULL;
+
+    /* Allocate resulting LRPT image object */
+    lrpt_image_t *result =
+        lrpt_image_alloc(decoder->channel_image_width, decoder->channel_image_height, err);
+
+    if (!result) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Can't allocate resulting LRPT image object");
+
+        return NULL;
+    }
+
+    /* Just copy data from internal image object to the resulting image object */
+    for (uint8_t i = 0; i < 6; i++) {
+        memcpy(
+                result->channels[i],
+                decoder->image->channels[i],
+                sizeof(uint8_t) * decoder->channel_image_width * decoder->channel_image_height);
+    }
+
+    return result;
 }
 
 /*************************************************************************************************/

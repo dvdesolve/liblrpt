@@ -41,6 +41,17 @@
 
 /*************************************************************************************************/
 
+/* liblrpt requires that IEEE 754 floating point standard is used. However some compilers doesn't
+ * provide special macro for testing that. We're quite lenient in this requirement so just plain
+ * warning will be given during compilation.
+ */
+#ifndef __STDC_IEC_559__
+#pragma message ("Your compiler doesn't define __STDC_IEC_559__ macro!")
+#pragma message ("Support for IEEE 754 floats and doubles may be unavailable or limited!")
+#endif
+
+/*************************************************************************************************/
+
 const uint8_t UTILS_DOUBLE_SER_SIZE = 10;
 const uint8_t UTILS_COMPLEX_SER_SIZE = (UTILS_DOUBLE_SER_SIZE * 2);
 
