@@ -75,7 +75,6 @@ target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_PATCH="${PROJECT_VERSION
 
 # extra compiler options
 target_compile_options(lrpt PRIVATE -Wall -pedantic)
-target_compile_options(lrpt PRIVATE -fPIC)
 target_compile_options(lrpt PRIVATE -fvisibility=hidden)
 target_compile_options(lrpt PRIVATE -fstack-protector-strong)
 

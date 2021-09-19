@@ -31,7 +31,9 @@ endif ()
 # prevent agressive and unsafe optimizations
 # (by default CMake uses -O3 level)
 set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+
+# enable position-independent code
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 
 # check for necessary types
