@@ -66,6 +66,13 @@ set(lrpt_HEADERS
 add_library(lrpt SHARED ${lrpt_SOURCES})
 
 
+# some compile-time definitions
+target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_FULL="${PROJECT_VERSION}")
+target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_MAJOR="${PROJECT_VERSION_MAJOR}")
+target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_MINOR="${PROJECT_VERSION_MINOR}")
+target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_PATCH="${PROJECT_VERSION_PATCH}")
+
+
 # preprocessor definitions
 target_compile_definitions(lrpt PRIVATE _FORTIFY_SOURCE=2)
 

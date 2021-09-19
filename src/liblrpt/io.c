@@ -109,7 +109,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         return NULL;
     }
 
-    const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
+    const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s, true);
 
     /* File position = 12 */
 
@@ -163,7 +163,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         return NULL;
     }
 
-    const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
+    const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s, true);
 
     /* File position = 21 + name_l */
 
@@ -382,7 +382,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
     /* Write sampling rate info */
     unsigned char sr_s[4];
-    lrpt_utils_s_uint32_t(samplerate, sr_s);
+    lrpt_utils_s_uint32_t(samplerate, sr_s, true);
 
     if (fwrite(sr_s, 1, 4, fh) != 4) {
         fclose(fh);
@@ -438,7 +438,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
     /* Write initial data length */
     unsigned char data_l_s[8];
-    lrpt_utils_s_uint64_t(0, data_l_s);
+    lrpt_utils_s_uint64_t(0, data_l_s, true);
 
     if (fwrite(data_l_s, 1, 8, fh) != 8) {
         free(name);
@@ -676,7 +676,7 @@ bool lrpt_iq_data_read_from_file(
                         file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
                         sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
 
-                if (!lrpt_utils_ds_double(v_s, &i_part)) {
+                if (!lrpt_utils_ds_double(v_s, &i_part, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't deserialize double value");
@@ -688,7 +688,7 @@ bool lrpt_iq_data_read_from_file(
                         file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
                         sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
 
-                if (!lrpt_utils_ds_double(v_s, &q_part)) {
+                if (!lrpt_utils_ds_double(v_s, &q_part, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't deserialize double value");
@@ -748,7 +748,7 @@ bool lrpt_iq_data_write_to_file(
                 unsigned char v_s[10];
 
                 /* I */
-                if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s)) {
+                if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't serialize double value");
@@ -761,7 +761,7 @@ bool lrpt_iq_data_write_to_file(
                         sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE);
 
                 /* Q */
-                if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s)) {
+                if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't serialize double value");
@@ -791,7 +791,7 @@ bool lrpt_iq_data_write_to_file(
             if (inplace) {
                 unsigned char v_s[8];
 
-                lrpt_utils_s_uint64_t(file->data_len, v_s);
+                lrpt_utils_s_uint64_t(file->data_len, v_s, true);
                 fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
                 if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
@@ -813,7 +813,7 @@ bool lrpt_iq_data_write_to_file(
         if (!inplace) {
             unsigned char v_s[8];
 
-            lrpt_utils_s_uint64_t(file->data_len, v_s);
+            lrpt_utils_s_uint64_t(file->data_len, v_s, true);
             fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
             if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
@@ -870,7 +870,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
         return NULL;
     }
 
-    const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s);
+    const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s, true);
 
     /* File position = 14 */
 
@@ -887,7 +887,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
         return NULL;
     }
 
-    const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s);
+    const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s, true);
 
     /* File position = 22 */
 
@@ -1129,7 +1129,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
     /* Write symbol rate info */
     unsigned char sr_s[4];
-    lrpt_utils_s_uint32_t(symrate, sr_s);
+    lrpt_utils_s_uint32_t(symrate, sr_s, true);
 
     if (fwrite(sr_s, 1, 4, fh) != 4) {
         fclose(fh);
@@ -1145,7 +1145,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
     /* Write initial data length */
     unsigned char data_l_s[8];
-    lrpt_utils_s_uint64_t(0, data_l_s);
+    lrpt_utils_s_uint64_t(0, data_l_s, true);
 
     if (fwrite(data_l_s, 1, 8, fh) != 8) {
         fclose(fh);
@@ -1598,7 +1598,7 @@ bool lrpt_qpsk_data_write_to_file(
             if (inplace) {
                 unsigned char v_s[8];
 
-                lrpt_utils_s_uint64_t(file->data_len, v_s);
+                lrpt_utils_s_uint64_t(file->data_len, v_s, true);
                 fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
                 if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
@@ -1622,7 +1622,7 @@ bool lrpt_qpsk_data_write_to_file(
         if (!inplace) {
             unsigned char v_s[8];
 
-            lrpt_utils_s_uint64_t(file->data_len, v_s);
+            lrpt_utils_s_uint64_t(file->data_len, v_s, true);
             fseek(file->fhandle, file->header_len - 8, SEEK_SET);
 
             if (fwrite(v_s, 1, 8, file->fhandle) != 8) {

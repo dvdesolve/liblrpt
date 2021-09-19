@@ -32,6 +32,7 @@
 
 #include "../../include/lrpt.h"
 #include "error.h"
+#include "utils.h"
 
 #include <inttypes.h>
 #include <math.h>
@@ -41,6 +42,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+/*************************************************************************************************/
+
+/** Perform gamma correction according to the BT.709 transfer function.
+ *
+ * \param val Linear pixel value.
+ *
+ * \return Corrected pixel value.
+ */
+static inline uint8_t bt709_gamma_encode(
+        uint8_t val);
 
 /*************************************************************************************************/
 
@@ -326,8 +338,8 @@ void lrpt_image_set_px(
 
 /*************************************************************************************************/
 
-/* lrpt_image_dump_pgm() */
-bool lrpt_image_dump_pgm(
+/* lrpt_image_dump_channel_pnm() */
+bool lrpt_image_dump_channel_pnm(
         const lrpt_image_t *image,
         const char *fname,
         uint8_t apid,
@@ -368,52 +380,58 @@ bool lrpt_image_dump_pgm(
         return false;
     }
 
-    /* Perform gamma correction (if requested) */
-    uint8_t *res = image->channels[apid - 64];
-    uint8_t *corrected = NULL;
-
-    if (corr) {
-        corrected = calloc(image->width * image->height, sizeof(uint8_t));
-
-        if (!corrected) {
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Can't allocate temporary buffer for gamma correction");
-
-            return false;
-        }
-
-        for (size_t j = 0; j < image->height; j++) {
-            for (size_t i = 0; i < image->width; i++)
-                corrected[i + j * image->width] =
-                    bt709_gamma_encode(lrpt_image_get_px(image, apid, i + j * image->width));
-        }
-
-        res = corrected;
-    }
-
-    FILE *fh = fopen(fname, "wb");
-
-    if (!fh) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
-                    "Can't open PGM file for writing");
-
-        return false;
-    }
-
-    /* Write PGM identifier */
-    fprintf(fh, "P5\n");
-
-    /* Write creator comment */
-    /* TODO write liblrpt version too */
-    fprintf(fh, "# Created with liblrpt\n");
-
     /* We're limiting our images to be 65535 * 65535 size at max */
     uint16_t w, h;
 
     w = (image->width > 65535) ? 65535 : image->width;
     h = (image->height > 65535) ? 65535 : image->height;
+
+    /* Create final buffer */
+    bool need_fill = (corr || (w != image->width) || (h != image->height));
+    uint8_t *res = NULL;
+
+    if (need_fill) {
+        res = calloc(w * h, sizeof(uint8_t));
+
+        if (!res) {
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                        "Can't allocate temporary buffer for storing channel data");
+
+            return false;
+        }
+    }
+    else /* Just use existing data without unnecessary copying */
+        res = image->channels[apid - 64];
+
+    /* Fill resulting buffer and perform gamma correction (if requested) */
+    if (need_fill)
+        for (size_t j = 0; j < h; j++)
+            for (size_t i = 0; i < w; i++) {
+                uint8_t px = image->channels[apid - 64][i + j * image->width];
+
+                res[i + j * w] = (corr) ? bt709_gamma_encode(px) : px;
+            }
+
+
+    FILE *fh = fopen(fname, "wb");
+
+    if (!fh) {
+        if (need_fill)
+            free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
+                    "Can't open PNM file for writing");
+
+        return false;
+    }
+
+    /* Write PNM identifier */
+    fprintf(fh, "P5\n");
+
+    /* Write creator comment */
+    fprintf(fh, "# Created with liblrpt ver. %s\n", LIBLRPT_VERSION_FULL);
 
     /* Write width and height */
     fprintf(fh, "%" PRIu16 "\n", w);
@@ -426,24 +444,28 @@ bool lrpt_image_dump_pgm(
     if (fwrite(res, sizeof(uint8_t), w * h, fh) != (w * h)) {
         fclose(fh);
 
+        if (need_fill)
+            free(res);
+
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "PGM file data write error");
+                    "PNM file data write error");
 
         return false;
     }
 
     fclose(fh);
 
-    free(corrected);
+    if (need_fill)
+        free(res);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* lrpt_image_dump_ppm() */
-bool lrpt_image_dump_ppm(
+/* lrpt_image_dump_combo_pnm() */
+bool lrpt_image_dump_combo_pnm(
         const lrpt_image_t *image,
         const char *fname,
         uint8_t apid_red,
@@ -487,13 +509,19 @@ bool lrpt_image_dump_ppm(
             (apid_blue > 69)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Requested APID number is incorrect");
+                    "Requested APID number(s) is/are incorrect");
 
         return false;
     }
 
+    /* We're limiting our images to be 65535 * 65535 size at max */
+    uint16_t w, h;
+
+    w = (image->width > 65535) ? 65535 : image->width;
+    h = (image->height > 65535) ? 65535 : image->height;
+
     /* Final buffer is just a RGB combination of requested APIDs */
-    uint8_t *res = calloc(3 * image->width * image->height, sizeof(uint8_t));
+    uint8_t *res = calloc(3 * w * h, sizeof(uint8_t));
 
     if (!res) {
         if (err)
@@ -503,75 +531,35 @@ bool lrpt_image_dump_ppm(
         return false;
     }
 
-    /* Perform gamma correction (if requested) */
-    uint8_t *corrected_r = NULL;
-    uint8_t *corrected_g = NULL;
-    uint8_t *corrected_b = NULL;
+    /* Fill resulting buffer and perform gamma correction (if requested) */
+    for (size_t j = 0; j < h; j++)
+        for (size_t i = 0; i < w; i++) {
+            uint8_t px_r = image->channels[apid_red - 64][i + j * image->width];
+            uint8_t px_g = image->channels[apid_green - 64][i + j * image->width];
+            uint8_t px_b = image->channels[apid_blue - 64][i + j * image->width];
 
-    if (corr) {
-        corrected_r = calloc(image->width * image->height, sizeof(uint8_t));
-        corrected_g = calloc(image->width * image->height, sizeof(uint8_t));
-        corrected_b = calloc(image->width * image->height, sizeof(uint8_t));
-
-        if (!corrected_r || !corrected_g || !corrected_b) {
-            free(corrected_r);
-            free(corrected_g);
-            free(corrected_b);
-
-            if (err)
-                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Can't allocate temporary buffer for gamma correction");
-
-            return false;
+            res[3 * (i + j * w) + 0] = (corr) ? bt709_gamma_encode(px_r) : px_r;
+            res[3 * (i + j * w) + 1] = (corr) ? bt709_gamma_encode(px_g) : px_g;
+            res[3 * (i + j * w) + 2] = (corr) ? bt709_gamma_encode(px_b) : px_b;
         }
-
-        for (size_t j = 0; j < image->height; j++) {
-            for (size_t i = 0; i < image->width; i++) {
-                corrected_r[i + j * image->width] =
-                    bt709_gamma_encode(lrpt_image_get_px(image, apid_red, i + j * image->width));
-                corrected_g[i + j * image->width] =
-                    bt709_gamma_encode(lrpt_image_get_px(image, apid_green, j * image->width));
-                corrected_b[i + j * image->width] =
-                    bt709_gamma_encode(lrpt_image_get_px(image, apid_blue, i + j * image->width));
-            }
-        }
-    }
-
-    /* Fill resulting buffer with interleaved RGB data */
-    uint8_t *res_r = (corr) ? corrected_r : image->channels[apid_red - 64];
-    uint8_t *res_g = (corr) ? corrected_g : image->channels[apid_green - 64];
-    uint8_t *res_b = (corr) ? corrected_b : image->channels[apid_blue - 64];
-
-    for (size_t j = 0; j < image->height; j++) {
-        for (size_t i = 0; i < image->width; i++) {
-            res[3 * (i + j * image->width) + 0] = res_r[i + j * image->width];
-            res[3 * (i + j * image->width) + 1] = res_g[i + j * image->width];
-            res[3 * (i + j * image->width) + 2] = res_b[i + j * image->width];
-        }
-    }
 
     FILE *fh = fopen(fname, "wb");
 
     if (!fh) {
+        free(res);
+
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
-                    "Can't open PPM file for writing");
+                    "Can't open PNM file for writing");
 
         return false;
     }
 
-    /* Write PPM identifier */
+    /* Write PNM identifier */
     fprintf(fh, "P6\n");
 
     /* Write creator comment */
-    /* TODO write liblrpt version too */
-    fprintf(fh, "# Created with liblrpt\n");
-
-    /* We're limiting our images to be 65535 * 65535 size at max */
-    uint16_t w, h;
-
-    w = (image->width > 65535) ? 65535 : image->width;
-    h = (image->height > 65535) ? 65535 : image->height;
+    fprintf(fh, "# Created with liblrpt ver. %s\n", LIBLRPT_VERSION_FULL);
 
     /* Write width and height */
     fprintf(fh, "%" PRIu16 "\n", w);
@@ -584,19 +572,482 @@ bool lrpt_image_dump_ppm(
     if (fwrite(res, 3 * sizeof(uint8_t), w * h, fh) != (w * h)) {
         fclose(fh);
 
+        free(res);
+
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "PPM file data write error");
+                    "PNM file data write error");
 
         return false;
     }
 
     fclose(fh);
+    free(res);
 
-    free(corrected_r);
-    free(corrected_g);
-    free(corrected_b);
+    return true;
+}
 
+/*************************************************************************************************/
+
+/* lrpt_image_dump_channel_bmp() */
+bool lrpt_image_dump_channel_bmp(
+        const lrpt_image_t *image,
+        const char *fname,
+        uint8_t apid,
+        lrpt_error_t *err) {
+    bool good = true;
+
+    if (image && (image->height > 0)) {
+        for (uint8_t i = 0; i < 6; i++)
+            if (!image->channels[i]) {
+                good = false;
+
+                break;
+            }
+    }
+
+    if (!image || !good) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "LRPT image object is NULL or corrupted");
+
+        return false;
+    }
+
+    if (!fname || (strlen(fname) == 0)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "File name is NULL or empty");
+
+        return false;
+    }
+
+    if ((apid < 64) || (apid > 69)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Requested APID number is incorrect");
+
+        return false;
+    }
+
+    /* We're limiting our images to be 65535 * 65535 size at max */
+    uint16_t w, h;
+
+    w = (image->width > 65535) ? 65535 : image->width;
+    h = (image->height > 65535) ? 65535 : image->height;
+
+    uint8_t pad = ((w % 4) == 0) ? 0 : (4 - w % 4); /* Padding for BMP scan lines */
+
+    /* Final buffer is just a padded requested APID channel */
+    uint8_t *res = calloc(h * (w + pad), sizeof(uint8_t));
+
+    if (!res) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Can't allocate temporary buffer for storing channel data");
+
+        return false;
+    }
+
+    /* Fill resulting buffer with padded channel data (fill direction is from bottom
+     * to top)
+     */
+    for (size_t j = 0; j < h; j++)
+        for (size_t i = 0; i < w; i++)
+            res[i + (h - j - 1) * (w + pad)] = image->channels[apid - 64][i + j * image->width];
+
+    FILE *fh = fopen(fname, "wb");
+
+    if (!fh) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
+                    "Can't open BMP file for writing");
+
+        return false;
+    }
+
+    uint32_t image_size = (h * (w + pad)); /* Padded image size */
+    uint32_t file_size = (image_size + 54 + 256 * 4); /* Image size + header size */
+
+    unsigned char b4_s[4];
+
+    /* Write BMP identifier */
+    fprintf(fh, "BM");
+
+    /* Write BMP file size in bytes */
+    lrpt_utils_s_uint32_t(file_size, b4_s, false);
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP file size write error");
+
+        return false;
+    }
+
+    /* Write BMP Header constant data */
+    unsigned char hdr_const_parts[12] = {
+        0x00, 0x00, 0x00, 0x00, /* Reserved fields */
+        0x36, 0x04, 0x00, 0x00, /* Data offset */
+        0x28, 0x00, 0x00, 0x00 /* InfoHeader size */
+    };
+
+    if (fwrite(hdr_const_parts, 1, 12, fh) != 12) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP Header write error");
+
+        return false;
+    }
+
+    /* Write width and height */
+    lrpt_utils_s_uint32_t(w, b4_s, false); /* Width */
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP image width write error");
+
+        return false;
+    }
+
+    lrpt_utils_s_uint32_t(h, b4_s, false); /* Height */
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP image height write error");
+
+        return false;
+    }
+
+    /* Write BMP InfoHeader constant data, part 1 */
+    unsigned char infohdr_const_parts_1[8] = {
+        0x01, 0x00, /* Planes */
+        0x08, 0x00, /* 8 bits per pixel */
+        0x00, 0x00, 0x00, 0x00 /* Compression */
+    };
+
+    if (fwrite(infohdr_const_parts_1, 1, 8, fh) != 8) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP InfoHeader write error");
+
+        return false;
+    }
+
+    /* Write BMP image size in bytes */
+    lrpt_utils_s_uint32_t(image_size, b4_s, false);
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP image size write error");
+
+        return false;
+    }
+
+    /* Write BMP InfoHeader constant data, part 2 */
+    unsigned char infohdr_const_parts_2[16] = {
+        0x23, 0x2E, 0x00, 0x00, /* 300 ppi horizontal resolution */
+        0x23, 0x2E, 0x00, 0x00, /* 300 ppi vertical resolution */
+        0x00, 0x01, 0x00, 0x00, /* Number of colors used (256) */
+        0x00, 0x01, 0x00, 0x00 /* Number of important colors (256) */
+    };
+
+    if (fwrite(infohdr_const_parts_2, 1, 16, fh) != 16) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP InfoHeader write error");
+
+        return false;
+    }
+
+    /* Write color table */
+    for (uint16_t i = 0; i <= 255; i++) {
+        unsigned char col_idx[4];
+
+        col_idx[0] = i;
+        col_idx[1] = i;
+        col_idx[2] = i;
+        col_idx[3] = 0;
+
+        if (fwrite(col_idx, 1, 4, fh) != 4) {
+            fclose(fh);
+            free(res);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                        "BMP ColorTable write error");
+
+            return false;
+        }
+    }
+
+    /* Write image itself */
+    if (fwrite(res, (w + pad) * sizeof(uint8_t), h, fh) != h) {
+        fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP file data write error");
+
+        return false;
+    }
+
+    fclose(fh);
+    free(res);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_image_dump_combo_bmp() */
+bool lrpt_image_dump_combo_bmp(
+        const lrpt_image_t *image,
+        const char *fname,
+        uint8_t apid_red,
+        uint8_t apid_green,
+        uint8_t apid_blue,
+        lrpt_error_t *err) {
+    bool good = true;
+
+    if (image && (image->height > 0)) {
+        for (uint8_t i = 0; i < 6; i++)
+            if (!image->channels[i]) {
+                good = false;
+
+                break;
+            }
+    }
+
+    if (!image || !good) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "LRPT image object is NULL or corrupted");
+
+        return false;
+    }
+
+    if (!fname || (strlen(fname) == 0)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "File name is NULL or empty");
+
+        return false;
+    }
+
+    if (
+            (apid_red < 64) ||
+            (apid_red > 69) ||
+            (apid_green < 64) ||
+            (apid_green > 69) ||
+            (apid_blue < 64) ||
+            (apid_blue > 69)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Requested APID number is incorrect");
+
+        return false;
+    }
+
+    /* We're limiting our images to be 65535 * 65535 size at max */
+    uint16_t w, h;
+
+    w = (image->width > 65535) ? 65535 : image->width;
+    h = (image->height > 65535) ? 65535 : image->height;
+
+    uint8_t pad = ((w % 4) == 0) ? 0 : (4 - w % 4); /* Padding for BMP scan lines */
+
+    /* Final buffer is just a BGR padded combination of requested APIDs */
+    uint8_t *res = calloc(
+            h * (3 * w + pad),
+            sizeof(uint8_t));
+
+    if (!res) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Can't allocate temporary buffer for storing RGB data");
+
+        return false;
+    }
+
+    /* Fill resulting buffer with interleaved and padded BGR data (fill direction is from bottom
+     * to top)
+     */
+    for (size_t j = 0; j < h; j++) {
+        for (size_t i = 0; i < w; i++) {
+            res[3 * i + (h - j - 1) * (3 * w + pad) + 0] =
+                image->channels[apid_blue - 64][i + j * w];
+            res[3 * i + (h - j - 1) * (3 * w + pad) + 1] =
+                image->channels[apid_green - 64][i + j * w];
+            res[3 * i + (h - j - 1) * (3 * w + pad) + 2] =
+                image->channels[apid_red - 64][i + j * w];
+        }
+    }
+
+    FILE *fh = fopen(fname, "wb");
+
+    if (!fh) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FOPEN,
+                    "Can't open BMP file for writing");
+
+        return false;
+    }
+
+    uint32_t image_size = (h * (3 * w + pad)); /* Padded image size */
+    uint32_t file_size = (image_size + 54); /* Image size + header size */
+
+    unsigned char b4_s[4];
+
+    /* Write BMP identifier */
+    fprintf(fh, "BM");
+
+    /* Write BMP file size in bytes */
+    lrpt_utils_s_uint32_t(file_size, b4_s, false);
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP file size write error");
+
+        return false;
+    }
+
+    /* Write BMP Header constant data */
+    unsigned char hdr_const_parts[12] = {
+        0x00, 0x00, 0x00, 0x00, /* Reserved fields */
+        0x36, 0x00, 0x00, 0x00, /* Data offset */
+        0x28, 0x00, 0x00, 0x00 /* InfoHeader size */
+    };
+
+    if (fwrite(hdr_const_parts, 1, 12, fh) != 12) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP Header write error");
+
+        return false;
+    }
+
+    /* Write width and height */
+    lrpt_utils_s_uint32_t(w, b4_s, false); /* Width */
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP image width write error");
+
+        return false;
+    }
+
+    lrpt_utils_s_uint32_t(h, b4_s, false); /* Height */
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP image height write error");
+
+        return false;
+    }
+
+    /* Write BMP InfoHeader constant data, part 1 */
+    unsigned char infohdr_const_parts_1[8] = {
+        0x01, 0x00, /* Planes */
+        0x18, 0x00, /* 24 bits per pixel */
+        0x00, 0x00, 0x00, 0x00 /* Compression */
+    };
+
+    if (fwrite(infohdr_const_parts_1, 1, 8, fh) != 8) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP InfoHeader write error");
+
+        return false;
+    }
+
+    /* Write BMP image size in bytes */
+    lrpt_utils_s_uint32_t(image_size, b4_s, false);
+
+    if (fwrite(b4_s, 1, 4, fh) != 4) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP image size write error");
+
+        return false;
+    }
+
+    /* Write BMP InfoHeader constant data, part 2 */
+    unsigned char infohdr_const_parts_2[16] = {
+        0x23, 0x2E, 0x00, 0x00, /* 300 ppi horizontal resolution */
+        0x23, 0x2E, 0x00, 0x00, /* 300 ppi vertical resolution */
+        0x00, 0x00, 0x00, 0x00, /* Number of colors used */
+        0x00, 0x00, 0x00, 0x00 /* Number of important colors */
+    };
+
+    if (fwrite(infohdr_const_parts_2, 1, 16, fh) != 16) {
+        fclose(fh);
+        free(res);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP InfoHeader write error");
+
+        return false;
+    }
+
+    /* Write image itself */
+    if (fwrite(res, (3 * w + pad) * sizeof(uint8_t), h, fh) != h) {
+        fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "BMP file data write error");
+
+        return false;
+    }
+
+    fclose(fh);
     free(res);
 
     return true;

@@ -76,7 +76,8 @@ static inline bool is_be(void) {
 /* lrpt_utils_s_uint16_t() */
 void lrpt_utils_s_uint16_t(
         uint16_t x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     union {
         uint16_t ui;
         unsigned char uc[2];
@@ -84,7 +85,9 @@ void lrpt_utils_s_uint16_t(
 
     t.ui = x;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 2; i++)
             v[i] = t.uc[i];
     }
@@ -98,13 +101,16 @@ void lrpt_utils_s_uint16_t(
 
 /* lrpt_utils_ds_uint16_t() */
 uint16_t lrpt_utils_ds_uint16_t(
-        const unsigned char *x) {
+        const unsigned char *x,
+        bool be) {
     union {
         uint16_t ui;
         unsigned char uc[2];
     } t;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 2; i++)
             t.uc[i] = x[i];
     }
@@ -121,7 +127,8 @@ uint16_t lrpt_utils_ds_uint16_t(
 /* lrpt_utils_s_int16_t() */
 void lrpt_utils_s_int16_t(
         int16_t x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     union {
         int16_t si;
         unsigned char uc[2];
@@ -129,7 +136,9 @@ void lrpt_utils_s_int16_t(
 
     t.si = x;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 2; i++)
             v[i] = t.uc[i];
     }
@@ -143,13 +152,16 @@ void lrpt_utils_s_int16_t(
 
 /* lrpt_utils_ds_int16_t() */
 int16_t lrpt_utils_ds_int16_t(
-        const unsigned char *x) {
+        const unsigned char *x,
+        bool be) {
     union {
         int16_t si;
         unsigned char uc[2];
     } t;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 2; i++)
             t.uc[i] = x[i];
     }
@@ -166,7 +178,8 @@ int16_t lrpt_utils_ds_int16_t(
 /* lrpt_utils_s_uint32_t() */
 void lrpt_utils_s_uint32_t(
         uint32_t x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     union {
         uint32_t ui;
         unsigned char uc[4];
@@ -174,7 +187,9 @@ void lrpt_utils_s_uint32_t(
 
     t.ui = x;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 4; i++)
             v[i] = t.uc[i];
     }
@@ -188,13 +203,16 @@ void lrpt_utils_s_uint32_t(
 
 /* lrpt_utils_ds_uint32_t() */
 uint32_t lrpt_utils_ds_uint32_t(
-        const unsigned char *x) {
+        const unsigned char *x,
+        bool be) {
     union {
         uint32_t ui;
         unsigned char uc[4];
     } t;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 4; i++)
             t.uc[i] = x[i];
     }
@@ -211,7 +229,8 @@ uint32_t lrpt_utils_ds_uint32_t(
 /* lrpt_utils_s_int32_t() */
 void lrpt_utils_s_int32_t(
         int32_t x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     union {
         int32_t si;
         unsigned char uc[4];
@@ -219,7 +238,9 @@ void lrpt_utils_s_int32_t(
 
     t.si = x;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 4; i++)
             v[i] = t.uc[i];
     }
@@ -233,13 +254,16 @@ void lrpt_utils_s_int32_t(
 
 /* lrpt_utils_ds_int32_t() */
 int32_t lrpt_utils_ds_int32_t(
-        const unsigned char *x) {
+        const unsigned char *x,
+        bool be) {
     union {
         int32_t si;
         unsigned char uc[4];
     } t;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 4; i++)
             t.uc[i] = x[i];
     }
@@ -256,7 +280,8 @@ int32_t lrpt_utils_ds_int32_t(
 /* lrpt_utils_s_uint64_t() */
 void lrpt_utils_s_uint64_t(
         uint64_t x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     union {
         uint64_t ui;
         unsigned char uc[8];
@@ -264,7 +289,9 @@ void lrpt_utils_s_uint64_t(
 
     t.ui = x;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 8; i++)
             v[i] = t.uc[i];
     }
@@ -278,13 +305,16 @@ void lrpt_utils_s_uint64_t(
 
 /* lrpt_utils_ds_uint64_t() */
 uint64_t lrpt_utils_ds_uint64_t(
-        const unsigned char *x) {
+        const unsigned char *x,
+        bool be) {
     union {
         uint64_t ui;
         unsigned char uc[8];
     } t;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 8; i++)
             t.uc[i] = x[i];
     }
@@ -301,7 +331,8 @@ uint64_t lrpt_utils_ds_uint64_t(
 /* lrpt_utils_s_int64_t() */
 void lrpt_utils_s_int64_t(
         int64_t x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     union {
         int64_t si;
         unsigned char uc[8];
@@ -309,7 +340,9 @@ void lrpt_utils_s_int64_t(
 
     t.si = x;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 8; i++)
             v[i] = t.uc[i];
     }
@@ -323,13 +356,16 @@ void lrpt_utils_s_int64_t(
 
 /* lrpt_utils_ds_int64_t() */
 int64_t lrpt_utils_ds_int64_t(
-        const unsigned char *x) {
+        const unsigned char *x,
+        bool be) {
     union {
         int64_t si;
         unsigned char uc[8];
     } t;
 
-    if (is_be()) {
+    bool fwd = (is_be() == be);
+
+    if (fwd) {
         for (uint8_t i = 0; i < 8; i++)
             t.uc[i] = x[i];
     }
@@ -346,7 +382,8 @@ int64_t lrpt_utils_ds_int64_t(
 /* lrpt_utils_s_double() */
 bool lrpt_utils_s_double(
         double x,
-        unsigned char *v) {
+        unsigned char *v,
+        bool be) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
@@ -362,8 +399,8 @@ bool lrpt_utils_s_double(
     unsigned char ex[2];
     unsigned char mant[8];
 
-    lrpt_utils_s_int16_t(e, ex);
-    lrpt_utils_s_int64_t(c_2to53 * m, mant);
+    lrpt_utils_s_int16_t(e, ex, be);
+    lrpt_utils_s_int64_t(c_2to53 * m, mant, be);
 
     memcpy(v, ex, sizeof(unsigned char) * 2); /* ex is 2 elements long */
     memcpy(v + 2, mant, sizeof(unsigned char) * 8); /* mant is 8 elements long */
@@ -376,7 +413,8 @@ bool lrpt_utils_s_double(
 /* lrpt_utils_ds_double() */
 bool lrpt_utils_ds_double(
         const unsigned char *x,
-        double *v) {
+        double *v,
+        bool be) {
     /* 2^53 - we must make use of every bit */
     const int64_t c_2to53 = 9007199254740992;
 
@@ -386,8 +424,8 @@ bool lrpt_utils_ds_double(
     memcpy(ex, x, sizeof(unsigned char) * 2); /* ex is 2 elements long */
     memcpy(mant, x + 2, sizeof(unsigned char) * 8); /* mant is 8 elements long */
 
-    int16_t e = lrpt_utils_ds_int16_t(ex);
-    double m = (double)lrpt_utils_ds_int64_t(mant) / c_2to53;
+    int16_t e = lrpt_utils_ds_int16_t(ex, be);
+    double m = (double)lrpt_utils_ds_int64_t(mant, be) / c_2to53;
 
     if (isnan(m))
         return false;

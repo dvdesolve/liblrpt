@@ -735,48 +735,86 @@ LRPT_API void lrpt_image_set_px(
         size_t pos,
         uint8_t val);
 
-/** Dump single channel as PGM file.
+/** Dump single channel as PNM file.
  *
- * Saves specified APID channel image to the PGM file format.
+ * Saves specified APID channel image to the PNM file format.
  *
  * \param image Pointer to the LRPT image object.
- * \param fname Name of file to save PGM image to.
+ * \param fname Name of file to save PNM image to.
  * \param apid Number of APID channel to save image to.
- * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PGM file will
+ * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PNM file will
  * be saved.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull saving and \c false otherwise.
  */
-LRPT_API bool lrpt_image_dump_pgm(
+LRPT_API bool lrpt_image_dump_channel_pnm(
         const lrpt_image_t *image,
         const char *fname,
         uint8_t apid,
         bool corr,
         lrpt_error_t *err);
 
-/** Dump red, green and blue channels as PPM file.
+/** Dump red, green and blue channels as PNM file.
  *
- * Saves specified APID channel images to the PPM file format.
+ * Saves specified APID channel images to the PNM file format.
  *
  * \param image Pointer to the LRPT image object.
- * \param fname Name of file to save PPM image to.
+ * \param fname Name of file to save PNM image to.
  * \param apid_red Number of APID channel to use as red channel.
  * \param apid_green Number of APID channel to use as green channel.
  * \param apid_blue Number of APID channel to use as blue channel.
- * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PPM file will
+ * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PNM file will
  * be saved.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull saving and \c false otherwise.
  */
-LRPT_API bool lrpt_image_dump_ppm(
+LRPT_API bool lrpt_image_dump_combo_pnm(
         const lrpt_image_t *image,
         const char *fname,
         uint8_t apid_red,
         uint8_t apid_green,
         uint8_t apid_blue,
         bool corr,
+        lrpt_error_t *err);
+
+/** Dump single channel as BMP file.
+ *
+ * Saves specified APID channel image to the BMP file format.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param fname Name of file to save PNM image to.
+ * \param apid Number of APID channel to save image to.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull saving and \c false otherwise.
+ */
+LRPT_API bool lrpt_image_dump_channel_bmp(
+        const lrpt_image_t *image,
+        const char *fname,
+        uint8_t apid,
+        lrpt_error_t *err);
+
+/** Dump red, green and blue channels as BMP file.
+ *
+ * Saves specified APID channel images to the BMP file format.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param fname Name of file to save BMP image to.
+ * \param apid_red Number of APID channel to use as red channel.
+ * \param apid_green Number of APID channel to use as green channel.
+ * \param apid_blue Number of APID channel to use as blue channel.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successfull saving and \c false otherwise.
+ */
+LRPT_API bool lrpt_image_dump_combo_bmp(
+        const lrpt_image_t *image,
+        const char *fname,
+        uint8_t apid_red,
+        uint8_t apid_green,
+        uint8_t apid_blue,
         lrpt_error_t *err);
 
 /** Initialize error object.
