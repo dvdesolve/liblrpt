@@ -66,19 +66,15 @@ set(lrpt_HEADERS
 add_library(lrpt SHARED ${lrpt_SOURCES})
 
 
-# some compile-time definitions
+# compile-time definitions
 target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_FULL="${PROJECT_VERSION}")
 target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_MAJOR="${PROJECT_VERSION_MAJOR}")
 target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_MINOR="${PROJECT_VERSION_MINOR}")
 target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_PATCH="${PROJECT_VERSION_PATCH}")
 
 
-# preprocessor definitions
-target_compile_definitions(lrpt PRIVATE _FORTIFY_SOURCE=2)
-
-
-# compiler options
-target_compile_options(lrpt PRIVATE -Wall -pedantic -Werror=format-security)
+# extra compiler options
+target_compile_options(lrpt PRIVATE -Wall -pedantic)
 target_compile_options(lrpt PRIVATE -fPIC)
 target_compile_options(lrpt PRIVATE -fvisibility=hidden)
 target_compile_options(lrpt PRIVATE -fstack-protector-strong)
@@ -96,5 +92,5 @@ set_target_properties(lrpt PROPERTIES C_STANDARD 11)
 set_target_properties(lrpt PROPERTIES DEFINE_SYMBOL "LRPT_DLL_EXPORTS")
 
 
-# install
+# install library
 install(TARGETS lrpt LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

@@ -497,7 +497,7 @@ LRPT_API bool lrpt_qpsk_data_from_qpsk(
  * This function behaves much like #lrpt_qpsk_data_from_qpsk(), however, it allocates QPSK
  * data object automatically.
  *
- * \param samples Pointer to the source QPSK data object.
+ * \param symbols Pointer to the source QPSK data object.
  * \param offset How much symbols should be skipped from the beginning of \p symbols.
  * \param n Number of symbols to copy.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
@@ -641,7 +641,7 @@ LRPT_API bool lrpt_qpsk_data_to_hard(
  *
  * \param width Width of the image (in px).
  * \param height Height of the image (in px).
- * \err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated LRPT image object or \c NULL in case of error.
  */

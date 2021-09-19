@@ -44,11 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* DEBUG */
-#include <inttypes.h>
-#include <stdio.h>
-/* DEBUG */
-
 /*************************************************************************************************/
 
 /** Standard quantization table */
@@ -281,9 +276,6 @@ static void fill_pix(
         size_t off = (x + y * decoder->channel_image_width);
 
         lrpt_image_set_px(decoder->image, apid, off, t);
-        /* DEBUG */
-        fprintf(stderr, "fill_pix(): apid = %" PRIu16 "; off = %zu; t = %" PRId32 "\n", apid, off, t);
-        /* DEBUG */
     }
 }
 

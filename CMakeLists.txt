@@ -60,6 +60,11 @@ endif ()
 add_subdirectory(src)
 
 
+# prepare and install pkg-config stuff
+configure_file(liblrpt.pc.in liblrpt.pc @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/liblrpt.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+
 # optionally build documentation
 option(BUILD_DOC "Build API documentation" ON)
 option(BUILD_DEVDOC "Build developer's documentation" OFF)
@@ -85,6 +90,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
         # actually install documentation
         install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/doc/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR})
     else (DOXYGEN_FOUND)
-        message(WARNING "Doxygen need to be installed to generate documentation")
+        message(WARNING "Doxygen needs to be installed to generate documentation")
     endif (DOXYGEN_FOUND)
 endif ()
