@@ -39,14 +39,30 @@
 
 /** Storage type for I/Q data */
 struct lrpt_iq_data__ {
-    complex double *iq; /**< Array of I/Q pairs */
-    size_t len; /**< Total number of I/Q pairs */
+    complex double *iq; /**< Array of I/Q samples */
+    size_t len; /**< Total number of I/Q samples */
+};
+
+/** Ring buffer type for I/Q data */
+struct lrpt_iq_rb__ {
+    complex double *iq; /**< Array of I/Q samples */
+    size_t len; /**< Total number of I/Q samples + 1, for determining full/empty states */
+    size_t head; /**< Pointer to the data head */
+    size_t tail; /**< Pointer to the data tail */
 };
 
 /** Storage type for QPSK data */
 struct lrpt_qpsk_data__ {
     int8_t *qpsk; /**< Array of QPSK bytes */
     size_t len; /**< Total number of QPSK bytes */
+};
+
+/** Ring buffer type for QPSK data */
+struct lrpt_qpsk_rb__ {
+    int8_t *qpsk; /**< Array of QPSK bytes */
+    size_t len; /**< Total number of QPSK samples + 1, for determining full/empty states */
+    size_t head; /**< Pointer to the data head */
+    size_t tail; /**< Pointer to the data tail */
 };
 
 /*************************************************************************************************/

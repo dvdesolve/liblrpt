@@ -210,7 +210,7 @@ bool lrpt_decoder_exec(
 
     /* Go through data given keeping at least 2 SFLs for forward correlation */
     while (decoder->pos < (data->len * 2 - 2 * DECODER_SOFT_FRAME_LEN)) {
-        if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) {
+        if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) { /* TODO that should be easily transformed to support ring buffering */
             lrpt_decoder_packet_parse_cvcdu(decoder);
 
             decoder->ok_cnt++; /* TODO count frames, CVCDUs and packets separately */

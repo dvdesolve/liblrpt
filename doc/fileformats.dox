@@ -92,8 +92,8 @@
  * \subsubsection lrptqpsk_symrate Symbol rate
  * Although it is possible for decoder to automatically select proper symbol rate using only
  * interleaving flag, liblrpt requires this info to be explicitly presented in QPSK symbols data
- * file as 4-byte unsigned integer. Usually symbol rate equals to 72000 for non-interleaved data
- * and to 80000 when interleaving is used.
+ * file as 4-byte unsigned integer in Big Endian form. Usually symbol rate equals to 72000
+ * for non-interleaved data and to 80000 when interleaving is used.
  *
  * \subsubsection lrptqpsk_data Data
  * Final section of Version 1 QPSK symbols data file is the symbols itself. As with I/Q data,

@@ -341,6 +341,223 @@ bool lrpt_iq_data_to_complex(
 
 /*************************************************************************************************/
 
+/* lrpt_iq_rb_alloc() */
+lrpt_iq_rb_t *lrpt_iq_rb_alloc(
+        size_t len,
+        lrpt_error_t *err) {
+    if (len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Can't create empty I/Q ring buffer object");
+
+        return NULL;
+    }
+
+    lrpt_iq_rb_t *rb = malloc(sizeof(lrpt_iq_rb_t));
+
+    if (!rb) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "I/Q ring buffer object allocation failed");
+
+        return NULL;
+    }
+
+    /* Set requested length (reserve 1 element for full/empty detection) and allocate storage
+     * for I and Q samples if length is not zero
+     */
+    rb->len = (len + 1);
+    rb->iq = calloc(len + 1, sizeof(complex double));
+
+    /* Return NULL only if allocation attempt has failed */
+    if (!rb->iq) {
+        lrpt_iq_rb_free(rb);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Data buffer allocation for I/Q ring buffer object failed");
+
+        return NULL;
+    }
+
+    /* Initially both head and tail are the same */
+    rb->head = 0;
+    rb->tail = 0;
+
+    return rb;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_free() */
+void lrpt_iq_rb_free(
+        lrpt_iq_rb_t *rb) {
+    if (!rb)
+        return;
+
+    free(rb->iq);
+    free(rb);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_length() */
+size_t lrpt_iq_rb_length(
+        const lrpt_iq_rb_t *rb) {
+    if (!rb)
+        return 0;
+
+    return (rb->len - 1);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_used() */
+size_t lrpt_iq_rb_used(
+        const lrpt_iq_rb_t *rb) {
+    if (!rb)
+        return 0;
+
+    if (rb->head >= rb->tail)
+        return (rb->head - rb->tail);
+    else
+        return (rb->len - rb->tail + rb->head);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_avail() */
+size_t lrpt_iq_rb_avail(
+        const lrpt_iq_rb_t *rb) {
+    if (!rb)
+        return 0;
+
+    return (rb->len - 1 - lrpt_iq_rb_used(rb));
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_is_empty() */
+bool lrpt_iq_rb_is_empty(
+        const lrpt_iq_rb_t *rb) {
+    if (!rb)
+        return false;
+
+    return (lrpt_iq_rb_used(rb) == 0);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_is_full() */
+bool lrpt_iq_rb_is_full(
+        const lrpt_iq_rb_t *rb) {
+    if (!rb)
+        return false;
+
+    return (lrpt_iq_rb_avail(rb) == 0);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_iq_rb_pop() */
+bool lrpt_iq_rb_pop(
+        lrpt_iq_rb_t *rb,
+        lrpt_iq_data_t *data,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!rb || !data) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q ring buffer object and/or I/Q data object are NULL");
+
+        return false;
+    }
+
+    if (lrpt_iq_rb_used(rb) < n) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Not enough data in I/Q ring buffer object for pop");
+
+        return false;
+    }
+
+    if (n == 0)
+        return true;
+
+    if (!lrpt_iq_data_resize(data, n, err))
+        return false;
+
+    if (rb->tail < rb->head) /* Not wrapped data */
+        memcpy(data->iq, rb->iq + rb->tail, sizeof(complex double) * n);
+    else { /* Wrapped data */
+        if ((rb->tail + n) < rb->len) /* Contiguous chunk */
+            memcpy(data->iq, rb->iq + rb->tail, sizeof(complex double) * n);
+        else { /* Non-contiguous chunk */
+            const size_t tn = (rb->len - rb->tail);
+
+            memcpy(data->iq, rb->iq + rb->tail, sizeof(complex double) * tn); /* Till the end */
+            memcpy(data->iq + tn, rb->iq, sizeof(complex double) * (n - tn)); /* From the start */
+        }
+    }
+
+    /* Advance tail position */
+    rb->tail = ((rb->tail + n) % rb->len);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* TODO add offset */
+/* lrpt_iq_rb_push() */
+bool lrpt_iq_rb_push(
+        lrpt_iq_rb_t *rb,
+        const lrpt_iq_data_t *data,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!rb || !data || !data->iq) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q ring buffer object and/or I/Q data object are NULL or corrupted");
+
+        return false;
+    }
+
+    if ((data->len == 0) || (n == 0))
+        return true;
+
+    if (data->len < n)
+        n = data->len;
+
+    if ((lrpt_iq_rb_avail(rb) < n)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Not enough space in I/Q ring buffer object for push");
+
+        return false;
+    }
+
+    if (rb->head < rb->tail) /* Wrapped data */
+        memcpy(rb->iq + rb->head, data->iq, sizeof(complex double) * n);
+    else { /* Not wrapped data */
+        if ((rb->head + n) < rb->len) /* Contiguous chunk */
+            memcpy(rb->iq + rb->head, data->iq, sizeof(complex double) * n);
+        else { /* Non-contiguous chunk */
+            const size_t tn = (rb->len - rb->head);
+
+            memcpy(rb->iq + rb->head, data->iq, sizeof(complex double) * tn); /* Till the end */
+            memcpy(rb->iq, data->iq + tn, sizeof(complex double) * (n - tn)); /* From the start */
+        }
+    }
+
+    /* Advance head position */
+    rb->head = ((rb->head + n) % rb->len);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_qpsk_data_alloc() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
         size_t len,
@@ -752,6 +969,223 @@ bool lrpt_qpsk_data_to_hard(
         if ((i == n) && ((j % 2) == 0))
             symbols[i / 4] = b;
     }
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_alloc() */
+lrpt_qpsk_rb_t *lrpt_qpsk_rb_alloc(
+        size_t len,
+        lrpt_error_t *err) {
+    if (len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Can't create empty QPSK ring buffer object");
+
+        return NULL;
+    }
+
+    lrpt_qpsk_rb_t *rb = malloc(sizeof(lrpt_qpsk_rb_t));
+
+    if (!rb) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "QPSK ring buffer object allocation failed");
+
+        return NULL;
+    }
+
+    /* Set requested length (reserve 1 element for full/empty detection) and allocate storage
+     * for QPSK bytes if length is not zero
+     */
+    rb->len = (len + 1);
+    rb->qpsk = calloc(2 * (len + 1), sizeof(int8_t));
+
+    /* Return NULL only if allocation attempt has failed */
+    if (!rb->qpsk) {
+        lrpt_qpsk_rb_free(rb);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Data buffer allocation for QPSK ring buffer object failed");
+
+        return NULL;
+    }
+
+    /* Initially both head and tail are the same */
+    rb->head = 0;
+    rb->tail = 0;
+
+    return rb;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_free() */
+void lrpt_qpsk_rb_free(
+        lrpt_qpsk_rb_t *rb) {
+    if (!rb)
+        return;
+
+    free(rb->qpsk);
+    free(rb);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_length() */
+size_t lrpt_qpsk_rb_length(
+        const lrpt_qpsk_rb_t *rb) {
+    if (!rb)
+        return 0;
+
+    return (rb->len - 1);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_used() */
+size_t lrpt_qpsk_rb_used(
+        const lrpt_qpsk_rb_t *rb) {
+    if (!rb)
+        return 0;
+
+    if (rb->head >= rb->tail)
+        return (rb->head - rb->tail);
+    else
+        return (rb->len - rb->tail + rb->head);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_avail() */
+size_t lrpt_qpsk_rb_avail(
+        const lrpt_qpsk_rb_t *rb) {
+    if (!rb)
+        return 0;
+
+    return (rb->len - 1 - lrpt_qpsk_rb_used(rb));
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_is_empty() */
+bool lrpt_qpsk_rb_is_empty(
+        const lrpt_qpsk_rb_t *rb) {
+    if (!rb)
+        return false;
+
+    return (lrpt_qpsk_rb_used(rb) == 0);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_is_full() */
+bool lrpt_qpsk_rb_is_full(
+        const lrpt_qpsk_rb_t *rb) {
+    if (!rb)
+        return false;
+
+    return (lrpt_qpsk_rb_avail(rb) == 0);
+}
+
+/*************************************************************************************************/
+
+/* lrpt_qpsk_rb_pop() */
+bool lrpt_qpsk_rb_pop(
+        lrpt_qpsk_rb_t *rb,
+        lrpt_qpsk_data_t *data,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!rb || !data) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK ring buffer object and/or QPSK data object are NULL");
+
+        return false;
+    }
+
+    if (lrpt_qpsk_rb_used(rb) < n) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Not enough data in QPSK ring buffer object for pop");
+
+        return false;
+    }
+
+    if (n == 0)
+        return true;
+
+    if (!lrpt_qpsk_data_resize(data, n, err))
+        return false;
+
+    if (rb->tail < rb->head) /* Not wrapped data */
+        memcpy(data->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * n);
+    else { /* Wrapped data */
+        if ((rb->tail + n) < rb->len) /* Contiguous chunk */
+            memcpy(data->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * n);
+        else { /* Non-contiguous chunk */
+            const size_t tn = (rb->len - rb->tail);
+
+            memcpy(data->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * tn); /* Till the end */
+            memcpy(data->qpsk + 2 * tn, rb->qpsk, sizeof(int8_t) * 2 * (n - tn)); /* From the start */
+        }
+    }
+
+    /* Advance tail position */
+    rb->tail = ((rb->tail + n) % rb->len);
+
+    return true;
+}
+
+/*************************************************************************************************/
+
+/* TODO add offset */
+/* lrpt_qpsk_rb_push() */
+bool lrpt_qpsk_rb_push(
+        lrpt_qpsk_rb_t *rb,
+        const lrpt_qpsk_data_t *data,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!rb || !data || !data->qpsk) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "QPSK ring buffer object and/or QPSK data object are NULL or corrupted");
+
+        return false;
+    }
+
+    if ((data->len == 0) || (n == 0))
+        return true;
+
+    if (data->len < n)
+        n = data->len;
+
+    if ((lrpt_qpsk_rb_avail(rb) < n)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Not enough space in QPSK ring buffer object for push");
+
+        return false;
+    }
+
+    if (rb->head < rb->tail) /* Wrapped data */
+        memcpy(rb->qpsk + 2 * rb->head, data->qpsk, sizeof(int8_t) * 2 * n);
+    else { /* Not wrapped data */
+        if ((rb->head + n) < rb->len) /* Contiguous chunk */
+            memcpy(rb->qpsk + 2 * rb->head, data->qpsk, sizeof(int8_t) * 2 * n);
+        else { /* Non-contiguous chunk */
+            const size_t tn = (rb->len - rb->head);
+
+            memcpy(rb->qpsk + 2 * rb->head, data->qpsk, sizeof(int8_t) * 2 * tn); /* Till the end */
+            memcpy(rb->qpsk, data->qpsk + 2 * tn, sizeof(int8_t) * 2 * (n - tn)); /* From the start */
+        }
+    }
+
+    /* Advance head position */
+    rb->head = ((rb->head + n) % rb->len);
 
     return true;
 }

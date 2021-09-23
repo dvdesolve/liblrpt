@@ -90,8 +90,14 @@ extern "C" {
 /** Type for I/Q samples storage */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 
+/** Type for ring buffer of I/Q samples storage */
+typedef struct lrpt_iq_rb__ lrpt_iq_rb_t;
+
 /** Type for QPSK symbols storage */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
+
+/** Type for ring buffer of QPSK symbols storage */
+typedef struct lrpt_qpsk_rb__ lrpt_qpsk_rb_t;
 
 /** Type for LRPT image storage */
 typedef struct lrpt_image__ lrpt_image_t;
@@ -404,6 +410,114 @@ LRPT_API bool lrpt_iq_data_to_complex(
         size_t n,
         lrpt_error_t *err);
 
+/** Allocate I/Q ring buffer object.
+ *
+ * Tries to allocate storage for I/Q ring buffer of requested \p len. User should free the object with
+ * #lrpt_iq_rb_free() after use.
+ *
+ * \param len Length of new I/Q ring buffer object in number of I/Q samples.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the allocated I/Q ring buffer object or \c NULL if allocation has failed.
+ */
+LRPT_API lrpt_iq_rb_t *lrpt_iq_rb_alloc(
+        size_t len,
+        lrpt_error_t *err);
+
+/** Free previously allocated I/Q ring buffer object.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ */
+LRPT_API void lrpt_iq_rb_free(
+        lrpt_iq_rb_t *rb);
+
+/** Length of I/Q ring buffer.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ *
+ * \return Maximum number of I/Q samples that can be stored in \p rb or \c 0 if \c NULL \p rb
+ * was passed.
+ */
+LRPT_API size_t lrpt_iq_rb_length(
+        const lrpt_iq_rb_t *rb);
+
+/** Number of stored samples in I/Q ring buffer.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ *
+ * \return Number of stored I/Q samples in \p rb or \c 0 if \c NULL \p rb
+ * was passed.
+ */
+LRPT_API size_t lrpt_iq_rb_used(
+        const lrpt_iq_rb_t *rb);
+
+/** Number of available for storage samples in I/Q ring buffer.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ *
+ * \return Number of available for storage I/Q samples in \p rb or \c 0 if \c NULL \p rb
+ * was passed.
+ */
+LRPT_API size_t lrpt_iq_rb_avail(
+        const lrpt_iq_rb_t *rb);
+
+/** Whether I/Q ring buffer object is empty.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ *
+ * \return \c true if ring buffer is fully empty or \c false if at least one I/Q sample
+ * is stored inside \p rb. \c false will be returned also if \c NULL \p rb was passed.
+ */
+LRPT_API bool lrpt_iq_rb_is_empty(
+        const lrpt_iq_rb_t *rb);
+
+/** Whether I/Q ring buffer object is full.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ *
+ * \return \c true if ring buffer is totally full or \c false if at least one I/Q sample can
+ * be placed inside \p rb. \c false will be returned also if \c NULL \p rb was passed.
+ */
+LRPT_API bool lrpt_iq_rb_is_full(
+        const lrpt_iq_rb_t *rb);
+
+/** Get I/Q data from I/Q ring buffer object.
+ *
+ * Returns requested number of I/Q samples from specified I/Q ring buffer object and frees them
+ * for future usage.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ * \param data Pointer to the I/Q data object.
+ * \param n Number of I/Q samples to get.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful popping and \c false otherwise. \c false will also be
+ * returned if ring buffer doesn't contain enough data for popping.
+ */
+LRPT_API bool lrpt_iq_rb_pop(
+        lrpt_iq_rb_t *rb,
+        lrpt_iq_data_t *data,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Put I/Q data to I/Q ring buffer object.
+ *
+ * Stores requested number of I/Q samples to specified I/Q ring buffer object.
+ *
+ * \param rb Pointer to the I/Q ring buffer object.
+ * \param data Pointer to the I/Q data object.
+ * \param n Number of I/Q samples to put.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful pushing and \c false otherwise. \c false will also be
+ * returned if ring buffer doesn't contain enough space for pushing.
+ */
+LRPT_API bool lrpt_iq_rb_push(
+        lrpt_iq_rb_t *rb,
+        const lrpt_iq_data_t *data,
+        size_t n,
+        lrpt_error_t *err);
+
 /** Allocate QPSK data object.
  *
  * Tries to allocate storage for QPSK data of requested \p len symbols. User should free
@@ -639,6 +753,114 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
 LRPT_API bool lrpt_qpsk_data_to_hard(
         const lrpt_qpsk_data_t *data,
         unsigned char *symbols,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Allocate QPSK ring buffer object.
+ *
+ * Tries to allocate storage for QPSK ring buffer of requested \p len. User should free the object with
+ * #lrpt_qpsk_rb_free() after use.
+ *
+ * \param len Length of new QPSK ring buffer object in number of QPSK symbols.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the allocated QPSK ring buffer object or \c NULL if allocation has failed.
+ */
+LRPT_API lrpt_qpsk_rb_t *lrpt_qpsk_rb_alloc(
+        size_t len,
+        lrpt_error_t *err);
+
+/** Free previously allocated QPSK ring buffer object.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ */
+LRPT_API void lrpt_qpsk_rb_free(
+        lrpt_qpsk_rb_t *rb);
+
+/** Length of QPSK ring buffer.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ *
+ * \return Maximum number of QPSK symbols that can be stored in \p rb or \c 0 if \c NULL \p rb
+ * was passed.
+ */
+LRPT_API size_t lrpt_qpsk_rb_length(
+        const lrpt_qpsk_rb_t *rb);
+
+/** Number of stored symbols in QPSK ring buffer.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ *
+ * \return Number of stored QPSK symbols in \p rb or \c 0 if \c NULL \p rb
+ * was passed.
+ */
+LRPT_API size_t lrpt_qpsk_rb_used(
+        const lrpt_qpsk_rb_t *rb);
+
+/** Number of available for storage symbols in QPSK ring buffer.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ *
+ * \return Number of available for storage QPSK symbols in \p rb or \c 0 if \c NULL \p rb
+ * was passed.
+ */
+LRPT_API size_t lrpt_qpsk_rb_avail(
+        const lrpt_qpsk_rb_t *rb);
+
+/** Whether QPSK ring buffer object is empty.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ *
+ * \return \c true if ring buffer is fully empty or \c false if at least one QPSK symbol
+ * is stored inside \p rb. \c false will be returned also if \c NULL \p rb was passed.
+ */
+LRPT_API bool lrpt_qpsk_rb_is_empty(
+        const lrpt_qpsk_rb_t *rb);
+
+/** Whether QPSK ring buffer object is full.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ *
+ * \return \c true if ring buffer is totally full or \c false if at least one QPSK symbol can
+ * be placed inside \p rb. \c false will be returned also if \c NULL \p rb was passed.
+ */
+LRPT_API bool lrpt_qpsk_rb_is_full(
+        const lrpt_qpsk_rb_t *rb);
+
+/** Get QPSK data from QPSK ring buffer object.
+ *
+ * Returns requested number of QPSK symbols from specified QPSK ring buffer object and frees them
+ * for future usage.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ * \param data Pointer to the QPSK data object.
+ * \param n Number of QPSK symbols to get.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful popping and \c false otherwise. \c false will also be
+ * returned if ring buffer doesn't contain enough data for popping.
+ */
+LRPT_API bool lrpt_qpsk_rb_pop(
+        lrpt_qpsk_rb_t *rb,
+        lrpt_qpsk_data_t *data,
+        size_t n,
+        lrpt_error_t *err);
+
+/** Put QPSK data to QPSK ring buffer object.
+ *
+ * Stores requested number of QPSK symbols to specified QPSK ring buffer object.
+ *
+ * \param rb Pointer to the QPSK ring buffer object.
+ * \param data Pointer to the QPSK data object.
+ * \param n Number of QPSK symbols to put.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful pushing and \c false otherwise. \c false will also be
+ * returned if ring buffer doesn't contain enough space for pushing.
+ */
+LRPT_API bool lrpt_qpsk_rb_push(
+        lrpt_qpsk_rb_t *rb,
+        const lrpt_qpsk_data_t *data,
         size_t n,
         lrpt_error_t *err);
 

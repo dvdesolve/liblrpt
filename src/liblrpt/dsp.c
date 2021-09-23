@@ -254,7 +254,7 @@ static bool resync_stream(
             if (!ok)
                 break;
 
-            /* Copy the actual data after the sync train and update total number of
+            /* Copy the actual data after the sync train (8 bits) and update total number of
              * copied symbols
              */
             memcpy(data->qpsk + resync_size, tmp_buf + posn + 8, sizeof(int8_t) * INTLV_DATA_LEN);
@@ -488,7 +488,7 @@ bool lrpt_dsp_filter_apply(
 
     /* Filter samples in the buffer */
     for (size_t i = 0; i < data->len; i++) {
-        complex double *cur_s = (samples + i);
+        complex double *cur_s = (samples + i); /* TODO that should be easily transformed to support ring buffering */
 
         /* Calculate and save filtered samples */
         complex double yn0 = (*cur_s * filter->a[0]);
@@ -540,7 +540,7 @@ lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
     dediff->lut = calloc(16385, sizeof(uint8_t));
 
     if (!dediff->lut) {
-        free(dediff);
+        lrpt_dsp_dediffcoder_deinit(dediff);
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
@@ -580,6 +580,7 @@ bool lrpt_dsp_dediffcoder_exec(
     if (!dediff || !data || data->len == 0)
         return false;
 
+    /* TODO all these calls to QPSK data buffer should be easily transformed to support ring buffering */
     int8_t t1 = data->qpsk[0];
     int8_t t2 = data->qpsk[1];
 
@@ -616,6 +617,10 @@ bool lrpt_dsp_deinterleaver_exec(
 
         return false;
     }
+
+    /* TODO this function (and resync_stream() too) modifies source data in nonlinear fashion.
+     * May be we should store resulting data in separate output object instead or modify this
+     * function to perform deinterleaving in realtime. */
 
     size_t old_size = data->len;
     int8_t *res_buf = NULL;

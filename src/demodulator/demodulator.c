@@ -323,7 +323,7 @@ bool lrpt_demodulator_exec(
 
     /* Resize output data structure */
     if (output->len < (input->len * demod->interp_factor))
-        if (!lrpt_qpsk_data_resize(output, input->len * demod->interp_factor, err))
+        if (!lrpt_qpsk_data_resize(output, input->len * demod->interp_factor, err)) /* TODO that should be easily transformed to support ring buffering */
             return false;
 
     /* Intermediate result storage */
@@ -333,14 +333,14 @@ bool lrpt_demodulator_exec(
     /* Now we're ready to process filtered I/Q data and get symbols */
     for (size_t i = 0; i < input->len; i++) {
         /* Make complex variable from filtered sample */
-        complex double cdata = input->iq[i];
+        complex double cdata = input->iq[i]; /* TODO that should be easily transformed to support ring buffering */
 
         for (uint8_t j = 0; j < demod->interp_factor; j++) {
             /* Pass samples through interpolator RRC filter */
             complex double fdata = lrpt_demodulator_rrc_filter_apply(demod->rrc, cdata);
 
             /* Demodulate using appropriate function */
-            if (demod_qpsk(demod, fdata, &sym)) {
+            if (demod_qpsk(demod, fdata, &sym)) { /* TODO that should be easily transformed to support ring buffering */
                 output->qpsk[2 * out_len] = sym.f;
                 output->qpsk[2 * out_len + 1] = sym.s;
 
