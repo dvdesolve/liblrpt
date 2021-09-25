@@ -63,17 +63,16 @@
 
 /*************************************************************************************************/
 
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+/*************************************************************************************************/
+
 /* Support for C++ codes */
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/*************************************************************************************************/
-
-#include <complex.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
 
 /*************************************************************************************************/
 
@@ -368,7 +367,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
  */
 LRPT_API bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
-        const complex double *samples,
+        const _Complex double *samples,
         size_t n,
         lrpt_error_t *err);
 
@@ -385,7 +384,7 @@ LRPT_API bool lrpt_iq_data_from_complex(
  * \c NULL \p samples data array was passed.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
-        const complex double *samples,
+        const _Complex double *samples,
         size_t n,
         lrpt_error_t *err);
 
@@ -406,7 +405,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
  */
 LRPT_API bool lrpt_iq_data_to_complex(
         const lrpt_iq_data_t *data,
-        complex double *samples,
+        _Complex double *samples,
         size_t n,
         lrpt_error_t *err);
 

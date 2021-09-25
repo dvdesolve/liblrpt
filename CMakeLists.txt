@@ -19,6 +19,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(liblrpt VERSION 0.1.0 LANGUAGES C DESCRIPTION "Demodulate, decode and post-process LRPT signals")
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 
 # use FHS
 include(GNUInstallDirs)

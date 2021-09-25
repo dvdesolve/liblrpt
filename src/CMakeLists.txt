@@ -87,7 +87,6 @@ target_link_libraries(lrpt PRIVATE m)
 set_target_properties(lrpt PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(lrpt PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(lrpt PROPERTIES PUBLIC_HEADER "../include/lrpt.h")
-set_target_properties(lrpt PROPERTIES C_STANDARD 11)
 set_target_properties(lrpt PROPERTIES DEFINE_SYMBOL "LRPT_DLL_EXPORTS")
 
 
