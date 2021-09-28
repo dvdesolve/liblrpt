@@ -483,7 +483,8 @@ LRPT_API bool lrpt_iq_rb_is_full(
 /** Get I/Q data from I/Q ring buffer object.
  *
  * Returns requested number of I/Q samples from specified I/Q ring buffer object and frees them
- * for future usage.
+ * for future usage. If \p n is greater than remaining number of I/Q samples in ring buffer then
+ * all remaining samples will be popped.
  *
  * \param rb Pointer to the I/Q ring buffer object.
  * \param data Pointer to the I/Q data object.
@@ -829,7 +830,8 @@ LRPT_API bool lrpt_qpsk_rb_is_full(
 /** Get QPSK data from QPSK ring buffer object.
  *
  * Returns requested number of QPSK symbols from specified QPSK ring buffer object and frees them
- * for future usage.
+ * for future usage. If \p n is greater than remaining number of QPSK symbols in ring buffer then
+ * all remaining symbols will be popped.
  *
  * \param rb Pointer to the QPSK ring buffer object.
  * \param data Pointer to the QPSK data object.

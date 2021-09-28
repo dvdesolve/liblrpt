@@ -169,7 +169,7 @@ bool lrpt_iq_data_append(
         return false;
     }
 
-    /* Silently ignore empty added data */
+    /* Silently ignore empty data */
     if (add->len == 0)
         return true;
 
@@ -473,16 +473,16 @@ bool lrpt_iq_rb_pop(
         return false;
     }
 
-    if (lrpt_iq_rb_used(rb) < n) {
+    if (lrpt_iq_rb_used(rb) < n)
+        n = lrpt_iq_rb_used(rb);
+
+    if (n == 0) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Not enough data in I/Q ring buffer object for pop");
+                    "No I/Q data to pop");
 
         return false;
     }
-
-    if (n == 0)
-        return true;
 
     if (!lrpt_iq_data_resize(data, n, err))
         return false;
@@ -1107,16 +1107,16 @@ bool lrpt_qpsk_rb_pop(
         return false;
     }
 
-    if (lrpt_qpsk_rb_used(rb) < n) {
+    if (lrpt_qpsk_rb_used(rb) < n)
+        n = lrpt_qpsk_rb_used(rb);
+
+    if (n == 0) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Not enough data in QPSK ring buffer object for pop");
+                    "No QPSK data to pop");
 
         return false;
     }
-
-    if (n == 0)
-        return true;
 
     if (!lrpt_qpsk_data_resize(data, n, err))
         return false;
