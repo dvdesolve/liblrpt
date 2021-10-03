@@ -418,10 +418,14 @@ size_t lrpt_iq_rb_used(
     if (!rb)
         return 0;
 
-    if (rb->head >= rb->tail)
-        return (rb->head - rb->tail);
+    /* Save as soon as possible */
+    size_t t = rb->tail;
+    size_t h = rb->head; /* We're estimating largest possible used buffer size */
+
+    if (h >= t)
+        return (h - t);
     else
-        return (rb->len - rb->tail + rb->head);
+        return (rb->len - t + h);
 }
 
 /*************************************************************************************************/
@@ -1052,10 +1056,14 @@ size_t lrpt_qpsk_rb_used(
     if (!rb)
         return 0;
 
-    if (rb->head >= rb->tail)
-        return (rb->head - rb->tail);
+    /* Save as soon as possible */
+    size_t t = rb->tail;
+    size_t h = rb->head; /* We're estimating largest possible used buffer size */
+
+    if (h >= t)
+        return (h - t);
     else
-        return (rb->len - rb->tail + rb->head);
+        return (rb->len - t + h);
 }
 
 /*************************************************************************************************/
