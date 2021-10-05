@@ -295,8 +295,30 @@ double lrpt_demodulator_siglvl(
 
 /*************************************************************************************************/
 
-/* lrpt_demodulator_phaseerr() */
-double lrpt_demodulator_phaseerr(
+/* lrpt_demodulator_pllstate() */
+bool lrpt_demodulator_pllstate(
+        const lrpt_demodulator_t *demod) {
+    if (!demod || !demod->pll)
+        return false;
+
+    return demod->pll->locked;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_pllfreq() */
+double lrpt_demodulator_pllfreq(
+        const lrpt_demodulator_t *demod) {
+    if (!demod || !demod->pll)
+        return 0;
+
+    return (((demod->offset) ? 2 : 1 ) * demod->pll->nco_freq * demod->sym_rate / (2 * M_PI));
+}
+
+/*************************************************************************************************/
+
+/* lrpt_demodulator_pllphaseerr() */
+double lrpt_demodulator_pllphaseerr(
         const lrpt_demodulator_t *demod) {
     if (!demod || !demod->pll)
         return 0;

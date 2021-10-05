@@ -1582,13 +1582,31 @@ LRPT_API double lrpt_demodulator_maxgain(
 LRPT_API double lrpt_demodulator_siglvl(
         const lrpt_demodulator_t *demod);
 
+/** PLL status.
+ *
+ * \param demod Pointer to the demodulator object.
+ *
+ * \return \c true if Costas loop is locked otherwise or in case of \c NULL \p demod parameter.
+ */
+LRPT_API bool lrpt_demodulator_pllstate(
+        const lrpt_demodulator_t *demod);
+
+/** PLL frequency.
+ *
+ * \param demod Pointer to the demodulator object.
+ *
+ * \return Current Costas loop NCO frequency or \c 0 in case of \c NULL \p demod parameter.
+ */
+LRPT_API double lrpt_demodulator_pllfreq(
+        const lrpt_demodulator_t *demod);
+
 /** Costas PLL average phase error.
  *
  * \param demod Pointer to the demodulator object.
  *
  * \return Current PLL average phase error value or \c 0 in case of \c NULL \p demod parameter.
  */
-LRPT_API double lrpt_demodulator_phaseerr(
+LRPT_API double lrpt_demodulator_pllphaseerr(
         const lrpt_demodulator_t *demod);
 
 /** Perform QPSK demodulation.
