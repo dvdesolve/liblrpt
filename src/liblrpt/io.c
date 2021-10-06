@@ -610,6 +610,17 @@ uint32_t lrpt_iq_file_samplerate(
 
 /*************************************************************************************************/
 
+/* lrpt_iq_file_bandwidth() */
+uint32_t lrpt_iq_file_bandwidth(
+        const lrpt_iq_file_t *file) {
+    if (!file)
+        return 0;
+
+    return file->bandwidth;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_iq_file_devicename() */
 const char *lrpt_iq_file_devicename(
         const lrpt_iq_file_t *file) {

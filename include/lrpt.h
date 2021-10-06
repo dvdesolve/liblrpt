@@ -1180,6 +1180,15 @@ LRPT_API bool lrpt_iq_file_is_offsetted(
 LRPT_API uint32_t lrpt_iq_file_samplerate(
         const lrpt_iq_file_t *file);
 
+/** I/Q data file bandwidth.
+ *
+ * \param file Pointer to the I/Q data file object.
+ *
+ * \return Signal bandwidth or \c 0 in case of \c NULL \p file parameter.
+ */
+LRPT_API uint32_t lrpt_iq_file_bandwidth(
+        const lrpt_iq_file_t *file);
+
 /** Device name used to write file.
  *
  * \param file Pointer to the I/Q data file object.
