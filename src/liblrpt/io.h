@@ -46,6 +46,7 @@ struct lrpt_iq_file__ {
     uint8_t version; /**< File format version */
     unsigned char flags; /**< I/Q data flags */
     uint32_t samplerate; /**< Sampling rate */
+    uint32_t bandwidth; /**< Bandwidth of the signal */
     char *device_name; /**< Device name info */
 
     uint64_t header_len; /**< Length of header data */

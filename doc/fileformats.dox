@@ -27,6 +27,10 @@
  * Sampling rate should be stored as well so QPSK demodulator will be able to perform demodulation.
  * Sampling rate is stored after flags as 4-byte unsigned integer in Big Endian form.
  *
+ * \subsubsection lrptiq_bandwidth Bandwidth
+ * Signal bandwidth should be stored so different DSP procedures will be possible.
+ * Bandwidth is stored as 4-byte unsigned integer in Big Endian form.
+ *
  * \subsubsection lrptiq_devicename Device name
  * Device name section should be presented in I/Q file even if actual device name is empty
  * string. This section is actually contains two adjacent subsections: length and device name

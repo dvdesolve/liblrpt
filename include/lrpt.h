@@ -1130,6 +1130,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
  * \param fname Name of file to write I/Q data to.
  * \param offset Whether offset QPSK was used or not.
  * \param samplerate Sampling rate.
+ * \param bandwidth Bandwidth of the signal.
  * \param device_name Device name string. If \p device_name is \c NULL no device name info will
  * be written.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
@@ -1140,6 +1141,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         const char *fname,
         bool offset,
         uint32_t samplerate,
+        uint32_t bandwidth,
         const char *device_name,
         lrpt_error_t *err);
 

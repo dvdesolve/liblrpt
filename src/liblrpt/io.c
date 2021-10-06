@@ -79,6 +79,8 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 static lrpt_iq_file_t *iq_file_open_r_v1(
         FILE *fh,
         lrpt_error_t *err) {
+    uint64_t hl = 7; /* Header length */
+
     /* File position = 7 */
 
     /* Read flags */
@@ -93,6 +95,8 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         return NULL;
     }
+
+    hl += 1;
 
     /* File position = 8 */
 
@@ -110,8 +114,27 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     }
 
     const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s, true);
+    hl += 4;
 
     /* File position = 12 */
+
+    /* Read bandwidth */
+    unsigned char bw_s[4];
+
+    if (fread(bw_s, 1, 4, fh) != 4) {
+        fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
+                    "I/Q file ver. 1 bandwidth read error");
+
+        return NULL;
+    }
+
+    const uint32_t bw = lrpt_utils_ds_uint32_t(bw_s, true);
+    hl += 4;
+
+    /* File position = 16 */
 
     /* Read in device name length */
     uint8_t name_l;
@@ -126,7 +149,8 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         return NULL;
     }
 
-    /* File position = 13 */
+    /* File position = 17 */
+    hl += 1;
 
     /* Read device name info */
     char *name = NULL;
@@ -147,7 +171,9 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
         }
     }
 
-    /* File position = 13 + name_l */
+    hl += name_l;
+
+    /* File position = 17 + name_l */
 
     /* Read data length */
     unsigned char data_l_s[8];
@@ -164,8 +190,9 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     }
 
     const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s, true);
+    hl += 8;
 
-    /* File position = 21 + name_l */
+    /* File position = 25 + name_l */
 
     /* Perform sanity checking - one complex I/Q sample is encoded as two doubles and each double
      * is serialized to the 10 unsigned chars
@@ -224,8 +251,9 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     file->version = LRPT_IQ_FILE_VER1;
     file->flags = flags;
     file->samplerate = sr;
+    file->bandwidth = bw;
     file->device_name = name;
-    file->header_len = 21 + name_l; /* Just a sum of all elements previously read */ /* TODO summate during reading */
+    file->header_len = hl;
     file->data_len = data_l;
     file->current = 0;
     file->iobuf = iobuf;
@@ -313,6 +341,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         const char *fname,
         bool offset,
         uint32_t samplerate,
+        uint32_t bandwidth,
         const char *device_name,
         lrpt_error_t *err) {
     if (!fname || (strlen(fname) == 0)) {
@@ -333,6 +362,8 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         return NULL;
     }
 
+    uint64_t hl = 0; /* Header length */
+
     /* File position = 0 */
 
     const uint8_t version = LRPT_IQ_FILE_VER1;
@@ -348,6 +379,8 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         return NULL;
     }
 
+    hl += 6;
+
     /* File position = 6 */
 
     if (fwrite(&version, sizeof(uint8_t), 1, fh) != 1) {
@@ -359,6 +392,8 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         return NULL;
     }
+
+    hl += 1;
 
     /* File position = 7 */
 
@@ -378,6 +413,8 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         return NULL;
     }
 
+    hl += 1;
+
     /* File position = 8 */
 
     /* Write sampling rate info */
@@ -394,7 +431,27 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         return NULL;
     }
 
+    hl += 4;
+
     /* File position = 12 */
+
+    /* Write bandwidth info */
+    unsigned char bw_s[4];
+    lrpt_utils_s_uint32_t(bandwidth, bw_s, true);
+
+    if (fwrite(bw_s, 1, 4, fh) != 4) {
+        fclose(fh);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "I/Q file ver. 1 bandwidth write error");
+
+        return NULL;
+    }
+
+    hl += 4;
+
+    /* File position = 16 */
 
     /* Write device name */
     uint8_t name_l = 0;
@@ -413,7 +470,9 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         return NULL;
     }
 
-    /* File position = 13 */
+    hl += 1;
+
+    /* File position = 17 */
 
     char *name = NULL;
 
@@ -434,7 +493,9 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         strncpy(name, device_name, name_l);
     }
 
-    /* File position = 13 + name_l */
+    hl += name_l;
+
+    /* File position = 17 + name_l */
 
     /* Write initial data length */
     unsigned char data_l_s[8];
@@ -451,7 +512,9 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         return NULL;
     }
 
-    /* File position = 21 + name_l */
+    hl += 8;
+
+    /* File position = 25 + name_l */
 
     /* Try to allocate temporary I/O buffer */
     unsigned char *iobuf = calloc(IO_IQ_DATA_N * UTILS_COMPLEX_SER_SIZE, sizeof(unsigned char));
@@ -488,7 +551,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     file->flags = flags;
     file->samplerate = samplerate;
     file->device_name = name;
-    file->header_len = 21 + name_l; /* Just a sum of all elements previously written */ /* TODO summate during writing */
+    file->header_len = hl;
     file->data_len = 0;
     file->current = 0;
     file->iobuf = iobuf;
@@ -840,6 +903,8 @@ bool lrpt_iq_data_write_to_file(
 static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
         FILE *fh,
         lrpt_error_t *err) {
+    uint64_t hl = 9; /* Header length */
+
     /* File position = 9 */
 
     /* Read flags */
@@ -854,6 +919,8 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
         return NULL;
     }
+
+    hl += 1;
 
     /* File position = 10 */
 
@@ -871,6 +938,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     }
 
     const uint32_t sr = lrpt_utils_ds_uint32_t(sr_s, true);
+    hl += 4;
 
     /* File position = 14 */
 
@@ -888,6 +956,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     }
 
     const uint64_t data_l = lrpt_utils_ds_uint64_t(data_l_s, true);
+    hl += 8;
 
     /* File position = 22 */
 
@@ -965,7 +1034,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     file->version = LRPT_QPSK_FILE_VER1;
     file->flags = flags;
     file->symrate = sr;
-    file->header_len = 22; /* Just a sum of all elements previously read */ /* TODO summate during reading */
+    file->header_len = hl;
     file->data_len = data_l;
     file->current = 0;
     file->iobuf = iobuf;
@@ -1074,6 +1143,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
         return NULL;
     }
 
+    uint64_t hl = 0; /* Header length */
+
     /* File position = 0 */
 
     const uint8_t version = LRPT_QPSK_FILE_VER1;
@@ -1089,6 +1160,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
         return NULL;
     }
 
+    hl += 8;
+
     /* File position = 8 */
 
     if (fwrite(&version, sizeof(uint8_t), 1, fh) != 1) {
@@ -1100,6 +1173,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         return NULL;
     }
+
+    hl += 1;
 
     /* File position = 9 */
 
@@ -1125,6 +1200,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
         return NULL;
     }
 
+    hl += 1;
+
     /* File position = 10 */
 
     /* Write symbol rate info */
@@ -1141,6 +1218,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
         return NULL;
     }
 
+    hl += 4;
+
     /* File position = 14 */
 
     /* Write initial data length */
@@ -1156,6 +1235,8 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         return NULL;
     }
+
+    hl += 8;
 
     /* File position = 22 */
 
@@ -1194,7 +1275,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
     file->version = LRPT_QPSK_FILE_VER1;
     file->flags = flags;
     file->symrate = symrate;
-    file->header_len = 22; /* Just a sum of all elements previously written */ /* TODO summate during writing */
+    file->header_len = hl;
     file->data_len = 0;
     file->current = 0;
     file->iobuf = iobuf;
