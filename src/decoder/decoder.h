@@ -84,9 +84,12 @@ struct lrpt_decoder__ {
     /** @} */
 
     /** @{ */
-    /** Packet counters (only for stats) */
-    uint32_t ok_cnt, tot_cnt;
+    /** Frame counters (only for stats) */
+    size_t frm_ok_cnt, frm_tot_cnt;
     /** @} */
+
+    size_t cvcdu_cnt; /**< CVCDU counter */
+    size_t pck_cnt; /**< Packet counter */
 
     /** @{ */
     /** Used by data link layer processor */

@@ -151,8 +151,10 @@ lrpt_decoder_t *lrpt_decoder_init(
 
     decoder->sc = sc;
 
-    decoder->ok_cnt = 0;
-    decoder->tot_cnt = 0;
+    decoder->frm_ok_cnt = 0;
+    decoder->frm_tot_cnt = 0;
+    decoder->cvcdu_cnt = 0;
+    decoder->pck_cnt = 0;
 
     decoder->sig_q = 0;
     decoder->framing_ok = false;
@@ -213,13 +215,13 @@ bool lrpt_decoder_exec(
         if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) { /* TODO that should be easily transformed to support ring buffering */
             lrpt_decoder_packet_parse_cvcdu(decoder);
 
-            decoder->ok_cnt++; /* TODO count frames, CVCDUs and packets separately */
+            decoder->frm_ok_cnt++;
             decoder->framing_ok = true;
         }
         else
             decoder->framing_ok = false;
 
-        decoder->tot_cnt++;  /* TODO count frames, CVCDUs and packets separately */
+        decoder->frm_tot_cnt++;
         n_sfls++;
     }
 
@@ -273,6 +275,61 @@ lrpt_image_t *lrpt_decoder_dump_image(
     }
 
     return result;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_framingstate() */
+bool lrpt_decoder_framingstate(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return false;
+
+    return decoder->framing_ok;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_framestot_cnt() */
+size_t lrpt_decoder_framestot_cnt(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    return decoder->frm_tot_cnt;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_framesok_cnt() */
+size_t lrpt_decoder_framesok_cnt(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    return decoder->frm_ok_cnt;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_cvcdu_cnt() */
+size_t lrpt_decoder_cvcdu_cnt(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    return decoder->cvcdu_cnt;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_packets_cnt() */
+size_t lrpt_decoder_packets_cnt(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    return decoder->pck_cnt;
 }
 
 /*************************************************************************************************/

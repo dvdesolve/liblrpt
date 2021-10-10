@@ -178,6 +178,9 @@ static uint16_t parse_partial(
         lrpt_decoder_t *decoder,
         uint8_t *p,
         uint16_t len) {
+    /* Increase packet counter */
+    decoder->pck_cnt++;
+
     /* For more information see section "3.2 Source Packet structure",
      * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
      */
@@ -210,6 +213,10 @@ static uint16_t parse_partial(
 /* lrpt_decoder_packet_parse_cvcdu() */
 void lrpt_decoder_packet_parse_cvcdu(
         lrpt_decoder_t *decoder) {
+    /* Increase CVCDU counter */
+    decoder->cvcdu_cnt++;
+
+    /* Get pointer to the error-corrected data */
     uint8_t *p = decoder->ecced;
 
     /* Parse VCDU primary header. For more details see section "5 DATA LINK LAYER",

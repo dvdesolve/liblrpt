@@ -1597,7 +1597,8 @@ LRPT_API double lrpt_demodulator_siglvl(
  *
  * \param demod Pointer to the demodulator object.
  *
- * \return \c true if Costas loop is locked otherwise or in case of \c NULL \p demod parameter.
+ * \return \c true if Costas loop is locked and \c false otherwise or in case of
+ * \c NULL \p demod parameter.
  */
 LRPT_API bool lrpt_demodulator_pllstate(
         const lrpt_demodulator_t *demod);
@@ -1696,6 +1697,53 @@ LRPT_API bool lrpt_decoder_exec(
 LRPT_API lrpt_image_t *lrpt_decoder_dump_image(
         lrpt_decoder_t *decoder,
         lrpt_error_t *err);
+
+/** Framing status.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return \c true if framing is good or \c false otherwise or in case of
+ * \c NULL \p decoder parameter.
+ */
+LRPT_API bool lrpt_decoder_framingstate(
+        const lrpt_decoder_t *decoder);
+
+/** Total number of frames processed.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Number of frames have been processed or \c 0 in case of \c NULL \p decoder parameter.
+ */
+LRPT_API size_t lrpt_decoder_framestot_cnt(
+        const lrpt_decoder_t *decoder);
+
+/** Number of good frames processed.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Number of successfully processed frames or \c 0 in case of \c NULL \p decoder parameter.
+ */
+LRPT_API size_t lrpt_decoder_framesok_cnt(
+        const lrpt_decoder_t *decoder);
+
+/** Number of CVCDUs processed.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Number of CVCDUs have been processed or \c 0 in case of \c NULL \p decoder parameter.
+ */
+LRPT_API size_t lrpt_decoder_cvcdu_cnt(
+        const lrpt_decoder_t *decoder);
+
+/** Number of partial packets processed.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Number of partial packets have been processed or \c 0 in case of
+ * \c NULL \p decoder parameter.
+ */
+LRPT_API size_t lrpt_decoder_packets_cnt(
+        const lrpt_decoder_t *decoder);
 
 /** LRPT decoder soft frame length.
  *
