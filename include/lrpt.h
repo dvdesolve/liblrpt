@@ -1745,6 +1745,15 @@ LRPT_API size_t lrpt_decoder_cvcdu_cnt(
 LRPT_API size_t lrpt_decoder_packets_cnt(
         const lrpt_decoder_t *decoder);
 
+/** Signal quality.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Signal quality in percents or \c 0 in case of \c NULL \p decoder parameter.
+ */
+LRPT_API uint8_t lrpt_decoder_sigqual(
+        const lrpt_decoder_t *decoder);
+
 /** LRPT decoder soft frame length.
  *
  * \return Length of decoder's soft frame (in bits).

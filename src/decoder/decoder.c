@@ -334,6 +334,17 @@ size_t lrpt_decoder_packets_cnt(
 
 /*************************************************************************************************/
 
+/* lrpt_decoder_sigqual() */
+uint8_t lrpt_decoder_sigqual(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    return decoder->sig_q;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_decoder_sfl() */
 size_t lrpt_decoder_sfl(void) {
     return DECODER_SOFT_FRAME_LEN;
