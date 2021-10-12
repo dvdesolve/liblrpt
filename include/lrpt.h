@@ -191,6 +191,9 @@ typedef enum lrpt_dsp_filter_type__ {
 /** Dediffcoder object type */
 typedef struct lrpt_dsp_dediffcoder__ lrpt_dsp_dediffcoder_t;
 
+/** Integer FFT object type */
+typedef struct lrpt_dsp_ifft__ lrpt_dsp_ifft_t;
+
 /** @} */
 
 /** \addtogroup demod Demodulator
@@ -1521,6 +1524,35 @@ LRPT_API bool lrpt_dsp_dediffcoder_exec(
 LRPT_API bool lrpt_dsp_deinterleaver_exec(
         lrpt_qpsk_data_t *data,
         lrpt_error_t *err);
+
+/** Initialize Integer FFT object.
+ *
+ * \param width Width of the FFT.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the Integer FFT object or \c NULL in case of error.
+ */
+LRPT_API lrpt_dsp_ifft_t *lrpt_dsp_ifft_init(
+        uint16_t width,
+        lrpt_error_t *err);
+
+/** Free previously allocated Integer FFT object.
+ *
+ * \param ifft Pointer to the Integer FFT object.
+ */
+LRPT_API void lrpt_dsp_ifft_deinit(
+        lrpt_dsp_ifft_t *ifft);
+
+/** Compute complex->complex radix-2 forward FFT in 16-bit integer arithmetics.
+ *
+ * \p data length should be twice the Integer FFT object's width.
+ *
+ * \param ifft Pointer to the Integer FFT object.
+ * \param data Pointer to the resulting FFT coefficients storage.
+ */
+LRPT_API void lrpt_dsp_ifft_exec(
+        const lrpt_dsp_ifft_t *ifft,
+        int16_t *data);
 
 /** @} */
 

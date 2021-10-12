@@ -33,6 +33,7 @@
 /*************************************************************************************************/
 
 #include <complex.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
@@ -67,6 +68,15 @@ struct lrpt_dsp_dediffcoder__ {
     /** Used by dediffcoder */
     int8_t pr_I, pr_Q;
     /** @} */
+};
+
+/** Integer FFT object */
+struct lrpt_dsp_ifft__ {
+    uint16_t width; /**< FFT width */
+    uint8_t order; /**< FFT order */
+
+    size_t len; /**< FFT data length */
+    int16_t *sw_lut; /**< Integer sinewave lookup table */
 };
 
 /*************************************************************************************************/
