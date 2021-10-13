@@ -412,6 +412,29 @@ LRPT_API bool lrpt_iq_data_to_complex(
         size_t n,
         lrpt_error_t *err);
 
+/** Convert I/Q data to the pairs of double-valued samples.
+ *
+ * Saves \p n I/Q samples to the resulting \p samples_i and \p samples_q arrays. Caller should be
+ * responsible that \p samples_i and \p samples_q are large enough to hold at least \p n elements!
+ *
+ * \param data Pointer to the I/Q data object.
+ * \param samples_i Pointer to the resulting storage of I parts of samples.
+ * \param samples_q Pointer to the resulting storage of Q parts of samples.
+ * \param n Number of I/Q samples to convert.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful conversion and \c false otherwise.
+ *
+ * \note If more samples than I/Q data object contains was requested then all samples will be
+ * converted.
+ */
+LRPT_API bool lrpt_iq_data_to_doubles(
+        const lrpt_iq_data_t *data,
+        double *samples_i,
+        double *samples_q,
+        size_t n,
+        lrpt_error_t *err);
+
 /** Allocate I/Q ring buffer object.
  *
  * Tries to allocate storage for I/Q ring buffer of requested \p len. User should free the object with

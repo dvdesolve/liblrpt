@@ -341,6 +341,36 @@ bool lrpt_iq_data_to_complex(
 
 /*************************************************************************************************/
 
+/* TODO add offset */
+/* lrpt_iq_data_to_doubles() */
+bool lrpt_iq_data_to_doubles(
+        const lrpt_iq_data_t *data,
+        double *samples_i,
+        double *samples_q,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!data || !data->iq) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q data object is NULL or corrupted");
+
+        return false;
+    }
+
+    if (n > data->len)
+        n = data->len;
+
+    /* Go through the each sample and store it in resulting array */
+    for (size_t i = 0; i < n; i++) {
+        samples_i[i] = creal(data->iq[i]);
+        samples_q[i] = cimag(data->iq[i]);
+    }
+
+    return true;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_iq_rb_alloc() */
 lrpt_iq_rb_t *lrpt_iq_rb_alloc(
         size_t len,
