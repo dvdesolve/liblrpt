@@ -120,6 +120,10 @@ lrpt_decoder_t *lrpt_decoder_init(
     decoder->corr_word = 0;
     decoder->corr_val = 64;
 
+    /* Initially we have no pixels */
+    for (uint8_t i = 0; i < 6; i++)
+        decoder->pxls_count[i] = 0;
+
     decoder->channel_image_height = 0;
 
     /* Each MCU is 8x8 block */
@@ -341,6 +345,73 @@ uint8_t lrpt_decoder_sigqual(
         return 0;
 
     return decoder->sig_q;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_pxls_avail() */
+void lrpt_decoder_pxls_avail(
+        const lrpt_decoder_t *decoder,
+        size_t count[6]) {
+    if (!decoder)
+        return;
+
+    for (uint8_t i = 0; i < 6; i++)
+        count[i] = decoder->pxls_count[i];
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_pxls_get() */
+bool lrpt_decoder_pxls_get(
+        const lrpt_decoder_t *decoder,
+        uint8_t *pxls,
+        uint8_t apid,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!decoder) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Decoder object is empty");
+
+        return false;
+    }
+
+    if ((apid < 64) || (apid > 69)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "APID is incorrect");
+
+        return false;
+    }
+
+    const lrpt_image_t *img = decoder->image;
+    size_t img_size = (img->width * img->height);
+
+    if (offset >= img_size) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Requested offset exceeds image size");
+
+        return false;
+    }
+
+    if (n > (img_size - offset))
+        n = (img_size - offset);
+
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_PARAM,
+                    "Nothing to read");
+
+        return false;
+    }
+
+    /* Just copy pixels */
+    memcpy(pxls, img->channels[apid - 64] + offset, n * sizeof(uint8_t));
+
+    return true;
 }
 
 /*************************************************************************************************/

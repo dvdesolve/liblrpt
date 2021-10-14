@@ -77,6 +77,7 @@ struct lrpt_decoder__ {
     /** @} */
 
     lrpt_image_t *image; /**< Per-channel image representation for all possible APIDs (64-69) */
+    size_t pxls_count[6]; /**< Current pixels count for each APID */
 
     /** @{ */
     /** Image dimensions */

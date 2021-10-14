@@ -1809,6 +1809,39 @@ LRPT_API size_t lrpt_decoder_packets_cnt(
 LRPT_API uint8_t lrpt_decoder_sigqual(
         const lrpt_decoder_t *decoder);
 
+/** Current number of pixels available.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param count Array of length 6 to store numbers to.
+ */
+LRPT_API void lrpt_decoder_pxls_avail(
+        const lrpt_decoder_t *decoder,
+        size_t count[6]);
+
+/** Get a slice of pixels.
+ *
+ * Reads requested number of pixels \p n starting with \p offset for specified \p apid and stores
+ * them into provided array \p pxls which should be large enough to hold at least \p n
+ * pixels. If requested number of pixels plus offset exceeds image size then all remaining pixels
+ * will be returned.
+ *
+ * \param decoder Pointer to the decoder object.
+ * \param pxls Resulting storage for pixels data.
+ * \param apid APID number.
+ * \param offset Offset to read pixels from.
+ * \param n Number of pixels to get.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful reading and \c false otherwise.
+ */
+LRPT_API bool lrpt_decoder_pxls_get(
+        const lrpt_decoder_t *decoder,
+        uint8_t *pxls,
+        uint8_t apid,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err);
+
 /** LRPT decoder soft frame length.
  *
  * \return Length of decoder's soft frame (in bits).

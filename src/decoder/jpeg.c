@@ -276,6 +276,7 @@ static void fill_pix(
         size_t off = (x + y * decoder->channel_image_width);
 
         lrpt_image_set_px(decoder->image, apid, off, t);
+        decoder->pxls_count[apid - 64] = (off + 1); /* Current offset is a pixel count */
     }
 }
 
