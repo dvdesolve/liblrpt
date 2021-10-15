@@ -125,26 +125,16 @@ lrpt_decoder_t *lrpt_decoder_init(
         decoder->pxls_count[i] = 0;
 
     decoder->channel_image_height = 0;
+    decoder->channel_image_width = lrpt_decoder_spacecraft_imgwidth(sc);
 
-    /* Each MCU is 8x8 block */
-    switch (sc) {
-        case LRPT_DECODER_SC_METEORM2:
-            decoder->channel_image_width = (196 * 8);
+    if (decoder->channel_image_width == 0) {
+        lrpt_decoder_deinit(decoder);
 
-            break;
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Spacecraft identifier is incorrect");
 
-        default:
-            {
-                lrpt_decoder_deinit(decoder);
-
-                if (err)
-                    lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                            "Spacecraft identifier is incorrect");
-
-                return NULL;
-            }
-
-            break;
+        return NULL;
     }
 
     if (!lrpt_image_set_width(decoder->image, decoder->channel_image_width, err)) {
@@ -412,6 +402,34 @@ bool lrpt_decoder_pxls_get(
     memcpy(pxls, img->channels[apid - 64] + offset, n * sizeof(uint8_t));
 
     return true;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_imgwidth() */
+size_t lrpt_decoder_imgwidth(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    return decoder->channel_image_width;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_spacecraft_imgwidth() */
+size_t lrpt_decoder_spacecraft_imgwidth(
+        lrpt_decoder_spacecraft_t sc) {
+    /* Each MCU is 8x8 block */
+    switch (sc) {
+        case LRPT_DECODER_SC_METEORM2:
+            return (196 * 8);
+            break;
+
+        default: /* Unknown spacecraft */
+            return 0;
+            break;
+    }
 }
 
 /*************************************************************************************************/

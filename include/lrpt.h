@@ -1842,6 +1842,25 @@ LRPT_API bool lrpt_decoder_pxls_get(
         size_t n,
         lrpt_error_t *err);
 
+/** Current decoder channel image width.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Current channel image width or \c 0 if \c NULL \p decoder parameter.
+ */
+LRPT_API size_t lrpt_decoder_imgwidth(
+        const lrpt_decoder_t *decoder);
+
+/** Standard image width for spacecraft.
+ *
+ * \param sc Spacecraft identifier.
+ *
+ * \return Standard image width (in px) for specified spacecraft or \c 0 if spacecraft is not
+ * supported.
+ */
+LRPT_API size_t lrpt_decoder_spacecraft_imgwidth(
+        lrpt_decoder_spacecraft_t sc);
+
 /** LRPT decoder soft frame length.
  *
  * \return Length of decoder's soft frame (in bits).
