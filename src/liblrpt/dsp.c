@@ -160,7 +160,7 @@ static bool find_sync(
         uint8_t *offset,
         uint8_t *sync) {
     *offset = 0;
-    bool result  = false;
+    bool result = false;
 
     /* Search for a sync byte at the beginning of block */
     for (uint8_t i = 0; i < (SYNCD_BLOCK_SIZ - INTLV_SYNCDATA * SYNCD_DEPTH); i++) {
@@ -226,11 +226,9 @@ static bool resync_stream(
         uint8_t sync;
 
         /* Only search for sync if look-forward below fails to find a sync train */
-        if (!find_sync(
-                    tmp_buf + posn,
-                    &offset,
-                    &sync)) {
+        if (!find_sync(tmp_buf + posn, &offset, &sync)) {
             posn += SYNCD_BUF_STEP;
+
             continue;
         }
 

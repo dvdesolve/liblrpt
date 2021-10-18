@@ -341,12 +341,15 @@ bool lrpt_iq_data_to_complex(
 
 /*************************************************************************************************/
 
+/* TODO add from_doubles and create_from_doubles accessors */
+
+/*************************************************************************************************/
+
 /* TODO add offset */
 /* lrpt_iq_data_to_doubles() */
 bool lrpt_iq_data_to_doubles(
         const lrpt_iq_data_t *data,
-        double *samples_i,
-        double *samples_q,
+        double *samples,
         size_t n,
         lrpt_error_t *err) {
     if (!data || !data->iq) {
@@ -360,11 +363,8 @@ bool lrpt_iq_data_to_doubles(
     if (n > data->len)
         n = data->len;
 
-    /* Go through the each sample and store it in resulting array */
-    for (size_t i = 0; i < n; i++) {
-        samples_i[i] = creal(data->iq[i]);
-        samples_q[i] = cimag(data->iq[i]);
-    }
+    /* Just copy samples */
+    memcpy(samples, data->iq, sizeof(complex double) * n);
 
     return true;
 }
