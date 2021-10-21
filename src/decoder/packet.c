@@ -273,6 +273,9 @@ void lrpt_decoder_packet_parse_cvcdu(
     /* Store index of last VCDU */
     decoder->last_vcdu = vcdu_cnt;
 
+    if (data_len <= hdr_off)
+        return;
+
     data_len -= hdr_off;
     uint16_t off = hdr_off;
 

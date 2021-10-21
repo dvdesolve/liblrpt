@@ -201,28 +201,35 @@ bool lrpt_decoder_exec(
         return false;
     }
 
-    /* Count up SFLs */
-    size_t n_sfls = 0;
+    /* Number of whole SFLs in data */
+    const size_t tot_sfls = ((data->len * 2) / DECODER_SOFT_FRAME_LEN);
 
-    /* Go through data given keeping at least 2 SFLs for forward correlation */
-    while (decoder->pos < (data->len * 2 - 2 * DECODER_SOFT_FRAME_LEN)) {
-        if (lrpt_decoder_data_process_frame(decoder, data->qpsk)) { /* TODO that should be easily transformed to support ring buffering */
-            lrpt_decoder_packet_parse_cvcdu(decoder);
+    /* We're leaving at least 2 SFLs at the end */
+    const size_t n_sfls = (tot_sfls - 2);
 
-            decoder->frm_ok_cnt++;
-            decoder->framing_ok = true;
+    /* Go through all available SFLs */
+    for (size_t i = 0; i < n_sfls; i++) {
+        /* Point to the next chunk */
+        int8_t *chunk = (data->qpsk + i * DECODER_SOFT_FRAME_LEN);
+
+        while (decoder->pos < DECODER_SOFT_FRAME_LEN) {
+            if (lrpt_decoder_data_process_frame(decoder, chunk)) {
+                lrpt_decoder_packet_parse_cvcdu(decoder);
+
+                decoder->frm_ok_cnt++;
+                decoder->framing_ok = true;
+            }
+            else
+                decoder->framing_ok = false;
+
+            decoder->frm_tot_cnt++;
         }
-        else
-            decoder->framing_ok = false;
 
-        decoder->frm_tot_cnt++;
-        n_sfls++;
+        /* Jump back */
+        decoder->pos -= DECODER_SOFT_FRAME_LEN;
     }
 
-    decoder->pos -=
-        (n_sfls == 0) ? DECODER_SOFT_FRAME_LEN : (n_sfls * DECODER_SOFT_FRAME_LEN);
-
-    /* Return number of processed QPSK symbols (1 QPSK symbol is 2 bits in lenth) */
+    /* Return number of processed QPSK symbols (1 QPSK symbol is 2 bits in length) */
     if (syms_proc)
         *syms_proc = (n_sfls * DECODER_SOFT_FRAME_LEN / 2);
 
