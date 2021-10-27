@@ -1000,6 +1000,17 @@ LRPT_API bool lrpt_image_flip(
         lrpt_image_t *image,
         lrpt_error_t *err);
 
+/** Perform histogram equalization on image.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful equalization and \c false otherwise.
+ */
+LRPT_API bool lrpt_image_normalize(
+        lrpt_image_t *image,
+        lrpt_error_t *err);
+
 /** Dump single channel as PNM file.
  *
  * Saves specified APID channel image to the PNM file format.
