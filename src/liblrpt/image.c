@@ -338,6 +338,53 @@ void lrpt_image_set_px(
 
 /*************************************************************************************************/
 
+/* lrpt_image_flip() */
+bool lrpt_image_flip(
+        lrpt_image_t *image,
+        lrpt_error_t *err) {
+    bool good = true;
+
+    if (image && (image->height > 0)) {
+        for (uint8_t i = 0; i < 6; i++)
+            if (!image->channels[i]) {
+                good = false;
+
+                break;
+            }
+    }
+
+    if (!image || !good) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "LRPT image object is NULL or corrupted");
+
+        return false;
+    }
+
+    if ((image->width == 0) || (image->height == 0))
+        return true;
+
+    const size_t iw = image->width;
+    const size_t ih = image->height;
+
+    for (uint8_t i = 0; i < 6; i++) {
+        for (size_t y = 0; y < (ih / 2 + ih % 2); y++) {
+            const size_t border = (y == (ih / 2)) ? (iw / 2) : iw;
+
+            for (size_t x = 0; x < border; x++) {
+                const uint8_t tmp = image->channels[i][y * iw + x];
+
+                image->channels[i][y * iw + x] = image->channels[i][(ih - 1 - y) * iw + (iw - 1 - x)];
+                image->channels[i][(ih - 1 - y) * iw + (iw - 1 - x)] = tmp;
+            }
+        }
+    }
+
+    return true;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_image_dump_channel_pnm() */
 bool lrpt_image_dump_channel_pnm(
         const lrpt_image_t *image,
