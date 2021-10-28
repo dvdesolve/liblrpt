@@ -22,27 +22,41 @@
 
 /** \file
  *
- * Public internal API for basic image manipulation.
+ * Public internal API for I/Q data filtering.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_IMAGE_H
-#define LRPT_LIBLRPT_IMAGE_H
+#ifndef LRPT_DSP_FILTER_H
+#define LRPT_DSP_FILTER_H
 
 /*************************************************************************************************/
 
-#include <stddef.h>
+#include <complex.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
-/** Storage type for LRPT images */
-struct lrpt_image__ {
-    size_t width; /**< Width of the image (in px) */
-    size_t height; /**< Height of the image (in px) */
+/** DSP filter object */
+struct lrpt_dsp_filter__ {
+    uint8_t npoles; /**< Number of poles, must be even. Max value is limited to the 252. */
 
-    uint8_t *channels[6]; /**< Per-channel image storage */
+    /** @{ */
+    /** a and b coefficients of the filter */
+    double *a;
+    double *b;
+    /** @} */
+
+    /** @{ */
+    /** Saved input and output values for I/Q samples */
+    complex double *x;
+    complex double *y;
+    /** @} */
+
+    /** @{ */
+    /** Ring buffer index for I/Q samples */
+    uint8_t ri;
+    /** @} */
 };
 
 /*************************************************************************************************/

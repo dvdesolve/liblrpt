@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
+ * Author: Artem Litvinovich
  * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
@@ -22,27 +23,28 @@
 
 /** \file
  *
- * Public internal API for basic image manipulation.
+ * Public internal API for dediffcoding routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_IMAGE_H
-#define LRPT_LIBLRPT_IMAGE_H
+#ifndef LRPT_DSP_DEDIFFCODER_H
+#define LRPT_DSP_DEDIFFCODER_H
 
 /*************************************************************************************************/
 
-#include <stddef.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
 
-/** Storage type for LRPT images */
-struct lrpt_image__ {
-    size_t width; /**< Width of the image (in px) */
-    size_t height; /**< Height of the image (in px) */
+/** Dediffcoder object */
+struct lrpt_dsp_dediffcoder__ {
+    uint8_t *lut; /**< Integer sqrt() lookup table */
 
-    uint8_t *channels[6]; /**< Per-channel image storage */
+    /** @{ */
+    /** Used by dediffcoder */
+    int8_t pr_I, pr_Q;
+    /** @} */
 };
 
 /*************************************************************************************************/

@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
- * Author: Viktor Drobot
  * Author: Neoklis Kyriazis
+ * Author: Viktor Drobot
  */
 
 /** \cond INTERNAL_API_DOCS */
@@ -43,15 +43,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/*************************************************************************************************/
-
-/* Needed for avoiding no signal areas (black bands) */
-static const uint8_t HIST_MIN_BLACK = 2;
-
-/* Cutoff percentiles for normalization */
-static const uint8_t HIST_CUTOFF_BLACK = 1;
-static const uint8_t HIST_CUTOFF_WHITE = 1;
 
 /*************************************************************************************************/
 
@@ -344,148 +335,6 @@ void lrpt_image_set_px(
         return;
 
     image->channels[apid - 64][pos] = val;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_image_flip() */
-bool lrpt_image_flip(
-        lrpt_image_t *image,
-        lrpt_error_t *err) {
-    bool good = true;
-
-    if (image && (image->height > 0)) {
-        for (uint8_t i = 0; i < 6; i++)
-            if (!image->channels[i]) {
-                good = false;
-
-                break;
-            }
-    }
-
-    if (!image || !good) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "LRPT image object is NULL or corrupted");
-
-        return false;
-    }
-
-    if ((image->width * image->height) == 0)
-        return true;
-
-    const size_t iw = image->width;
-    const size_t ih = image->height;
-
-    for (uint8_t i = 0; i < 6; i++) {
-        for (size_t y = 0; y < (ih / 2 + ih % 2); y++) {
-            const size_t border = (y == (ih / 2)) ? (iw / 2) : iw;
-
-            for (size_t x = 0; x < border; x++) {
-                const uint8_t tmp = image->channels[i][y * iw + x];
-
-                image->channels[i][y * iw + x] = image->channels[i][(ih - 1 - y) * iw + (iw - 1 - x)];
-                image->channels[i][(ih - 1 - y) * iw + (iw - 1 - x)] = tmp;
-            }
-        }
-    }
-
-    return true;
-}
-
-/*************************************************************************************************/
-
-/* lrpt_image_normalize() */
-bool lrpt_image_normalize(
-        lrpt_image_t *image,
-        lrpt_error_t *err) {
-    bool good = true;
-
-    if (image && (image->height > 0)) {
-        for (uint8_t i = 0; i < 6; i++)
-            if (!image->channels[i]) {
-                good = false;
-
-                break;
-            }
-    }
-
-    if (!image || !good) {
-        if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "LRPT image object is NULL or corrupted");
-
-        return false;
-    }
-
-    if ((image->width * image->height) == 0)
-        return true;
-
-    size_t hist[256]; /* Intensity histogram */
-
-    for (uint8_t i = 0; i < 6; i++) {
-        /* Zero out histogram */
-        memset(hist, 0, sizeof(size_t) * 256);
-
-        /* Count up intensities */
-        for (size_t j = 0; j < (image->width * image->height); j++)
-            hist[image->channels[i][j]]++;
-
-        /* Determine black/white cut-off counts */
-        size_t black_cutoff = (image->width * image->height * HIST_CUTOFF_BLACK) / 100;
-        size_t white_cutoff = (image->width * image->height * HIST_CUTOFF_WHITE) / 100;
-
-        /* Find black cutoff intensity */
-        size_t cnt = 0;
-        uint8_t black_cutval = 0;
-
-        for (black_cutval = HIST_MIN_BLACK; black_cutval < 255; black_cutval++) {
-            cnt += hist[black_cutval];
-
-            if (cnt >= black_cutoff)
-                break;
-        }
-
-        /* Find white cutoff intensity */
-        cnt = 0;
-        uint8_t white_cutval = 0;
-
-        for (white_cutval = 255; white_cutval > 0; white_cutval--) {
-            cnt += hist[white_cutval];
-
-            if (cnt >= white_cutoff)
-                break;
-        }
-
-        /* Rescale pixels in image for required intensity range. We should be careful because
-         * line below will give integer underflow.
-         */
-        uint8_t rng_in = (white_cutval - black_cutval);
-
-        if (rng_in == 0)
-            continue;
-
-        /* Perform histogram normalization on image */
-        for (size_t j = 0; j < (image->width * image->height); j++) {
-            /* Input image pixel values are relative to input black cut off. Clamp pixel values
-             * within black and white cut off values.
-             */
-            uint8_t val = image->channels[i][j];
-
-            if (val > white_cutval)
-                val = white_cutval;
-            else if (val < black_cutval)
-                val = black_cutval;
-
-            val -= black_cutval;
-
-            /* Normalized pixel values are scaled according to the ratio of required pixel value
-             * range to input pixel value range */
-            image->channels[i][j] = (0 + (val * 255) / rng_in);
-        }
-    }
-
-    return true;
 }
 
 /*************************************************************************************************/

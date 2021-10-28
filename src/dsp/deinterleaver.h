@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
+ * Author: Artem Litvinovich
  * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
@@ -22,28 +23,13 @@
 
 /** \file
  *
- * Public internal API for basic image manipulation.
+ * Public internal API for deinterleaver routines.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_IMAGE_H
-#define LRPT_LIBLRPT_IMAGE_H
-
-/*************************************************************************************************/
-
-#include <stddef.h>
-#include <stdint.h>
-
-/*************************************************************************************************/
-
-/** Storage type for LRPT images */
-struct lrpt_image__ {
-    size_t width; /**< Width of the image (in px) */
-    size_t height; /**< Height of the image (in px) */
-
-    uint8_t *channels[6]; /**< Per-channel image storage */
-};
+#ifndef LRPT_DSP_DEINTERLEAVER_H
+#define LRPT_DSP_DEINTERLEAVER_H
 
 /*************************************************************************************************/
 

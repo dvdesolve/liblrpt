@@ -30,12 +30,17 @@ set(lrpt_SOURCES
     demodulator/demodulator.c
     demodulator/pll.c
     demodulator/rrc.c
+    dsp/dediffcoder.c
+    dsp/deinterleaver.c
+    dsp/filter.c
+    dsp/ifft.c
     liblrpt/datatype.c
-    liblrpt/dsp.c
     liblrpt/error.c
     liblrpt/image.c
     liblrpt/io.c
     liblrpt/utils.c
+    postprocessor/geom.c
+    postprocessor/normalize.c
 )
 
 set(lrpt_HEADERS
@@ -53,12 +58,17 @@ set(lrpt_HEADERS
     demodulator/demodulator.h
     demodulator/pll.h
     demodulator/rrc.h
+    dsp/dediffcoder.h
+    dsp/deinterleaver.h
+    dsp/filter.h
+    dsp/ifft.h
     liblrpt/datatype.h
-    liblrpt/dsp.h
     liblrpt/error.h
     liblrpt/image.h
     liblrpt/io.h
     liblrpt/utils.h
+    postprocessor/geom.h
+    postprocessor/normalize.h
 )
 
 

@@ -14,6 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
+ * Author: Tom Roberts
+ * Author: Malcolm Slaney
+ * Author: Dimitrios Bouras
  * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
@@ -22,53 +25,20 @@
 
 /** \file
  *
- * Public internal API for various DSP routines.
+ * Public internal API for performing integer FFT.
  */
 
 /*************************************************************************************************/
 
-#ifndef LRPT_LIBLRPT_DSP_H
-#define LRPT_LIBLRPT_DSP_H
+#ifndef LRPT_DSP_IFFT_H
+#define LRPT_DSP_IFFT_H
 
 /*************************************************************************************************/
 
-#include <complex.h>
 #include <stddef.h>
 #include <stdint.h>
 
 /*************************************************************************************************/
-
-/** DSP filter object */
-struct lrpt_dsp_filter__ {
-    uint8_t npoles; /**< Number of poles, must be even. Max value is limited to the 252. */
-
-    /** @{ */
-    /** a and b coefficients of the filter */
-    double *a;
-    double *b;
-    /** @} */
-
-    /** @{ */
-    /** Saved input and output values for I/Q samples */
-    complex double *x;
-    complex double *y;
-    /** @} */
-
-    /** @{ */
-    /** Ring buffer index for I/Q samples */
-    uint8_t ri;
-    /** @} */
-};
-
-/** Dediffcoder object */
-struct lrpt_dsp_dediffcoder__ {
-    uint8_t *lut; /**< Integer sqrt() lookup table */
-
-    /** @{ */
-    /** Used by dediffcoder */
-    int8_t pr_I, pr_Q;
-    /** @} */
-};
 
 /** Integer FFT object */
 struct lrpt_dsp_ifft__ {
