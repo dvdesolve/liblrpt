@@ -1607,12 +1607,14 @@ LRPT_API bool lrpt_postproc_image_flip(
 /** Perform histogram equalization on image.
  *
  * \param image Pointer to the LRPT image object.
+ * \param clahe Whether to perform contrast limited adaptive histogram equalization.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successful equalization and \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_normalize(
         lrpt_image_t *image,
+        bool clahe,
         lrpt_error_t *err);
 
 /** @} */

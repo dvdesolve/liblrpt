@@ -155,6 +155,8 @@ void lrpt_dsp_ifft_deinit(
 void lrpt_dsp_ifft_exec(
         const lrpt_dsp_ifft_t *ifft,
         int16_t *data) {
+    /* This is heavily adapted version of original IFFT algorithm by Roberts-Slaney-Bouras */
+
     /* Decompose time domain signal (bit reversal). This is only needed if the time domain
      * points were not already decomposed while data has being entered into these buffers.
      */
