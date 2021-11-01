@@ -1056,4 +1056,26 @@ bool lrpt_image_dump_combo_bmp(
 
 /*************************************************************************************************/
 
+void lrpt_image_rawdump(lrpt_image_t *image, const char *fname) {
+    char *res = calloc(strlen(fname) + 6, sizeof(char));
+    FILE *f;
+
+    snprintf(res, strlen(fname) + 6, "%s_0.px", fname);
+    f = fopen(res, "wb");
+    fwrite(image->channels[0], sizeof(uint8_t), image->width * image->height, f);
+    fclose(f);
+
+    snprintf(res, strlen(fname) + 6, "%s_1.px", fname);
+    f = fopen(res, "wb");
+    fwrite(image->channels[1], sizeof(uint8_t), image->width * image->height, f);
+    fclose(f);
+
+    snprintf(res, strlen(fname) + 6, "%s_2.px", fname);
+    f = fopen(res, "wb");
+    fwrite(image->channels[2], sizeof(uint8_t), image->width * image->height, f);
+    fclose(f);
+
+    free(res);
+}
+
 /** \endcond */

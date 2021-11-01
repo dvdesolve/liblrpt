@@ -1604,6 +1604,25 @@ LRPT_API bool lrpt_postproc_image_flip(
         lrpt_image_t *image,
         lrpt_error_t *err);
 
+/** Perform image rectification.
+ *
+ * Compensates tangential scale distortion and distortion caused by the curvature of the Earth.
+ * If \p interpolate is \c true then intermediate pixel values will be interpolated rather than
+ * filled with the same value.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param altitude Spacecraft altitude, in km.
+ * \param interpolate Whether to perform pixel interpolation.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the rectified LRPT image object or \c NULL in case of error.
+ */
+LRPT_API lrpt_image_t *lrpt_image_rectify(
+        lrpt_image_t *image,
+        double altitude,
+        bool interpolate,
+        lrpt_error_t *err);
+
 /** Perform histogram equalization on image.
  *
  * \param image Pointer to the LRPT image object.
@@ -1914,7 +1933,7 @@ LRPT_API size_t lrpt_decoder_sfl(void);
 LRPT_API size_t lrpt_decoder_hfl(void);
 
 /** @} */
-
+LRPT_API void lrpt_image_rawdump(lrpt_image_t *image, const char *fname);
 /*************************************************************************************************/
 
 /* Support for C++ codes */
