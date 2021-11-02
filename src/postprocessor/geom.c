@@ -88,9 +88,9 @@ static lrpt_image_t *rectify_w2rg(
  * \param image Pointer to the image object.
  * \param altitude Satellite altitude, in km.
  *
- * \return \c true on successfull rectification and \c false otherwise.
+ * \return Pointer to the rectified image object or \c NULL in case of error.
  */
-static bool rectify_5b4az(
+static lrpt_image_t *rectify_5b4az(
         lrpt_image_t *image,
         double altitude);
 
@@ -153,7 +153,7 @@ static lrpt_image_t *rectify_w2rg(
 
     /* The size of first sub-satellite pixel */
     double resolution = (2.0 * calc_beta(beta_max, dphi / 2.0, altitude));
-    double beta0 = resolution; /* Needed for later estimation of beta */
+    double beta0 = (resolution / 2.0); /* Needed for later estimation of beta */
 
     /* Width of the rectified image, as float */
     const double width_f = ((2.0 * beta_max) / resolution);
@@ -172,7 +172,7 @@ static lrpt_image_t *rectify_w2rg(
     /* Calculate the correct position of each pixel */
     for (size_t i = 0; i < w2; i++) {
         const double phi = (i + 0.5) * dphi; /* Instantaneous scan angle */
-        const double beta = calc_beta(beta0, phi, altitude); /* Corresponding phi angle */
+        const double beta = calc_beta(beta0, phi, altitude); /* Corresponding beta angle */
 
         beta0 = beta;
 
@@ -307,11 +307,155 @@ static lrpt_image_t *rectify_w2rg(
 /*************************************************************************************************/
 
 /* rectify_5b4az() */
-static bool rectify_5b4az(
+static lrpt_image_t *rectify_5b4az(
         lrpt_image_t *image,
         double altitude) {
-//      Calculate_Pixel_Spacing_2( METEOR_IMAGE_WIDTH, &channel_image_width );
-    return true;
+    /* Pixel-to-pixel stride of the scanner, in radians */
+    const double dphi = (2.0 * RECT_PHI_MAX / (image->width - 1));
+
+    /* Max beta angle, corresponding to max phi */
+    const double beta_max = calc_beta(0.1, RECT_PHI_MAX, altitude);
+
+    /* Width of the rectified image, as float */
+    const double width_f = (beta_max / calc_beta(beta_max, dphi / 2.0, altitude));
+    double beta0 = (beta_max / width_f); /* Needed for later estimation of beta */
+
+    /* Width of the rectified image, in pixels */
+    size_t rect_width = width_f;
+
+    /* Round to the nearest multiple of 8 because of the MCU size */
+    rect_width -= (rect_width % 8);
+
+    const size_t rw2 = (rect_width / 2);
+
+    /* The center pixel (first to right of the center) of input image */
+    const size_t w2 = (image->width / 2);
+
+    /* Prepare indices buffer for pixel values extrapolation during rectification */
+    size_t *indices = calloc(rw2, sizeof(size_t));
+
+    if (!indices)
+        return NULL;
+
+    /* Prepare extrapolation factors buffer */
+    double *factors = calloc(rw2, sizeof(double));
+
+    if (!factors) {
+        free(indices);
+
+        return NULL;
+    }
+
+    /* Distance between centers of adjacent rectified image pixels */
+    const double delta_center = ((2.0 * beta_max) / (rect_width - 1));
+
+    double prev_center = -calc_beta(beta0, dphi / 2.0, altitude);
+
+    size_t rect_idx = 0, orig_idx = 0;
+
+    /* Repeat for all pixels in rectified image buffer */
+    while (rect_idx < rw2) {
+        const double phi = (orig_idx + 0.5) * dphi; /* Instantaneous scan angle */
+        const double beta = calc_beta(beta0, phi, altitude); /* Corresponding beta angle */
+
+        beta0 = beta;
+
+        /* The center position of original image when projected onto the surface of the Earth */
+        const double orig_pixel_center = beta;
+
+        /* The center position of the rectified image when projected onto the surface of the Earth */
+        const double rect_pixel_center = (rect_idx + 0.5) * delta_center;
+
+        /* If rectified pixel overtakes an original pixel, then advance the original pixel
+         * index and save its center position as the previous center
+         */
+        if (rect_pixel_center > orig_pixel_center) {
+            orig_idx++;
+            prev_center = orig_pixel_center;
+
+            continue;
+        }
+
+        /* If rectified pixel center position is less than the original pixel position,
+         * save the original pixel index in the reference indices buffer */
+        indices[rect_idx] = orig_idx;
+
+        /* The extrapolation factor is the distance of the rectified pixel center
+         * from the reference pixel center, divided by the distance between the centers
+         * of the reference pixel and the previous one */
+        factors[rect_idx] =
+            ((rect_pixel_center - orig_pixel_center) / (prev_center - orig_pixel_center));
+
+        rect_idx++;
+    }
+
+    lrpt_image_t *new_img = lrpt_image_alloc(rect_width, image->height, NULL);
+
+    if (!new_img) {
+        free(factors);
+        free(indices);
+
+        return NULL;
+    }
+
+    for (uint8_t i = 0; i < 6; i++) {
+        /* TODO that should be rechecked for possible arithmetic over/underflows while calculating diffs etc */
+        /* Rectify image buffer line by line */
+        for (size_t j = 0; j < image->height; j++) {
+            /* Indices to input and output image buffers */
+            size_t rect_buff_idx = (j * rect_width + rw2);
+            const size_t stride = (j * image->width + w2);;
+
+            /* Extrapolate values of each pixel in output buffer. This is from the center right pixel
+             * to the right edge.
+             */
+            for (size_t k = 0; k < rw2; k++) {
+                /* This index points to the pixel in input buffer that is to be used as the
+                 * reference for extrapolating pixel value
+                 */
+                const size_t in_buff_idx = (indices[k] + stride);
+
+                /* This is the diff in values of the reference pixel and the one before it,
+                 * and it is to be used for linear extrapolation of the value of the current pixel
+                 * of the output buffer
+                 */
+                const int16_t pxval_diff =
+                    (image->channels[i][in_buff_idx - 1] - image->channels[i][in_buff_idx]);
+
+                /* Pixel value is the reference input pixel value plus a proportion of the value diff
+                 * above, according to the extrapolation factor
+                 */
+                new_img->channels[i][rect_buff_idx] =
+                    (image->channels[i][in_buff_idx] + pxval_diff * factors[k]);
+
+                rect_buff_idx++;
+            }
+
+            /* Extrapolate values of each pixel in output buffer as above. This is from the
+             * center left pixel to the left edge
+             */
+            rect_buff_idx = (j * rect_width + rw2);
+
+            for (size_t k = 0; k < rw2; k++) {
+                const size_t in_buff_idx = (stride - indices[k]);
+
+                const int16_t pxval_diff =
+                    (image->channels[i][in_buff_idx - 1] - image->channels[i][in_buff_idx]);
+
+                rect_buff_idx--;
+
+                new_img->channels[i][rect_buff_idx] =
+                    (image->channels[i][in_buff_idx - 1] - pxval_diff * factors[k]);
+            }
+        }
+    }
+
+    free(factors);
+    free(indices);
+
+    lrpt_image_free(image);
+
+    return new_img;
 }
 
 /*************************************************************************************************/
@@ -408,7 +552,9 @@ lrpt_image_t *lrpt_image_rectify(
         }
     }
     else {
-        if (!rectify_5b4az(image, altitude)) {
+        result = rectify_5b4az(image, altitude);
+
+        if (!result) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                         "Can't rectify image with interpolation algorithm (5B4AZ)");

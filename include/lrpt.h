@@ -1616,6 +1616,8 @@ LRPT_API bool lrpt_postproc_image_flip(
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the rectified LRPT image object or \c NULL in case of error.
+ *
+ * \warning If rectification was successfull original image will be internally deallocated!
  */
 LRPT_API lrpt_image_t *lrpt_image_rectify(
         lrpt_image_t *image,
@@ -1933,7 +1935,7 @@ LRPT_API size_t lrpt_decoder_sfl(void);
 LRPT_API size_t lrpt_decoder_hfl(void);
 
 /** @} */
-LRPT_API void lrpt_image_rawdump(lrpt_image_t *image, const char *fname);
+
 /*************************************************************************************************/
 
 /* Support for C++ codes */
