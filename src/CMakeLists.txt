@@ -39,6 +39,7 @@ set(lrpt_SOURCES
     liblrpt/image.c
     liblrpt/io.c
     liblrpt/utils.c
+    postprocessor/color.c
     postprocessor/geom.c
     postprocessor/normalize.c
 )
@@ -67,6 +68,7 @@ set(lrpt_HEADERS
     liblrpt/image.h
     liblrpt/io.h
     liblrpt/utils.h
+    postprocessor/color.h
     postprocessor/geom.h
     postprocessor/normalize.h
 )

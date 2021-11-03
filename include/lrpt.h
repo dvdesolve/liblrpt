@@ -1619,7 +1619,7 @@ LRPT_API bool lrpt_postproc_image_flip(
  *
  * \warning If rectification was successfull original image will be internally deallocated!
  */
-LRPT_API lrpt_image_t *lrpt_image_rectify(
+LRPT_API lrpt_image_t *lrpt_postproc_image_rectify(
         lrpt_image_t *image,
         double altitude,
         bool interpolate,
@@ -1636,6 +1636,92 @@ LRPT_API lrpt_image_t *lrpt_image_rectify(
 LRPT_API bool lrpt_postproc_image_normalize(
         lrpt_image_t *image,
         bool clahe,
+        lrpt_error_t *err);
+
+/** Rescale color range for specified APID.
+ *
+ * Performs rescaling of the original color range for specified \p apid. Resulting range will be
+ * between \p pxval_min and \p pxval_max.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param apid APID number for which rescaling will be applied.
+ * \param pxval_min Lower edge of desired color range.
+ * \param pxval_max Upper edge of desired color range.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful rescaling and \c false otherwise.
+ */
+LRPT_API bool lrpt_postproc_image_rescale_range(
+        lrpt_image_t *image,
+        uint8_t apid,
+        uint8_t pxval_min,
+        uint8_t pxval_max,
+        lrpt_error_t *err);
+
+/** Fix watery areas coloring.
+ *
+ * Histogram equalization tends to darken watery areas. Use this function to counteract this effect.
+ * All blue pixels which value are less than \p pxval_min will be shifted and rescaled to fit into
+ * specified range between \p pxval_min and \p pxval_max.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param apid_blue APID number for blue channel.
+ * \param pxval_min Lower edge of desired color range. Good starting value is 60.
+ * \param pxval_max Upper edge of desired color range. Good starting value is 80.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful rescaling and \c false otherwise.
+ */
+LRPT_API bool lrpt_postproc_image_fix_water(
+        lrpt_image_t *image,
+        uint8_t apid_blue,
+        uint8_t pxval_min,
+        uint8_t pxval_max,
+        lrpt_error_t *err);
+
+/** Fix cloudy areas coloring.
+ *
+ * Red/infrared channel of AVHRR instrument may produce wrong (too much) luminance so coloring of
+ * cloudy areas will be screwed. Use this function to counteract this effect. All pixel values of
+ * blue channel which are greater than \p threshold will be considered as cloudy areas and all RGB
+ * components will be equalized. Otherwise, red channel will be rescaled to fit into
+ * specified range between \p red_min and \p red_max.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param apid_red APID number for red channel.
+ * \param apid_green APID number for green channel.
+ * \param apid_blue APID number for blue channel.
+ * \param red_min Lower edge of desired color range. Good starting value is 0.
+ * \param red_max Upper edge of desired color range. Good starting value is 240.
+ * \param threshold Threshold to determine where cloudy areas are. Good starting value is 210.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful rescaling and \c false otherwise.
+ */
+LRPT_API bool lrpt_postproc_image_fix_clouds(
+        lrpt_image_t *image,
+        uint8_t apid_red,
+        uint8_t apid_green,
+        uint8_t apid_blue,
+        uint8_t red_min,
+        uint8_t red_max,
+        uint8_t threshold,
+        lrpt_error_t *err);
+
+/** Invert color palette for specified APID.
+ *
+ * When AVHRR operates in infrared mode usage of this function can enhance final image. It's advised
+ * to invert all IR channels at once.
+ *
+ * \param image Pointer to the LRPT image object.
+ * \param apid APID number which will be inverted.
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return \c true on successful rescaling and \c false otherwise.
+ */
+LRPT_API bool lrpt_postproc_image_invert_channel(
+        lrpt_image_t *image,
+        uint8_t apid,
         lrpt_error_t *err);
 
 /** @} */

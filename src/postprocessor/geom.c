@@ -507,8 +507,8 @@ bool lrpt_image_flip(
 
 /*************************************************************************************************/
 
-/* lrpt_image_rectify() */
-lrpt_image_t *lrpt_image_rectify(
+/* lrpt_postproc_image_rectify() */
+lrpt_image_t *lrpt_postproc_image_rectify(
         lrpt_image_t *image,
         double altitude,
         bool interpolate,
@@ -563,6 +563,7 @@ lrpt_image_t *lrpt_image_rectify(
         }
     }
 
+    /* TODO may be implement in such a way that a new image will be returned instead... */
     return result;
 }
 
