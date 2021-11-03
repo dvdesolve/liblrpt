@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with liblrpt. If not, see https://www.gnu.org/licenses/
  *
- * Author: Neoklis Kyriazis
  * Author: Viktor Drobot
  */
 

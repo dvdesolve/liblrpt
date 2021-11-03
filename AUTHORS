@@ -1,11 +1,5 @@
-Viktor Drobot (dvdesolve)
-linux776@gmail.com
-
-Neoklis Kyriazis (neoklis)
-nkcyham@yahoo.com
-Ham Radio Call: 5B4AZ
-
-Artem Litvinovich (artlav)
-
-Davide Belloli (dbdexter-dev)
-dbdexter.dev@gmail.com
+Maintainer: Viktor Drobot (dvdesolve) [linux776@gmail.com]
+Original author of glrpt/mlrpt: Neoklis Kyriazis (neoklis) [nkcyham@yahoo.com]
+Decoder author: Artem Litvinovich (artlav)
+Demodulator author: Davide Belloli (dbdexter-dev) [dbdexter.dev@gmail.com]
+IFFT algorithm authors: Tom Roberts, Malcolm Slaney, Dimitrios Bouras
