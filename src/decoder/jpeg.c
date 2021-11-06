@@ -199,23 +199,18 @@ static bool progress_image(
          * spacecraft (the order of APIDs in packet).
          */
         /* Realign */
-        switch (decoder->sc) {
-            case LRPT_DECODER_SC_METEORM2:
-                {
-                    /* For more information see
-                     * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
-                     */
-                    if (apid == 65)
-                        jpeg->first_pck -= 14;
+        if (
+                (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
+                (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
+                (decoder->sc == LRPT_DECODER_SC_METEORM2_2)) {
+            /* For more information see
+             * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+             */
+            if (apid == 65)
+                jpeg->first_pck -= 14;
 
-                    if ((apid == 66) || (apid == 68))
-                        jpeg->first_pck -= 28;
-                }
-
-                break;
-
-            default:
-                break;
+            if ((apid == 66) || (apid == 68))
+                jpeg->first_pck -= 28;
         }
     }
 

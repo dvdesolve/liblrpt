@@ -82,7 +82,8 @@ typedef struct lrpt_demodulator_pll__ {
  * \param unlocked_threshold Unlocking threshold.
  * \param offset Offsetted QPSK modulation mode.
  *
- * \warning \p locked_threshold should be strictly less than \p unlocked_threshold!
+ * \warning \p locked_threshold should be strictly less than \p unlocked_threshold! Also non of the
+ * locked or unlocked thresholds should be zero!
  *
  * \return PLL object or \c NULL in case of error.
  */

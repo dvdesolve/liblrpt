@@ -96,26 +96,18 @@ static uint16_t parse_partial(
 static void parse_70(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
-    switch (decoder->sc) {
-        case LRPT_DECODER_SC_METEORM2:
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-            {
-                /* TODO implement properly */
-                /* For more information see appendix "A",
-                 * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
-                 */
-                uint8_t hour = p[8];
-                uint8_t min = p[9];
-                uint8_t sec = p[10];
-                uint16_t msec = (p[11] * 4);
-            }
-#pragma GCC diagnostic pop
-
-            break;
-
-        default:
-            break;
+    if (
+            (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_2)) {
+        /* TODO implement properly */
+        /* For more information see appendix "A",
+         * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+         */
+        /*uint8_t hour = p[8];
+        uint8_t min = p[9];
+        uint8_t sec = p[10];
+        uint16_t msec = (p[11] * 4);*/
     }
 }
 
@@ -127,30 +119,23 @@ static void parse_img(
         uint8_t *p,
         uint16_t apid,
         uint16_t pck_cnt) {
-    switch (decoder->sc) {
-        case LRPT_DECODER_SC_METEORM2:
-            {
-                /* For more information see section "I",
-                 * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
-                 */
-                const uint8_t mcu_id = p[0];
-                const uint8_t q = p[5];
+    if (
+            (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_2)) {
+        /* For more information see section "I",
+         * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
+         */
+        const uint8_t mcu_id = p[0];
+        const uint8_t q = p[5];
 
-                lrpt_decoder_jpeg_decode_mcus(decoder, p + 6, apid, pck_cnt, mcu_id, q);
-            }
-
-            break;
-
-        default:
-            break;
+        lrpt_decoder_jpeg_decode_mcus(decoder, p + 6, apid, pck_cnt, mcu_id, q);
     }
 }
 
 /*************************************************************************************************/
 
 /* parse_apid() */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
 static void parse_apid(
         lrpt_decoder_t *decoder,
         uint8_t *p) {
@@ -160,8 +145,7 @@ static void parse_apid(
     uint16_t apid = (((p[0] << 8) | p[1]) & 0x07FF);
     uint16_t pck_cnt = (((p[2] << 8) | p[3]) & 0x3FFF);
 
-    /* TODO implement properly */
-    uint16_t pck_len = ((p[4] << 8) | p[5]);
+    /* uint16_t pck_len = ((p[4] << 8) | p[5]); */
 
     /* 14 is an offset to get "User data" block directly */
     if ((apid >= 64) && (apid <= 69))
@@ -169,7 +153,6 @@ static void parse_apid(
     else if (apid == 70)
         parse_70(decoder, p + 14);
 }
-#pragma GCC diagnostic pop
 
 /*************************************************************************************************/
 

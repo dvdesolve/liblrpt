@@ -65,17 +65,17 @@ static double rrc_coeff(
         uint16_t taps,
         double osf,
         double alpha) {
-    const uint16_t order = (taps - 1) / 2;
+    const uint16_t order = ((taps - 1) / 2);
 
     /* Handle the 0/0 case */
     if (order == index)
         return (1.0 - alpha + 4.0 * alpha / M_PI);
 
     const double t = (abs(order - index)) / osf;
-    const double mpt = M_PI * t;
-    const double at4 = 4.0 * alpha * t;
-    const double coeff = sin(mpt * (1.0 - alpha)) + at4 * cos(mpt * (1.0 + alpha));
-    const double interm = mpt * ( 1.0 - at4 * at4 );
+    const double mpt = (M_PI * t);
+    const double at4 = (4.0 * alpha * t);
+    const double coeff = (sin(mpt * (1.0 - alpha)) + at4 * cos(mpt * (1.0 + alpha)));
+    const double interm = (mpt * ( 1.0 - at4 * at4));
 
     return (coeff / interm);
 }
@@ -99,7 +99,7 @@ lrpt_demodulator_rrc_filter_t *lrpt_demodulator_rrc_filter_init(
     rrc->memory = NULL;
 
     /* Try to allocate storage for coefficients and memory */
-    const uint16_t taps = order * 2 + 1;
+    const uint16_t taps = (order * 2 + 1);
 
     rrc->count = taps;
     rrc->coeffs = calloc(taps, sizeof(double));

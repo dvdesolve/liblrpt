@@ -69,8 +69,8 @@ lrpt_dsp_filter_t *lrpt_dsp_filter_init(
     filter->x = NULL;
     filter->y = NULL;
 
-    /* Number of poles should be even and not greater than 252 to fit in uint8_t type */
-    if ((num_poles > 252) || ((num_poles % 2) != 0)) {
+    /* Number of poles should be even, non-zero and not greater than 252 to fit in uint8_t type */
+    if ((num_poles > 252) || ((num_poles % 2) != 0) || (num_poles == 0)) {
         lrpt_dsp_filter_deinit(filter);
 
         if (err)

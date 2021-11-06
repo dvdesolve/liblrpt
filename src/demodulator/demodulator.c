@@ -205,6 +205,17 @@ lrpt_demodulator_t *lrpt_demodulator_init(
     demod->pll = NULL;
     demod->rrc = NULL;
 
+    /* Sanity checking */
+    if (interp_factor == 0) {
+        lrpt_demodulator_deinit(demod);
+
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Interpolation factor is zero");
+
+        return NULL;
+    }
+
     /* Set correct demodulation mode */
     demod->offset = offset;
 

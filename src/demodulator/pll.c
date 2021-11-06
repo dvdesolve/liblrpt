@@ -182,7 +182,10 @@ lrpt_demodulator_pll_t *lrpt_demodulator_pll_init(
     pll->bw = bandwidth;
 
     /* Set up thresholds for PLL hysteresis feature */
-    if (unlocked_threshold <= locked_threshold) {
+    if (
+            (unlocked_threshold == 0.0) ||
+            (locked_threshold == 0.0) ||
+            (unlocked_threshold <= locked_threshold)) {
         lrpt_demodulator_pll_deinit(pll);
 
         return NULL;

@@ -236,7 +236,9 @@ typedef struct lrpt_decoder__ lrpt_decoder_t;
 
 /** Supported spacecrafts */
 typedef enum lrpt_decoder_spacecraft__ {
-    LRPT_DECODER_SC_METEORM2  /**< Meteor-M2 */
+    LRPT_DECODER_SC_METEORM2,   /**< Meteor-M2 */
+    LRPT_DECODER_SC_METEORM2_1, /**< Meteor-M2-1 */
+    LRPT_DECODER_SC_METEORM2_2  /**< Meteor-M2-2 */
 } lrpt_decoder_spacecraft_t;
 
 /** @} */
@@ -1484,7 +1486,7 @@ LRPT_API bool lrpt_qpsk_data_write_to_file(
  * \param bandwidth Bandwidth of the signal, Hz.
  * \param samplerate Signal sampling rate, samples/s.
  * \param ripple Ripple level, %.
- * \param num_poles Number of filter poles. Must be even and not greater than 252!
+ * \param num_poles Number of filter poles. Must be even, non-zero and not greater than 252!
  * \param type Filter type (see #lrpt_dsp_filter_type_t for supported filter types).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -1737,14 +1739,14 @@ LRPT_API bool lrpt_postproc_image_invert_channel(
  *
  * \param offset Whether offsetted version of QPSK modulation is used.
  * \param costas_bandwidth Initial Costas' PLL bandwidth in Hz.
- * \param interp_factor Interpolation factor. Usual value is 4.
+ * \param interp_factor Interpolation factor. Should be greater than 0! Common value is 4.
  * \param demod_samplerate Demodulation sampling rate in samples/s.
  * \param symbol_rate PSK symbol rate in Sym/s.
- * \param rrc_order Costas' PLL root raised cosine filter order.
- * \param rrc_alpha Costas' PLL root raised cosine filter alpha factor.
- * \param pll_locked_threshold Costas' PLL locked threshold.
+ * \param rrc_order Costas' PLL root raised cosine filter order. Common value is 32.
+ * \param rrc_alpha Costas' PLL root raised cosine filter alpha factor. Common value is 0.6.
+ * \param pll_locked_threshold Costas' PLL locked threshold. Can't be zero.
  * \param pll_unlocked_threshold Costas' PLL unlocked threshold. Should be strictly greater than
- * \p pll_locked_threshold!.
+ * \p pll_locked_threshold! Can't be zero.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the demodulator object or \c NULL in case of error.

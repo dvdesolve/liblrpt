@@ -433,6 +433,14 @@ size_t lrpt_decoder_spacecraft_imgwidth(
             return (196 * 8);
             break;
 
+        case LRPT_DECODER_SC_METEORM2_1:
+            return (196 * 8);
+            break;
+
+        case LRPT_DECODER_SC_METEORM2_2:
+            return (196 * 8);
+            break;
+
         default: /* Unknown spacecraft */
             return 0;
             break;
