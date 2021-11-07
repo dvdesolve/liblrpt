@@ -51,12 +51,12 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(
     if (!data) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/Q data object allocation failed");
+                    "I/Q data object allocation has failed");
 
         return NULL;
     }
 
-    /* Set requested length and allocate storage for I and Q samples if length is not zero */
+    /* Set requested length and allocate storage for I/Q samples if length is not zero */
     data->len = len;
 
     if (len > 0) {
@@ -68,7 +68,7 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(
 
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Data buffer allocation for I/Q data object failed");
+                        "Data buffer allocation for I/Q data object has failed");
 
             return NULL;
         }
@@ -109,7 +109,7 @@ bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
         size_t new_len,
         lrpt_error_t *err) {
-    /* We accept only valid data objects or simple empty objects */
+    /* Accept only valid data objects or plain empty objects */
     if (!data || ((data->len > 0) && !data->iq)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
@@ -118,11 +118,11 @@ bool lrpt_iq_data_resize(
         return false;
     }
 
-    /* If sizes are the same just return true */
+    /* If sizes are the same don't do anything */
     if (data->len == new_len)
         return true;
 
-    /* In case of zero length create empty but valid data object */
+    /* In case of zero length create plain empty data object */
     if (new_len == 0) {
         free(data->iq);
 
@@ -135,7 +135,7 @@ bool lrpt_iq_data_resize(
         if (!new_iq) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Data buffer reallocation for I/Q data object failed");
+                        "Data buffer reallocation for I/Q data object has failed");
 
             return false;
         }
@@ -164,7 +164,7 @@ bool lrpt_iq_data_append(
     if (!data || !add || (data == add)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Original and/or added I/Q data objects are NULL or the same");
+                    "Original and/or added I/Q data objects are NULL or equivalent");
 
         return false;
     }
@@ -173,16 +173,18 @@ bool lrpt_iq_data_append(
     if (add->len == 0)
         return true;
 
+    /* Handle oversized requests */
     if (n > (add->len - offset))
         n = (add->len - offset);
 
+    /* Keep old length for further calculations */
     const size_t old_len = data->len;
 
     /* Resize original storage */
     if (!lrpt_iq_data_resize(data, old_len + n, err))
         return false;
 
-    /* Just copy extra samples */
+    /* Just copy samples */
     memcpy(data->iq + old_len, add->iq + offset, sizeof(complex double) * n);
 
     return true;
@@ -190,7 +192,6 @@ bool lrpt_iq_data_append(
 
 /*************************************************************************************************/
 
-/* TODO add subset helper to extract part of the self samples */
 /* lrpt_iq_data_from_iq() */
 bool lrpt_iq_data_from_iq(
         lrpt_iq_data_t *data,
@@ -206,6 +207,7 @@ bool lrpt_iq_data_from_iq(
         return false;
     }
 
+    /* Handle oversized requests */
     if (n > (samples->len - offset))
         n = (samples->len - offset);
 
@@ -230,11 +232,12 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
     if (!samples || (samples->len == 0)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q source data is NULL or empty");
+                    "I/Q source data object is NULL or empty");
 
         return NULL;
     }
 
+    /* Handle oversized requests */
     if (n > (samples->len - offset))
         n = (samples->len - offset);
 
@@ -256,11 +259,11 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_iq_data_from_complex() */
 bool lrpt_iq_data_from_complex(
         lrpt_iq_data_t *data,
         const complex double *samples,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!data || !samples) {
@@ -276,17 +279,17 @@ bool lrpt_iq_data_from_complex(
         return false;
 
     /* Just copy samples */
-    memcpy(data->iq, samples, sizeof(complex double) * n);
+    memcpy(data->iq, samples + offset, sizeof(complex double) * n);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_iq_data_create_from_complex() */
 lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         const complex double *samples,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!samples) {
@@ -304,7 +307,7 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         return NULL;
 
     /* Convert samples */
-    if (!lrpt_iq_data_from_complex(data, samples, n, err)) {
+    if (!lrpt_iq_data_from_complex(data, samples, offset, n, err)) {
         lrpt_iq_data_free(data);
 
         return NULL;
@@ -315,11 +318,11 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_iq_data_to_complex() */
 bool lrpt_iq_data_to_complex(
-        const lrpt_iq_data_t *data,
         complex double *samples,
+        const lrpt_iq_data_t *data,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!data || !data->iq) {
@@ -330,26 +333,82 @@ bool lrpt_iq_data_to_complex(
         return false;
     }
 
-    if (n > data->len)
-        n = data->len;
+    /* Handle oversized requests */
+    if (n > (data->len - offset))
+        n = (data->len - offset);
 
     /* Just copy samples */
-    memcpy(samples, data->iq, sizeof(complex double) * n);
+    memcpy(samples, data->iq + offset, sizeof(complex double) * n);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO add from_doubles and create_from_doubles accessors */
+/* lrpt_iq_data_from_doubles() */
+bool lrpt_iq_data_from_doubles(
+        lrpt_iq_data_t *data,
+        const double *samples,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!data || !samples) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q data object and/or I/Q samples array are NULL");
+
+        return false;
+    }
+
+    /* Resize storage */
+    if (!lrpt_iq_data_resize(data, n, err))
+        return false;
+
+    /* Just copy samples */
+    memcpy(data->iq, samples + 2 * offset, sizeof(complex double) * 2 * n);
+
+    return true;
+}
 
 /*************************************************************************************************/
 
-/* TODO add offset */
+/* lrpt_iq_data_create_from_doubles() */
+lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
+        const double *samples,
+        size_t offset,
+        size_t n,
+        lrpt_error_t *err) {
+    if (!samples) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "I/Q samples array is NULL");
+
+        return NULL;
+    }
+
+    /* Allocate new storage */
+    lrpt_iq_data_t *data = lrpt_iq_data_alloc(n, err);
+
+    if (!data)
+        return NULL;
+
+    /* Convert samples */
+    if (!lrpt_iq_data_from_doubles(data, samples, offset, n, err)) {
+        lrpt_iq_data_free(data);
+
+        return NULL;
+    }
+
+    return data;
+}
+
+/*************************************************************************************************/
+
 /* lrpt_iq_data_to_doubles() */
 bool lrpt_iq_data_to_doubles(
-        const lrpt_iq_data_t *data,
         double *samples,
+        const lrpt_iq_data_t *data,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!data || !data->iq) {
@@ -360,11 +419,12 @@ bool lrpt_iq_data_to_doubles(
         return false;
     }
 
-    if (n > data->len)
-        n = data->len;
+    /* Handle oversized requests */
+    if (n > (data->len - offset))
+        n = (data->len - offset);
 
     /* Just copy samples */
-    memcpy(samples, data->iq, sizeof(complex double) * n);
+    memcpy(samples, data->iq + offset, sizeof(complex double) * n);
 
     return true;
 }
@@ -388,13 +448,13 @@ lrpt_iq_rb_t *lrpt_iq_rb_alloc(
     if (!rb) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/Q ring buffer object allocation failed");
+                    "I/Q ring buffer object allocation has failed");
 
         return NULL;
     }
 
     /* Set requested length (reserve 1 element for full/empty detection) and allocate storage
-     * for I and Q samples if length is not zero
+     * for I/Q samples if length is not zero
      */
     rb->len = (len + 1);
     rb->iq = calloc(len + 1, sizeof(complex double));
@@ -405,7 +465,7 @@ lrpt_iq_rb_t *lrpt_iq_rb_alloc(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Data buffer allocation for I/Q ring buffer object failed");
+                    "Data buffer allocation for I/Q ring buffer object has failed");
 
         return NULL;
     }
@@ -437,6 +497,7 @@ size_t lrpt_iq_rb_length(
     if (!rb)
         return 0;
 
+    /* Account for empty/full detection */
     return (rb->len - 1);
 }
 
@@ -507,6 +568,7 @@ bool lrpt_iq_rb_pop(
         return false;
     }
 
+    /* Handle oversized requests */
     if (lrpt_iq_rb_used(rb) < n)
         n = lrpt_iq_rb_used(rb);
 
@@ -518,6 +580,7 @@ bool lrpt_iq_rb_pop(
         return false;
     }
 
+    /* Resize storage */
     if (!lrpt_iq_data_resize(data, n, err))
         return false;
 
@@ -542,11 +605,11 @@ bool lrpt_iq_rb_pop(
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_iq_rb_push() */
 bool lrpt_iq_rb_push(
         lrpt_iq_rb_t *rb,
         const lrpt_iq_data_t *data,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!rb || !data || !data->iq) {
@@ -557,11 +620,13 @@ bool lrpt_iq_rb_push(
         return false;
     }
 
+    /* Silently ignore empty data */
     if ((data->len == 0) || (n == 0))
         return true;
 
-    if (data->len < n)
-        n = data->len;
+    /* Handle oversized requests */
+    if (n > (data->len - offset))
+        n = (data->len - offset);
 
     if ((lrpt_iq_rb_avail(rb) < n)) {
         if (err)
@@ -572,15 +637,15 @@ bool lrpt_iq_rb_push(
     }
 
     if (rb->head < rb->tail) /* Wrapped data */
-        memcpy(rb->iq + rb->head, data->iq, sizeof(complex double) * n);
+        memcpy(rb->iq + rb->head, data->iq + offset, sizeof(complex double) * n);
     else { /* Not wrapped data */
         if ((rb->head + n) < rb->len) /* Contiguous chunk */
-            memcpy(rb->iq + rb->head, data->iq, sizeof(complex double) * n);
+            memcpy(rb->iq + rb->head, data->iq + offset, sizeof(complex double) * n);
         else { /* Non-contiguous chunk */
             const size_t tn = (rb->len - rb->head);
 
-            memcpy(rb->iq + rb->head, data->iq, sizeof(complex double) * tn); /* Till the end */
-            memcpy(rb->iq, data->iq + tn, sizeof(complex double) * (n - tn)); /* From the start */
+            memcpy(rb->iq + rb->head, data->iq + offset, sizeof(complex double) * tn); /* Till the end */
+            memcpy(rb->iq, data->iq + offset + tn, sizeof(complex double) * (n - tn)); /* From the start */
         }
     }
 

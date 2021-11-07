@@ -217,6 +217,15 @@ bool lrpt_utils_ds_double(
         double *v,
         bool be);
 
+/** Perform gamma correction according to the BT.709 transfer function.
+ *
+ * \param val Linear pixel value.
+ *
+ * \return Corrected pixel value.
+ */
+uint8_t lrpt_utils_bt709_gamma_encode(
+        uint8_t val);
+
 /*************************************************************************************************/
 
 #endif
