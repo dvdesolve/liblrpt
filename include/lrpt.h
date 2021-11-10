@@ -86,19 +86,19 @@ extern "C" {
  * @{
  */
 
-/** I/Q samples data storage */
+/** I/Q samples data storage type */
 typedef struct lrpt_iq_data__ lrpt_iq_data_t;
 
-/** Ring buffer for I/Q samples */
+/** I/Q samples ring buffer storage type */
 typedef struct lrpt_iq_rb__ lrpt_iq_rb_t;
 
-/** QPSK symbols data storage */
+/** QPSK symbols data storage type */
 typedef struct lrpt_qpsk_data__ lrpt_qpsk_data_t;
 
-/** Ring buffer for QPSK symbols */
+/** QPSK symbols ring buffer storage type */
 typedef struct lrpt_qpsk_rb__ lrpt_qpsk_rb_t;
 
-/** LRPT image storage */
+/** LRPT image storage type */
 typedef struct lrpt_image__ lrpt_image_t;
 
 /** Error levels */
@@ -113,7 +113,9 @@ typedef enum lrpt_error_level__ {
 typedef enum lrpt_error_code__ {
     LRPT_ERR_CODE_NONE = 0,
     LRPT_ERR_CODE_ALLOC,
+    LRPT_ERR_CODE_INVOBJ,
     LRPT_ERR_CODE_PARAM,
+    LRPT_ERR_CODE_NODATA,
     LRPT_ERR_CODE_FOPEN,
     LRPT_ERR_CODE_FREAD,
     LRPT_ERR_CODE_FWRITE,
@@ -124,7 +126,7 @@ typedef enum lrpt_error_code__ {
     LRPT_ERR_CODE_DATAPROC
 } lrpt_error_code_t;
 
-/** Error object */
+/** Error object type */
 typedef struct lrpt_error__ lrpt_error_t;
 
 /** @} */
@@ -138,7 +140,7 @@ typedef struct lrpt_error__ lrpt_error_t;
  * @{
  */
 
-/** I/Q samples data file */
+/** I/Q samples data file type */
 typedef struct lrpt_iq_file__ lrpt_iq_file_t;
 
 /** Supported I/Q samples data file format versions */
@@ -151,7 +153,7 @@ typedef enum lrpt_iq_file_flags_ver1__ {
     LRPT_IQ_FILE_FLAGS_VER1_OFFSET = 0x01 /**< Offset modulation */
 } lrpt_iq_file_flags_ver1_t;
 
-/** QPSK symbols data file */
+/** QPSK symbols data file type */
 typedef struct lrpt_qpsk_file__ lrpt_qpsk_file_t;
 
 /** Supported QPSK symbols data file format versions */
@@ -177,7 +179,7 @@ typedef enum lrpt_qpsk_file_flags_ver1__ {
  * @{
  */
 
-/** Chebyshev filter */
+/** Chebyshev filter object type */
 typedef struct lrpt_dsp_filter__ lrpt_dsp_filter_t;
 
 /** Supported Chebyshev filter types */
@@ -187,10 +189,10 @@ typedef enum lrpt_dsp_filter_type__ {
     LRPT_DSP_FILTER_TYPE_BANDPASS  /**< Bandpass filter */
 } lrpt_dsp_filter_type_t;
 
-/** Dediffcoder */
+/** Dediffcoder object type */
 typedef struct lrpt_dsp_dediffcoder__ lrpt_dsp_dediffcoder_t;
 
-/** Integer FFT */
+/** Integer FFT object type */
 typedef struct lrpt_dsp_ifft__ lrpt_dsp_ifft_t;
 
 /** @} */
@@ -216,7 +218,7 @@ typedef struct lrpt_dsp_ifft__ lrpt_dsp_ifft_t;
  * @{
  */
 
-/** Demodulator */
+/** Demodulator object type */
 typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 
 /** @} */
@@ -230,7 +232,7 @@ typedef struct lrpt_demodulator__ lrpt_demodulator_t;
  * @{
  */
 
-/** Decoder */
+/** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
 
 /** Supported spacecrafts */
@@ -250,12 +252,11 @@ typedef enum lrpt_decoder_spacecraft__ {
 
 /** Allocate I/Q data object.
  *
- * Tries to allocate I/Q data object of requested length \p len. User should free it after use
- * with #lrpt_iq_data_free().
+ * Tries to allocate I/Q data object of requested length \p len. If zero length is requested
+ * empty object will be allocated but it will be possible to resize it later with
+ * #lrpt_iq_data_resize(). User should free object with #lrpt_iq_data_free() after use.
  *
- * \param len Length of new I/Q data object in number of I/Q samples. If zero length is
- * requested, empty object will be allocated but it will be possible to resize it later
- * with #lrpt_iq_data_resize().
+ * \param len Length of new I/Q data object in number of I/Q samples.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data object or \c NULL in case of error.
@@ -283,8 +284,9 @@ LRPT_API size_t lrpt_iq_data_length(
 
 /** Resize existing I/Q data object.
  *
- * \p data will be resized to keep \p new_len I/Q samples. If new I/Q samples were allocated
- * during resize they will be initialized to \c 0.
+ * \p data will be resized to fit requested number \p new_len of I/Q samples. If new I/Q samples
+ * were allocated during resize they will be initialized to \c 0. If zero new length is
+ * requested I/Q data object will be set to the empty object.
  *
  * \param data Pointer to the I/Q data object.
  * \param new_len Length \p data will be resized to.
@@ -292,7 +294,8 @@ LRPT_API size_t lrpt_iq_data_length(
  *
  * \return \c true on successfull resize and \c false in case of error.
  *
- * \note If resize has failed \p data object will not be modified.
+ * \note If resize has failed or new length equals to the current one \p data object will not
+ * be modified.
  */
 LRPT_API bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
@@ -301,51 +304,53 @@ LRPT_API bool lrpt_iq_data_resize(
 
 /** Append I/Q data to the existing I/Q data object.
  *
- * Adds \p n I/Q samples from \p add object starting with position \p offset to the end of
- * \p data object. If \p n exceeds available number of I/Q samples in \p add
- * (considering offset) then all I/Q samples starting from \p offset will be appended.
+ * Adds \p n I/Q samples from \p data_src object starting with position \p offset to the end of
+ * \p data_dest object. If \p n exceeds available number of I/Q samples in \p data_src
+ * (considering offset) all I/Q samples starting from \p offset will be appended.
  *
- * \param data Pointer to the I/Q data object which will be enlarged.
- * \param add Pointer to the I/Q data object which contents will be added to the \p data.
- * \param offset How much I/Q samples should be skipped from the beginning of \p add.
+ * \param[in,out] data_dest Pointer to the destination I/Q data object.
+ * \param[in] data_src Pointer to the source I/Q data object.
+ * \param offset How much I/Q samples should be skipped from the beginning of \p data_src.
  * \param n Number of I/Q samples to append.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull append and \c false in case of error.
  *
- * \note If append has failed \p data object will not be modified.
+ * \warning \p data_dest and \p data_src can't be the same object!
+ *
+ * \note If append has failed, source I/Q data object is empty or no data is available for append
+ * \p data_dest object will not be modified.
  */
 LRPT_API bool lrpt_iq_data_append(
-        lrpt_iq_data_t *data,
-        const lrpt_iq_data_t *add,
+        lrpt_iq_data_t *data_dest,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
 
 /** Copy a part of I/Q samples to another I/Q data object.
  *
- * Copies \p n I/Q samples from \p samples object starting with position \p offset to the \p data
- * object which will be auto-resized to fit requested number of I/Q samples. If \p n exceeds
- * available number of I/Q samples in \p samples (considering offset) then all I/Q samples
- * starting from \p offset will be copied.
+ * Copies \p n I/Q samples from \p data_src object starting with position \p offset to the
+ * \p data_dest object which will be auto-resized to fit requested number of I/Q samples.
+ * If \p n exceeds available number of I/Q samples in \p data_src (considering offset) all
+ * I/Q samples starting from \p offset will be copied.
  *
- * \param data Pointer to the I/Q data object.
- * \param samples Pointer to the source I/Q data object.
- * \param offset How much I/Q samples should be skipped from the beginning of \p samples.
+ * \param[out] data_dest Pointer to the destination I/Q data object.
+ * \param[in] data_src Pointer to the source I/Q data object.
+ * \param offset How much I/Q samples should be skipped from the beginning of \p data_src.
  * \param n Number of I/Q samples to copy.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull copying and \c false in case of error.
  *
- * \note If copying has failed \p data object will not be modified.
+ * \warning \p data_dest and \p data_src can't be the same object!
  *
- * \warning \p data and \p samples can't be the same object!
- *
- * \todo Implement copying from the same object.
+ * \note If copying has failed, source I/Q data object is empty or no data is available for copy
+ * \p data_dest object will not be modified.
  */
 LRPT_API bool lrpt_iq_data_from_iq(
-        lrpt_iq_data_t *data,
-        const lrpt_iq_data_t *samples,
+        lrpt_iq_data_t *data_dest,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
@@ -353,17 +358,17 @@ LRPT_API bool lrpt_iq_data_from_iq(
 /** Create I/Q data object from a part of another I/Q data object.
  *
  * This function behaves similarly to #lrpt_iq_data_from_iq(), however, it allocates I/Q data
- * object automatically.
+ * object automatically. User should free object with #lrpt_iq_data_free() after use.
  *
- * \param samples Pointer to the source I/Q data object.
- * \param offset How much I/Q samples should be skipped from the beginning of \p samples.
+ * \param[in] data_src Pointer to the source I/Q data object.
+ * \param offset How much I/Q samples should be skipped from the beginning of \p data_src.
  * \param n Number of I/Q samples to copy.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data object or \c NULL in case of error.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
-        const lrpt_iq_data_t *samples,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
@@ -371,11 +376,11 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
 /** Convert array of complex I/Q samples to the I/Q data object.
  *
  * Converts \p n I/Q samples from array of complex I/Q samples \p samples starting with position
- * \p offset to the internal format of I/Q data storage and saves them to \p data object which
- * will be auto-resized to fit requested number of I/Q samples.
+ * \p offset to the internal format of I/Q data storage and saves them to \p data_dest object
+ * which will be auto-resized to fit requested number of I/Q samples.
  *
- * \param data Pointer to the I/Q data object.
- * \param samples Pointer to the array of complex I/Q samples.
+ * \param[out] data_dest Pointer to the destination I/Q data object.
+ * \param[in] samples Pointer to the source array of complex I/Q samples.
  * \param offset How much I/Q samples should be skipped from the beginning of \p samples.
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
@@ -384,20 +389,23 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
  *
  * \warning User should be responsible that \p samples array contains at least \p n elements
  * starting from \p offset and up to the end!
+ *
+ * \note If conversion has failed or no data is available for conversion \p data_dest object
+ * will not be modified.
  */
 LRPT_API bool lrpt_iq_data_from_complex(
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         const _Complex double *samples,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
 
-/** Create I/Q data object from complex I/Q samples.
+/** Create I/Q data object from array of complex I/Q samples.
  *
  * This function behaves similarly to #lrpt_iq_data_from_complex(), however, it allocates I/Q
- * data object automatically.
+ * data object automatically. User should free object with #lrpt_iq_data_free() after use.
  *
- * \param samples Pointer to the array of complex I/Q samples.
+ * \param[in] samples Pointer to the source array of complex I/Q samples.
  * \param offset How much I/Q samples should be skipped from the beginning of \p samples.
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
@@ -410,15 +418,15 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         size_t n,
         lrpt_error_t *err);
 
-/** Convert I/Q data to complex I/Q samples.
+/** Convert I/Q data to array of complex I/Q samples.
  *
- * Converts \p n I/Q samples from \p data object starting with position \p offset to the
- * \p samples array. If \p n exceeds available number of I/Q samples in \p data
- * (considering offset) then all I/Q samples starting from \p offset will be converted.
+ * Converts \p n I/Q samples from \p data_src object starting with position \p offset to the
+ * \p samples array. If \p n exceeds available number of I/Q samples in \p data_src (considering
+ * offset) all I/Q samples starting from \p offset will be converted.
  *
- * \param samples Pointer to the resulting complex array.
- * \param data Pointer to the source I/Q data object.
- * \param offset How much I/Q samples should be skipped from the beginning of \p data.
+ * \param[out] samples Pointer to the destination array of complex I/Q samples.
+ * \param[in] data_src Pointer to the source I/Q data object.
+ * \param offset How much I/Q samples should be skipped from the beginning of \p data_src.
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -426,53 +434,61 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
  *
  * \warning User should be responsible that \p samples array is large enough to keep at least
  * \p n elements!
+ *
+ * \note If source I/Q data object is empty or no data is available for conversion \p samples
+ * array will not be modified.
  */
 LRPT_API bool lrpt_iq_data_to_complex(
         _Complex double *samples,
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
 
 /** Convert array of adjacent double-valued I/Q samples to the I/Q data object.
  *
- * Converts \p n I/Q samples from array of adjacent double-valued I/Q samples \p samples starting
- * with position \p offset to the internal format of I/Q data storage and saves them to
- * \p data object which will be auto-resized to fit requested number of I/Q samples.
+ * Converts \p n I/Q samples from array of adjacent double-valued I/Q samples \p samples
+ * starting with position \p offset to the internal format of I/Q data storage and saves them to
+ * \p data_dest object which will be auto-resized to fit requested number of I/Q samples.
  *
- * \param data Pointer to the I/Q data object.
- * \param samples Pointer to the array of adjacent double-valued I/Q samples.
- * \param offset How much I/Q samples should be skipped from the beginning of \p samples.
- * \param n Number of I/Q samples to convert.
+ * \param[out] data_dest Pointer to the destination I/Q data object.
+ * \param[in] samples Pointer to the source array of adjacent double-valued I/Q samples.
+ * \param offset How much I/Q samples of internal format should be skipped from the beginning
+ * of \p samples.
+ * \param n Number of I/Q samples of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull converting and \c false in case of error.
  *
- * \note 1 I/Q sample equals to 2 double-valued I/Q samples.
+ * \note 1 I/Q sample of internal format equals to 2 double-valued I/Q samples.
  *
  * \warning User should be responsible that \p samples array contains at least \c 2x \p n
  * elements starting from \c 2x \p offset and up to the end!
+ *
+ * \note If conversion has failed or no data is available for conversion \p data_dest object
+ * will not be modified.
  */
 LRPT_API bool lrpt_iq_data_from_doubles(
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         const double *samples,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
 
-/** Create I/Q data object from adjacent double-valued I/Q samples.
+/** Create I/Q data object from array of adjacent double-valued I/Q samples.
  *
  * This function behaves similarly to #lrpt_iq_data_from_doubles(), however, it allocates I/Q
- * data object automatically.
+ * data object automatically. User should free object with #lrpt_iq_data_free() after use.
  *
- * \param samples Pointer to the array of complex I/Q samples.
- * \param offset How much I/Q samples should be skipped from the beginning of \p samples.
- * \param n Number of I/Q samples to convert.
+ * \param[in] samples Pointer to the source array of adjacent double-valued I/Q samples.
+ * \param offset How much I/Q samples of internal format should be skipped from the beginning
+ * of \p samples.
+ * \param n Number of I/Q samples of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated I/Q data object or \c NULL in case of error.
  *
- * \note 1 I/Q sample equals to 2 double-valued I/Q samples.
+ * \note 1 I/Q sample of internal format equals to 2 double-valued I/Q samples.
  */
 LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         const double *samples,
@@ -480,28 +496,29 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         size_t n,
         lrpt_error_t *err);
 
-/** Convert I/Q data to the adjacent double-valued I/Q samples.
+/** Convert I/Q data to the array of adjacent double-valued I/Q samples.
  *
- * Converts \p n I/Q samples from \p data object starting with position \p offset to the
- * \p samples array. If \p n exceeds available number of I/Q samples in \p data
- * (considering offset) then all I/Q samples starting from \p offset will be converted.
+ * Converts \p n I/Q samples from \p data_src object starting with position \p offset to the
+ * \p samples array. If \p n exceeds available number of I/Q samples in \p data_src (considering
+ * offset) all I/Q samples starting from \p offset will be converted.
  *
- * \param samples Pointer to the resulting double-valued array.
- * \param data Pointer to the source I/Q data object.
- * \param offset How much I/Q samples should be skipped from the beginning of \p data.
+ * \param[out] samples Pointer to the destination array of adjacent double-valued I/Q samples.
+ * \param[in] data_src Pointer to the source I/Q data object.
+ * \param offset How much I/Q samples should be skipped from the beginning of \p data_src.
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successful conversion and \c false in case of error.
  *
- * \note 1 I/Q sample equals to 2 double-valued I/Q samples.
- *
  * \warning User should be responsible that \p samples array is large enough to keep at least
  * \c 2x \p n elements!
+ *
+ * \note If source I/Q data object is empty or no data is available for conversion \p samples
+ * array will not be modified.
  */
 LRPT_API bool lrpt_iq_data_to_doubles(
         double *samples,
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err);
@@ -580,7 +597,7 @@ LRPT_API bool lrpt_iq_rb_is_full(
  *
  * Pops requested number of I/Q samples from \p rb object and frees them for future usage.
  * Resulting data will be stored in \p data object. If \p n is greater than remaining number
- * of I/Q samples in ring buffer then all remaining samples will be popped.
+ * of I/Q samples in ring buffer all remaining samples will be popped.
  *
  * \param rb Pointer to the I/Q ring buffer object.
  * \param data Pointer to the I/Q data object.
@@ -598,7 +615,7 @@ LRPT_API bool lrpt_iq_rb_pop(
 /** Put I/Q data to I/Q ring buffer object.
  *
  * Pushes requested number of I/Q samples to \p rb object. If \p n exceeds available number of
- * I/Q samples in \p data (considering offset) then all I/Q samples starting from \p offset
+ * I/Q samples in \p data (considering offset) all I/Q samples starting from \p offset
  * will be pushed.
  *
  * \param rb Pointer to the I/Q ring buffer object.
@@ -668,7 +685,7 @@ LRPT_API bool lrpt_qpsk_data_resize(
  *
  * Adds \p n QPSK symbols from QPSK data object \p add starting with position \p offset to the end
  * of \p data object. If \p n exceeds available number of symbols in \p add (accounting for offset)
- * then all symbols will be copied.
+ * all symbols will be copied.
  *
  * \param data Pointer to the QPSK data object which will be enlarged.
  * \param add Pointer to the QPSK data object which contents will be added to the \p data.
@@ -690,7 +707,7 @@ LRPT_API bool lrpt_qpsk_data_append(
  *
  * Copies \p n symbols from QPSK data object \p symbols starting with position \p offset to the
  * QPSK data object \p data which will be auto-resized to fit requested number of symbols.
- * If \p n exceed available number of symbols in \p symbols (accounting for offset) then all
+ * If \p n exceed available number of symbols in \p symbols (accounting for offset) all
  * symbols will be copied.
  *
  * \param data Pointer to the QPSK data object.
@@ -784,7 +801,7 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
  *
  * \return \c true on successful conversion and \c false otherwise.
  *
- * \note If more symbols than QPSK data object contains was requested then all symbols will be
+ * \note If more symbols than QPSK data object contains was requested all symbols will be
  * converted.
  */
 LRPT_API bool lrpt_qpsk_data_to_soft(
@@ -845,7 +862,7 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
  *
  * \return \c true on successful conversion and \c false otherwise.
  *
- * \note If more symbols than QPSK data object contains was requested then all symbols will be
+ * \note If more symbols than QPSK data object contains was requested all symbols will be
  * converted.
  */
 LRPT_API bool lrpt_qpsk_data_to_hard(
@@ -928,7 +945,7 @@ LRPT_API bool lrpt_qpsk_rb_is_full(
 /** Get QPSK data from QPSK ring buffer object.
  *
  * Returns requested number of QPSK symbols from specified QPSK ring buffer object and frees them
- * for future usage. If \p n is greater than remaining number of QPSK symbols in ring buffer then
+ * for future usage. If \p n is greater than remaining number of QPSK symbols in ring buffer
  * all remaining symbols will be popped.
  *
  * \param rb Pointer to the QPSK ring buffer object.
@@ -965,7 +982,7 @@ LRPT_API bool lrpt_qpsk_rb_push(
 
 /** Allocate LRPT image object.
  *
- * If \p width or \p height are \c 0 then empty image will be allocated.
+ * If \p width or \p height are \c 0 empty image will be allocated.
  *
  * \param width Width of the image (in px).
  * \param height Height of the image (in px).
@@ -1460,7 +1477,7 @@ LRPT_API bool lrpt_qpsk_data_write_to_file(
  * \param image Pointer to the LRPT image object.
  * \param fname Name of file to save PNM image to.
  * \param apid Number of APID channel to save image to.
- * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PNM file will
+ * \param corr Whether to perform BT.709 gamma correction. If \c false linear PNM file will
  * be saved.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -1482,7 +1499,7 @@ LRPT_API bool lrpt_image_dump_channel_pnm(
  * \param apid_red Number of APID channel to use as red channel.
  * \param apid_green Number of APID channel to use as green channel.
  * \param apid_blue Number of APID channel to use as blue channel.
- * \param corr Whether to perform BT.709 gamma correction. If \c false then linear PNM file will
+ * \param corr Whether to perform BT.709 gamma correction. If \c false linear PNM file will
  * be saved.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -1669,7 +1686,7 @@ LRPT_API bool lrpt_postproc_image_flip(
 /** Perform image rectification.
  *
  * Compensates tangential scale distortion and distortion caused by the curvature of the Earth.
- * If \p interpolate is \c true then intermediate pixel values will be interpolated rather than
+ * If \p interpolate is \c true intermediate pixel values will be interpolated rather than
  * filled with the same value.
  *
  * \param image Pointer to the LRPT image object.
@@ -1888,7 +1905,7 @@ LRPT_API double lrpt_demodulator_pllphaseerr(
 /** Perform QPSK demodulation.
  *
  * Runs demodulation on given \p input I/Q samples. Input samples are filtered with Chebyshev
- * recursive filter and then demodulated with \p demod demodulator object. Resulting QPSK
+ * recursive filter and demodulated with \p demod demodulator object. Resulting QPSK
  * symbols will be stored in \p output QPSK data object.
  *
  * \param demod Pointer to the demodulator object.
@@ -2031,7 +2048,7 @@ LRPT_API void lrpt_decoder_pxls_avail(
  *
  * Reads requested number of pixels \p n starting with \p offset for specified \p apid and stores
  * them into provided array \p pxls which should be large enough to hold at least \p n
- * pixels. If requested number of pixels plus offset exceeds image size then all remaining pixels
+ * pixels. If requested number of pixels plus offset exceeds image size all remaining pixels
  * will be returned.
  *
  * \param decoder Pointer to the decoder object.

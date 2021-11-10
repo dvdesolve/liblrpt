@@ -62,7 +62,6 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(
     if (len > 0) {
         data->iq = calloc(len, sizeof(complex double));
 
-        /* Return NULL only if allocation attempt has failed */
         if (!data->iq) {
             lrpt_iq_data_free(data);
 
@@ -109,10 +108,9 @@ bool lrpt_iq_data_resize(
         lrpt_iq_data_t *data,
         size_t new_len,
         lrpt_error_t *err) {
-    /* Accept only valid data objects or plain empty objects */
     if (!data || ((data->len > 0) && !data->iq)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
                     "I/Q data object is NULL or corrupted");
 
         return false;
@@ -122,7 +120,7 @@ bool lrpt_iq_data_resize(
     if (data->len == new_len)
         return true;
 
-    /* In case of zero length create plain empty data object */
+    /* In case of zero length create empty I/Q data object */
     if (new_len == 0) {
         free(data->iq);
 
@@ -140,7 +138,7 @@ bool lrpt_iq_data_resize(
             return false;
         }
         else {
-            /* Zero out newly allocated portion */
+            /* Zero out newly allocated part of I/Q array */
             if (new_len > data->len)
                 memset(new_iq + data->len, 0, sizeof(complex double) * (new_len - data->len));
 
@@ -156,36 +154,66 @@ bool lrpt_iq_data_resize(
 
 /* lrpt_iq_data_append() */
 bool lrpt_iq_data_append(
-        lrpt_iq_data_t *data,
-        const lrpt_iq_data_t *add,
+        lrpt_iq_data_t *data_dest,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !add || (data == add)) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Original and/or added I/Q data objects are NULL or equivalent");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination I/Q data object is NULL");
 
         return false;
     }
 
-    /* Silently ignore empty data */
-    if (add->len == 0)
+    if (!data_src || ((data_src->len > 0) && !data_src->iq)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL or corrupted");
+
+        return false;
+    }
+
+    if (data_dest == data_src) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Source and destination I/Q data objects are the same");
+
+        return false;
+    }
+
+    /* Ignore empty source I/Q data objects */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source I/Q data object is empty");
+
         return true;
+    }
 
     /* Handle oversized requests */
-    if (n > (add->len - offset))
-        n = (add->len - offset);
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
 
-    /* Keep old length for further calculations */
-    const size_t old_len = data->len;
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
-    /* Resize original storage */
-    if (!lrpt_iq_data_resize(data, old_len + n, err))
+        return true;
+    }
+
+    /* Keep old length for further copying */
+    const size_t old_len = data_dest->len;
+
+    /* Resize destination storage */
+    if (!lrpt_iq_data_resize(data_dest, old_len + n, err))
         return false;
 
     /* Just copy samples */
-    memcpy(data->iq + old_len, add->iq + offset, sizeof(complex double) * n);
+    memcpy(data_dest->iq + old_len, data_src->iq + offset, sizeof(complex double) * n);
 
     return true;
 }
@@ -194,29 +222,63 @@ bool lrpt_iq_data_append(
 
 /* lrpt_iq_data_from_iq() */
 bool lrpt_iq_data_from_iq(
-        lrpt_iq_data_t *data,
-        const lrpt_iq_data_t *samples,
+        lrpt_iq_data_t *data_dest,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !samples || (samples->len == 0)) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object and/or I/Q source data are NULL or I/Q source data is empty");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination I/Q data object is NULL");
 
         return false;
     }
 
-    /* Handle oversized requests */
-    if (n > (samples->len - offset))
-        n = (samples->len - offset);
+    if (!data_src || ((data_src->len > 0) && !data_src->iq)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL or corrupted");
 
-    /* Resize storage */
-    if (!lrpt_iq_data_resize(data, n, err))
+        return false;
+    }
+
+    if (data_dest == data_src) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Source and destination I/Q data objects are the same");
+
+        return false;
+    }
+
+    /* Ignore empty source I/Q data objects */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source I/Q data object is empty");
+
+        return true;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
+    /* Resize destination storage */
+    if (!lrpt_iq_data_resize(data_dest, n, err))
         return false;
 
     /* Just copy samples */
-    memcpy(data->iq, samples->iq + offset, sizeof(complex double) * n);
+    memcpy(data_dest->iq, data_src->iq + offset, sizeof(complex double) * n);
 
     return true;
 }
@@ -225,61 +287,87 @@ bool lrpt_iq_data_from_iq(
 
 /* lrpt_iq_data_create_from_iq() */
 lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
-        const lrpt_iq_data_t *samples,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!samples || (samples->len == 0)) {
+    if (!data_src || ((data_src->len > 0) && !data_src->iq) || (data_src->len == 0)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q source data object is NULL or empty");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL, corrupted or empty");
 
         return NULL;
     }
 
     /* Handle oversized requests */
-    if (n > (samples->len - offset))
-        n = (samples->len - offset);
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
 
-    /* Allocate new storage */
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(n, err);
-
-    if (!data)
-        return NULL;
-
-    /* Convert samples */
-    if (!lrpt_iq_data_from_iq(data, samples, offset, n, err)) {
-        lrpt_iq_data_free(data);
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
         return NULL;
     }
 
-    return data;
+    /* Allocate storage */
+    lrpt_iq_data_t *data_dest = lrpt_iq_data_alloc(n, err);
+
+    if (!data_dest)
+        return NULL;
+
+    /* Convert samples */
+    if (!lrpt_iq_data_from_iq(data_dest, data_src, offset, n, err)) {
+        lrpt_iq_data_free(data_dest);
+
+        return NULL;
+    }
+
+    return data_dest;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_data_from_complex() */
 bool lrpt_iq_data_from_complex(
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         const complex double *samples,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !samples) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object and/or I/Q samples array are NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination I/Q data object is NULL");
 
         return false;
     }
 
+    if (!samples) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source complex I/Q samples array is NULL");
+
+        return false;
+    }
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, n, err))
+    if (!lrpt_iq_data_resize(data_dest, n, err))
         return false;
 
     /* Just copy samples */
-    memcpy(data->iq, samples + offset, sizeof(complex double) * n);
+    memcpy(data_dest->iq, samples + offset, sizeof(complex double) * n);
 
     return true;
 }
@@ -294,26 +382,35 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         lrpt_error_t *err) {
     if (!samples) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q samples array is NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source complex I/Q samples array is NULL");
 
         return NULL;
     }
 
-    /* Allocate new storage */
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(n, err);
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
-    if (!data)
+        return NULL;
+    }
+
+    /* Allocate storage */
+    lrpt_iq_data_t *data_dest = lrpt_iq_data_alloc(n, err);
+
+    if (!data_dest)
         return NULL;
 
     /* Convert samples */
-    if (!lrpt_iq_data_from_complex(data, samples, offset, n, err)) {
-        lrpt_iq_data_free(data);
+    if (!lrpt_iq_data_from_complex(data_dest, samples, offset, n, err)) {
+        lrpt_iq_data_free(data_dest);
 
         return NULL;
     }
 
-    return data;
+    return data_dest;
 }
 
 /*************************************************************************************************/
@@ -321,24 +418,33 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
 /* lrpt_iq_data_to_complex() */
 bool lrpt_iq_data_to_complex(
         complex double *samples,
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !data->iq) {
+    if (!data_src || ((data_src->len > 0) && !data_src->iq) || (data_src->len == 0)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL, corrupted or empty");
 
         return false;
     }
 
     /* Handle oversized requests */
-    if (n > (data->len - offset))
-        n = (data->len - offset);
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return false;
+    }
 
     /* Just copy samples */
-    memcpy(samples, data->iq + offset, sizeof(complex double) * n);
+    memcpy(samples, data_src->iq + offset, sizeof(complex double) * n);
 
     return true;
 }
@@ -347,25 +453,42 @@ bool lrpt_iq_data_to_complex(
 
 /* lrpt_iq_data_from_doubles() */
 bool lrpt_iq_data_from_doubles(
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         const double *samples,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !samples) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object and/or I/Q samples array are NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination I/Q data object is NULL");
 
         return false;
     }
 
+    if (!samples) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source double-valued I/Q samples array is NULL");
+
+        return false;
+    }
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, n, err))
+    if (!lrpt_iq_data_resize(data_dest, n, err))
         return false;
 
     /* Just copy samples */
-    memcpy(data->iq, samples + 2 * offset, sizeof(complex double) * 2 * n);
+    memcpy(data_dest->iq, samples + 2 * offset, sizeof(double) * 2 * n);
 
     return true;
 }
@@ -380,26 +503,35 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         lrpt_error_t *err) {
     if (!samples) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q samples array is NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source double-valued I/Q samples array is NULL");
 
         return NULL;
     }
 
-    /* Allocate new storage */
-    lrpt_iq_data_t *data = lrpt_iq_data_alloc(n, err);
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
-    if (!data)
+        return NULL;
+    }
+
+    /* Allocate storage */
+    lrpt_iq_data_t *data_dest = lrpt_iq_data_alloc(n, err);
+
+    if (!data_dest)
         return NULL;
 
     /* Convert samples */
-    if (!lrpt_iq_data_from_doubles(data, samples, offset, n, err)) {
-        lrpt_iq_data_free(data);
+    if (!lrpt_iq_data_from_doubles(data_dest, samples, offset, n, err)) {
+        lrpt_iq_data_free(data_dest);
 
         return NULL;
     }
 
-    return data;
+    return data_dest;
 }
 
 /*************************************************************************************************/
@@ -407,24 +539,33 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
 /* lrpt_iq_data_to_doubles() */
 bool lrpt_iq_data_to_doubles(
         double *samples,
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !data->iq) {
+    if (!data_src || ((data_src->len > 0) && !data_src->iq) || (data_src->len == 0)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL, corrupted or empty");
 
         return false;
     }
 
     /* Handle oversized requests */
-    if (n > (data->len - offset))
-        n = (data->len - offset);
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return false;
+    }
 
     /* Just copy samples */
-    memcpy(samples, data->iq + offset, sizeof(complex double) * n);
+    memcpy(samples, data_src->iq + offset, sizeof(double) * 2 * n);
 
     return true;
 }
@@ -806,7 +947,6 @@ bool lrpt_qpsk_data_append(
 
 /*************************************************************************************************/
 
-/* TODO add subset helper to extract part of the self symbols */
 /* lrpt_qpsk_data_from_qpsk() */
 bool lrpt_qpsk_data_from_qpsk(
         lrpt_qpsk_data_t *data,
