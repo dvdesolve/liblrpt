@@ -38,7 +38,6 @@
 
 /*************************************************************************************************/
 
-/* Library defaults */
 static const double AGC_WINSIZE = 65536.0; /* 1024 * 64 */
 static const double AGC_WINSIZE_1 = AGC_WINSIZE - 1.0;
 

@@ -56,7 +56,6 @@ typedef struct qpsk_sym__ {
 
 /*************************************************************************************************/
 
-/* Library defaults */
 static const double DEMOD_RESYNC_SCALE_QPSK = 2000000.0;
 static const double DEMOD_RESYNC_SCALE_OQPSK = 2000000.0;
 

@@ -42,7 +42,6 @@
 
 /*************************************************************************************************/
 
-/* Library defaults */
 static const double PLL_INIT_FREQ = 0.001; /* Initial Costas' PLL frequency */
 static const double PLL_DAMPING = 1.0 / M_SQRT2; /* Damping factor */
 

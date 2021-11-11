@@ -75,13 +75,16 @@ lrpt_iq_data_t *lrpt_iq_data_alloc(
     else
         data->iq = NULL;
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return data;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_data_free() */
-void lrpt_iq_data_free(
+inline void lrpt_iq_data_free(
         lrpt_iq_data_t *data) {
     if (!data)
         return;
@@ -93,7 +96,7 @@ void lrpt_iq_data_free(
 /*************************************************************************************************/
 
 /* lrpt_iq_data_length() */
-size_t lrpt_iq_data_length(
+inline size_t lrpt_iq_data_length(
         const lrpt_iq_data_t *data) {
     if (!data)
         return 0;
@@ -117,8 +120,13 @@ bool lrpt_iq_data_resize(
     }
 
     /* If sizes are the same don't do anything */
-    if (data->len == new_len)
+    if (data->len == new_len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_PARAM,
+                    "New length of I/Q data object equals to the old one");
+
         return true;
+    }
 
     /* In case of zero length create empty I/Q data object */
     if (new_len == 0) {
@@ -138,7 +146,7 @@ bool lrpt_iq_data_resize(
             return false;
         }
         else {
-            /* Zero out newly allocated part of I/Q array */
+            /* Zero out newly allocated part of I/Q data array */
             if (new_len > data->len)
                 memset(new_iq + data->len, 0, sizeof(complex double) * (new_len - data->len));
 
@@ -146,6 +154,9 @@ bool lrpt_iq_data_resize(
             data->iq = new_iq;
         }
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -192,6 +203,15 @@ bool lrpt_iq_data_append(
         return true;
     }
 
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source I/Q data length");
+
+        return false;
+    }
+
     /* Handle oversized requests */
     if (n > (data_src->len - offset))
         n = data_src->len - offset;
@@ -214,6 +234,9 @@ bool lrpt_iq_data_append(
 
     /* Just copy samples */
     memcpy(data_dest->iq + old_len, data_src->iq + offset, sizeof(complex double) * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -260,6 +283,15 @@ bool lrpt_iq_data_from_iq(
         return true;
     }
 
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source I/Q data length");
+
+        return false;
+    }
+
     /* Handle oversized requests */
     if (n > (data_src->len - offset))
         n = data_src->len - offset;
@@ -280,6 +312,9 @@ bool lrpt_iq_data_from_iq(
     /* Just copy samples */
     memcpy(data_dest->iq, data_src->iq + offset, sizeof(complex double) * n);
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -297,6 +332,15 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
                     "Source I/Q data object is NULL, corrupted or empty");
 
         return NULL;
+    }
+
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source I/Q data length");
+
+        return false;
     }
 
     /* Handle oversized requests */
@@ -324,6 +368,9 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
 
         return NULL;
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return data_dest;
 }
@@ -369,6 +416,9 @@ bool lrpt_iq_data_from_complex(
     /* Just copy samples */
     memcpy(data_dest->iq, samples + offset, sizeof(complex double) * n);
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -410,6 +460,9 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
         return NULL;
     }
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return data_dest;
 }
 
@@ -430,6 +483,15 @@ bool lrpt_iq_data_to_complex(
         return false;
     }
 
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source I/Q data length");
+
+        return false;
+    }
+
     /* Handle oversized requests */
     if (n > (data_src->len - offset))
         n = data_src->len - offset;
@@ -437,14 +499,17 @@ bool lrpt_iq_data_to_complex(
     /* Just finish when nothing to do */
     if (n == 0) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
                     "No data to process");
 
-        return false;
+        return true;
     }
 
     /* Just copy samples */
     memcpy(samples, data_src->iq + offset, sizeof(complex double) * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -490,6 +555,9 @@ bool lrpt_iq_data_from_doubles(
     /* Just copy samples */
     memcpy(data_dest->iq, samples + 2 * offset, sizeof(double) * 2 * n);
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -531,6 +599,9 @@ lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
         return NULL;
     }
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return data_dest;
 }
 
@@ -551,6 +622,15 @@ bool lrpt_iq_data_to_doubles(
         return false;
     }
 
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source I/Q data length");
+
+        return false;
+    }
+
     /* Handle oversized requests */
     if (n > (data_src->len - offset))
         n = data_src->len - offset;
@@ -558,14 +638,17 @@ bool lrpt_iq_data_to_doubles(
     /* Just finish when nothing to do */
     if (n == 0) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
                     "No data to process");
 
-        return false;
+        return true;
     }
 
     /* Just copy samples */
     memcpy(samples, data_src->iq + offset, sizeof(double) * 2 * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -597,10 +680,9 @@ lrpt_iq_rb_t *lrpt_iq_rb_alloc(
     /* Set requested length (reserve 1 element for full/empty detection) and allocate storage
      * for I/Q samples if length is not zero
      */
-    rb->len = (len + 1);
+    rb->len = len + 1;
     rb->iq = calloc(len + 1, sizeof(complex double));
 
-    /* Return NULL only if allocation attempt has failed */
     if (!rb->iq) {
         lrpt_iq_rb_free(rb);
 
@@ -611,9 +693,12 @@ lrpt_iq_rb_t *lrpt_iq_rb_alloc(
         return NULL;
     }
 
-    /* Initially both head and tail are the same */
+    /* Initially both head and tail are pointing to the same element */
     rb->head = 0;
     rb->tail = 0;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return rb;
 }
@@ -621,7 +706,7 @@ lrpt_iq_rb_t *lrpt_iq_rb_alloc(
 /*************************************************************************************************/
 
 /* lrpt_iq_rb_free() */
-void lrpt_iq_rb_free(
+inline void lrpt_iq_rb_free(
         lrpt_iq_rb_t *rb) {
     if (!rb)
         return;
@@ -633,7 +718,7 @@ void lrpt_iq_rb_free(
 /*************************************************************************************************/
 
 /* lrpt_iq_rb_length() */
-size_t lrpt_iq_rb_length(
+inline size_t lrpt_iq_rb_length(
         const lrpt_iq_rb_t *rb) {
     if (!rb)
         return 0;
@@ -645,14 +730,14 @@ size_t lrpt_iq_rb_length(
 /*************************************************************************************************/
 
 /* lrpt_iq_rb_used() */
-size_t lrpt_iq_rb_used(
+inline size_t lrpt_iq_rb_used(
         const lrpt_iq_rb_t *rb) {
     if (!rb)
         return 0;
 
-    /* Save as soon as possible */
+    /* Save as soon as possible, so we'll get largest assessment of used size */
     size_t t = rb->tail;
-    size_t h = rb->head; /* We're estimating largest possible used buffer size */
+    size_t h = rb->head;
 
     if (h >= t)
         return (h - t);
@@ -663,18 +748,19 @@ size_t lrpt_iq_rb_used(
 /*************************************************************************************************/
 
 /* lrpt_iq_rb_avail() */
-size_t lrpt_iq_rb_avail(
+inline size_t lrpt_iq_rb_avail(
         const lrpt_iq_rb_t *rb) {
     if (!rb)
         return 0;
 
+    /* Account for empty/full detection */
     return (rb->len - 1 - lrpt_iq_rb_used(rb));
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_rb_is_empty() */
-bool lrpt_iq_rb_is_empty(
+inline bool lrpt_iq_rb_is_empty(
         const lrpt_iq_rb_t *rb) {
     if (!rb)
         return false;
@@ -685,7 +771,7 @@ bool lrpt_iq_rb_is_empty(
 /*************************************************************************************************/
 
 /* lrpt_iq_rb_is_full() */
-bool lrpt_iq_rb_is_full(
+inline bool lrpt_iq_rb_is_full(
         const lrpt_iq_rb_t *rb) {
     if (!rb)
         return false;
@@ -698,13 +784,21 @@ bool lrpt_iq_rb_is_full(
 /* lrpt_iq_rb_pop() */
 bool lrpt_iq_rb_pop(
         lrpt_iq_rb_t *rb,
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         size_t n,
         lrpt_error_t *err) {
-    if (!rb || !data) {
+    if (!rb) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q ring buffer object and/or I/Q data object are NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "I/Q ring buffer object is NULL");
+
+        return false;
+    }
+
+    if (!data_dest) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination I/Q data object is NULL");
 
         return false;
     }
@@ -713,33 +807,40 @@ bool lrpt_iq_rb_pop(
     if (lrpt_iq_rb_used(rb) < n)
         n = lrpt_iq_rb_used(rb);
 
+    /* Just finish when nothing to do */
     if (n == 0) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "No I/Q data to pop");
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
-        return false;
+        return true;
     }
 
     /* Resize storage */
-    if (!lrpt_iq_data_resize(data, n, err))
+    if (!lrpt_iq_data_resize(data_dest, n, err))
         return false;
 
     if (rb->tail < rb->head) /* Not wrapped data */
-        memcpy(data->iq, rb->iq + rb->tail, sizeof(complex double) * n);
+        memcpy(data_dest->iq, rb->iq + rb->tail, sizeof(complex double) * n);
     else { /* Wrapped data */
         if ((rb->tail + n) < rb->len) /* Contiguous chunk */
-            memcpy(data->iq, rb->iq + rb->tail, sizeof(complex double) * n);
+            memcpy(data_dest->iq, rb->iq + rb->tail, sizeof(complex double) * n);
         else { /* Non-contiguous chunk */
-            const size_t tn = (rb->len - rb->tail);
+            const size_t tn = rb->len - rb->tail;
 
-            memcpy(data->iq, rb->iq + rb->tail, sizeof(complex double) * tn); /* Till the end */
-            memcpy(data->iq + tn, rb->iq, sizeof(complex double) * (n - tn)); /* From the start */
+            /* Till the end */
+            memcpy(data_dest->iq, rb->iq + rb->tail, sizeof(complex double) * tn);
+
+            /* From the start */
+            memcpy(data_dest->iq + tn, rb->iq, sizeof(complex double) * (n - tn));
         }
     }
 
     /* Advance tail position */
-    rb->tail = ((rb->tail + n) % rb->len);
+    rb->tail = (rb->tail + n) % rb->len;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -749,25 +850,47 @@ bool lrpt_iq_rb_pop(
 /* lrpt_iq_rb_push() */
 bool lrpt_iq_rb_push(
         lrpt_iq_rb_t *rb,
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!rb || !data || !data->iq) {
+    if (!rb) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q ring buffer object and/or I/Q data object are NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "I/Q ring buffer object is NULL");
 
         return false;
     }
 
-    /* Silently ignore empty data */
-    if ((data->len == 0) || (n == 0))
+    if (!data_src || ((data_src->len > 0) && !data_src->iq)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL or corrupted");
+
+        return false;
+    }
+
+    /* Ignore empty source I/Q data objects */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source I/Q data object is empty");
+
         return true;
+    }
 
     /* Handle oversized requests */
-    if (n > (data->len - offset))
-        n = (data->len - offset);
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
 
     if ((lrpt_iq_rb_avail(rb) < n)) {
         if (err)
@@ -778,20 +901,26 @@ bool lrpt_iq_rb_push(
     }
 
     if (rb->head < rb->tail) /* Wrapped data */
-        memcpy(rb->iq + rb->head, data->iq + offset, sizeof(complex double) * n);
+        memcpy(rb->iq + rb->head, data_src->iq + offset, sizeof(complex double) * n);
     else { /* Not wrapped data */
         if ((rb->head + n) < rb->len) /* Contiguous chunk */
-            memcpy(rb->iq + rb->head, data->iq + offset, sizeof(complex double) * n);
+            memcpy(rb->iq + rb->head, data_src->iq + offset, sizeof(complex double) * n);
         else { /* Non-contiguous chunk */
-            const size_t tn = (rb->len - rb->head);
+            const size_t tn = rb->len - rb->head;
 
-            memcpy(rb->iq + rb->head, data->iq + offset, sizeof(complex double) * tn); /* Till the end */
-            memcpy(rb->iq, data->iq + offset + tn, sizeof(complex double) * (n - tn)); /* From the start */
+            /* Till the end */
+            memcpy(rb->iq + rb->head, data_src->iq + offset, sizeof(complex double) * tn);
+
+            /* From the start */
+            memcpy(rb->iq, data_src->iq + offset + tn, sizeof(complex double) * (n - tn));
         }
     }
 
     /* Advance head position */
-    rb->head = ((rb->head + n) % rb->len);
+    rb->head = (rb->head + n) % rb->len;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -807,7 +936,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
     if (!data) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "QPSK data object allocation failed");
+                    "QPSK data object allocation has failed");
 
         return NULL;
     }
@@ -819,13 +948,12 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
         /* Twice a length because 1 symbol consists of two bytes */
         data->qpsk = calloc(2 * len, sizeof(int8_t));
 
-        /* Return NULL only if allocation attempt has failed */
         if (!data->qpsk) {
             lrpt_qpsk_data_free(data);
 
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Data buffer allocation for QPSK data object failed");
+                        "Data buffer allocation for QPSK data object has failed");
 
             return NULL;
         }
@@ -833,13 +961,16 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_alloc(
     else
         data->qpsk = NULL;
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return data;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_qpsk_data_free() */
-void lrpt_qpsk_data_free(
+inline void lrpt_qpsk_data_free(
         lrpt_qpsk_data_t *data) {
     if (!data)
         return;
@@ -851,7 +982,7 @@ void lrpt_qpsk_data_free(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_data_length() */
-size_t lrpt_qpsk_data_length(
+inline size_t lrpt_qpsk_data_length(
         const lrpt_qpsk_data_t *data) {
     if (!data)
         return 0;
@@ -866,20 +997,24 @@ bool lrpt_qpsk_data_resize(
         lrpt_qpsk_data_t *data,
         size_t new_len,
         lrpt_error_t *err) {
-    /* We accept only valid data objects or simple empty objects */
     if (!data || ((data->len > 0) && !data->qpsk)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
                     "QPSK data object is NULL or corrupted");
 
         return false;
     }
 
-    /* Is sizes are the same just return true */
-    if (data->len == new_len)
-        return true;
+    /* Is sizes are the same just don't do anything */
+    if (data->len == new_len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_PARAM,
+                    "New length of QPSK data object equals to the old one");
 
-    /* In case of zero length create empty but valid data object */
+        return true;
+    }
+
+    /* In case of zero length create empty QPSK data object */
     if (new_len == 0) {
         free(data->qpsk);
 
@@ -887,17 +1022,18 @@ bool lrpt_qpsk_data_resize(
         data->qpsk = NULL;
     }
     else {
+        /* Twice a length because 1 symbol consists of two bytes */
         int8_t *new_s = reallocarray(data->qpsk, 2 * new_len, sizeof(int8_t));
 
         if (!new_s) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Data buffer reallocation for QPSK data object failed");
+                        "Data buffer reallocation for QPSK data object has failed");
 
             return false;
         }
         else {
-            /* Zero out newly allocated portion */
+            /* Zero out newly allocated part of QPSK data array */
             if (new_len > data->len)
                 memset(new_s + 2 * data->len, 0, sizeof(int8_t) * 2 * (new_len - data->len));
 
@@ -906,6 +1042,9 @@ bool lrpt_qpsk_data_resize(
         }
     }
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -913,34 +1052,69 @@ bool lrpt_qpsk_data_resize(
 
 /* lrpt_qpsk_data_append() */
 bool lrpt_qpsk_data_append(
-        lrpt_qpsk_data_t *data,
-        const lrpt_qpsk_data_t *add,
+        lrpt_qpsk_data_t *data_dest,
+        const lrpt_qpsk_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !add || (data == add)) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "Original and/or added QPSK data objects are NULL or the same");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination QPSK data object is NULL");
 
         return false;
     }
 
-    /* Silently ignore empty added data */
-    if (add->len == 0)
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL or corrupted");
+
+        return false;
+    }
+
+    if (data_dest == data_src) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Source and destination QPSK data objects are the same");
+
+        return false;
+    }
+
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source QPSK data length");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
         return true;
+    }
 
-    if (n > (add->len - offset))
-        n = (add->len - offset);
+    /* Keep old length for further copying */
+    const size_t old_len = data_dest->len;
 
-    const size_t old_len = data->len;
-
-    /* Resize original storage */
-    if (!lrpt_qpsk_data_resize(data, old_len + n, err))
+    /* Resize destination storage */
+    if (!lrpt_qpsk_data_resize(data_dest, old_len + n, err))
         return false;
 
-    /* Just copy extra symbols */
-    memcpy(data->qpsk + 2 * old_len, add->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
+    /* Just copy symbols */
+    memcpy(data_dest->qpsk + 2 * old_len, data_src->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -949,28 +1123,75 @@ bool lrpt_qpsk_data_append(
 
 /* lrpt_qpsk_data_from_qpsk() */
 bool lrpt_qpsk_data_from_qpsk(
-        lrpt_qpsk_data_t *data,
-        const lrpt_qpsk_data_t *symbols,
+        lrpt_qpsk_data_t *data_dest,
+        const lrpt_qpsk_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !symbols || (symbols->len == 0)) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object and/or QPSK source data are NULL or QPSK source data is empty");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination QPSK data object is NULL");
 
         return false;
     }
 
-    if (n > (symbols->len - offset))
-        n = (symbols->len - offset);
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL or corrupted");
 
-    /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, n, err))
+        return false;
+    }
+
+    if (data_dest == data_src) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Source and destination QPSK data objects are the same");
+
+        return false;
+    }
+
+    /* Ignore empty source QPSK data objects */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source QPSK data object is empty");
+
+        return true;
+    }
+
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source QPSK data length");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
+    /* Resize destination storage */
+    if (!lrpt_qpsk_data_resize(data_dest, n, err))
         return false;
 
     /* Just copy symbols */
-    memcpy(data->qpsk, symbols->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
+    memcpy(data_dest->qpsk, data_src->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -979,163 +1200,257 @@ bool lrpt_qpsk_data_from_qpsk(
 
 /* lrpt_qpsk_data_create_from_qpsk() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_qpsk(
-        const lrpt_qpsk_data_t *symbols,
+        const lrpt_qpsk_data_t *data_src,
         size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!symbols || (symbols->len == 0)) {
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk) || (data_src->len == 0)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK source data is NULL or empty");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL, corrupted or empty");
 
         return NULL;
     }
 
-    if (n > (symbols->len - offset))
-        n = (symbols->len - offset);
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source QPSK data length");
 
-    /* Allocate new storage */
-    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(n, err);
+        return false;
+    }
 
-    if (!data)
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return NULL;
+    }
+
+    /* Allocate storage */
+    lrpt_qpsk_data_t *data_dest = lrpt_qpsk_data_alloc(n, err);
+
+    if (!data_dest)
         return NULL;
 
     /* Convert symbols */
-    if (!lrpt_qpsk_data_from_qpsk(data, symbols, offset, n, err)) {
-        lrpt_qpsk_data_free(data);
+    if (!lrpt_qpsk_data_from_qpsk(data_dest, data_src, offset, n, err)) {
+        lrpt_qpsk_data_free(data_dest);
 
         return NULL;
     }
 
-    return data;
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
+    return data_dest;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_data_from_soft() */
 bool lrpt_qpsk_data_from_soft(
-        lrpt_qpsk_data_t *data,
+        lrpt_qpsk_data_t *data_dest,
         const int8_t *symbols,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !symbols) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object and/or QPSK soft symbols array are NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination QPSK data object is NULL");
 
         return false;
     }
 
+    if (!symbols) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source soft QPSK symbols array is NULL");
+
+        return false;
+    }
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, n, err))
+    if (!lrpt_qpsk_data_resize(data_dest, n, err))
         return false;
 
     /* Just copy symbols */
-    memcpy(data->qpsk, symbols, sizeof(int8_t) * 2 * n);
+    memcpy(data_dest->qpsk, symbols + 2 * offset, sizeof(int8_t) * 2 * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_data_create_from_soft() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
         const int8_t *symbols,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!symbols) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK soft symbols array is NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source soft QPSK symbols array is NULL");
 
         return NULL;
     }
 
-    /* Allocate new storage */
-    lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(n, err);
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
-    if (!data)
+        return NULL;
+    }
+
+    /* Allocate storage */
+    lrpt_qpsk_data_t *data_dest = lrpt_qpsk_data_alloc(n, err);
+
+    if (!data_dest)
         return NULL;
 
     /* Convert symbols */
-    if (!lrpt_qpsk_data_from_soft(data, symbols, n, err)) {
-        lrpt_qpsk_data_free(data);
+    if (!lrpt_qpsk_data_from_soft(data_dest, symbols, offset, n, err)) {
+        lrpt_qpsk_data_free(data_dest);
 
         return NULL;
     }
 
-    return data;
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
+    return data_dest;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_data_to_soft() */
 bool lrpt_qpsk_data_to_soft(
-        const lrpt_qpsk_data_t *data,
         int8_t *symbols,
+        const lrpt_qpsk_data_t *data_src,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !data->qpsk) {
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk) || (data_src->len == 0)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL, corrupted or empty");
 
         return false;
     }
 
-    if (n > data->len)
-        n = data->len;
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source QPSK data length");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
 
     /* Just copy symbols */
-    memcpy(symbols, data->qpsk, sizeof(int8_t) * 2 * n);
+    memcpy(symbols, data_src->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_data_from_hard() */
 bool lrpt_qpsk_data_from_hard(
-        lrpt_qpsk_data_t *data,
+        lrpt_qpsk_data_t *data_dest,
         const unsigned char *symbols,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !symbols) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object and/or QPSK hard symbols array are NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination QPSK data object is NULL");
 
         return false;
     }
 
+    if (!symbols) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source hard QPSK symbols array is NULL");
+
+        return false;
+    }
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
     /* Resize storage */
-    if (!lrpt_qpsk_data_resize(data, n, err))
+    if (!lrpt_qpsk_data_resize(data_dest, n, err))
         return false;
 
-    /* Convert hard to soft and store in QPSK data object */
+    /* Convert hard symbols to soft and store them in QPSK data object */
     size_t i = 0;
     uint8_t j = 0;
 
     while (i < n) {
-        const unsigned char b = ((symbols[i / 4] >> (7 - j)) & 0x01);
+        const unsigned char b = (symbols[i / 4] >> (7 - j)) & 0x01;
 
-        data->qpsk[2 * i + j % 2] = (b == 0x01) ? 127 : -127;
+        data_dest->qpsk[2 * i + j % 2] = (b == 0x01) ? 127 : -127;
         j = (j + 1) % 8;
 
         if ((j % 2) == 0)
             i++;
     }
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_data_create_from_hard() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
@@ -1143,13 +1458,22 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         lrpt_error_t *err) {
     if (!symbols) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK hard symbols array is NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source hard QPSK symbols array is NULL");
 
         return NULL;
     }
 
-    /* Allocate new storage */
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return NULL;
+    }
+
+    /* Allocate storage */
     lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(n, err);
 
     if (!data)
@@ -1162,28 +1486,50 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         return NULL;
     }
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return data;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_data_to_hard() */
 bool lrpt_qpsk_data_to_hard(
-        const lrpt_qpsk_data_t *data,
         unsigned char *symbols,
+        const lrpt_qpsk_data_t *data_src,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!data || !data->qpsk) {
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk) || (data_src->len == 0)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL, corrupted or empty");
 
         return false;
     }
 
-    if (n > data->len)
-        n = data->len;
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source QPSK data length");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
 
     /* Convert symbols */
     size_t i = 0;
@@ -1191,8 +1537,8 @@ bool lrpt_qpsk_data_to_hard(
     unsigned char b = 0x00;
 
     while (i < n) {
-        if (data->qpsk[2 * i + j % 2] >= 0)
-            b |= (1 << (7 - j));
+        if (data_src->qpsk[2 * offset + 2 * i + j % 2] >= 0)
+            b |= 1 << (7 - j);
 
         j++;
 
@@ -1208,6 +1554,9 @@ bool lrpt_qpsk_data_to_hard(
         if ((i == n) && ((j % 2) == 0))
             symbols[i / 4] = b;
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -1231,15 +1580,15 @@ lrpt_qpsk_rb_t *lrpt_qpsk_rb_alloc(
     if (!rb) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "QPSK ring buffer object allocation failed");
+                    "QPSK ring buffer object allocation has failed");
 
         return NULL;
     }
 
     /* Set requested length (reserve 1 element for full/empty detection) and allocate storage
-     * for QPSK bytes if length is not zero
+     * for QPSK symbols if length is not zero
      */
-    rb->len = (len + 1);
+    rb->len = len + 1;
     rb->qpsk = calloc(2 * (len + 1), sizeof(int8_t));
 
     /* Return NULL only if allocation attempt has failed */
@@ -1248,7 +1597,7 @@ lrpt_qpsk_rb_t *lrpt_qpsk_rb_alloc(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Data buffer allocation for QPSK ring buffer object failed");
+                    "Data buffer allocation for QPSK ring buffer object has failed");
 
         return NULL;
     }
@@ -1257,13 +1606,16 @@ lrpt_qpsk_rb_t *lrpt_qpsk_rb_alloc(
     rb->head = 0;
     rb->tail = 0;
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return rb;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_qpsk_rb_free() */
-void lrpt_qpsk_rb_free(
+inline void lrpt_qpsk_rb_free(
         lrpt_qpsk_rb_t *rb) {
     if (!rb)
         return;
@@ -1275,25 +1627,26 @@ void lrpt_qpsk_rb_free(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_rb_length() */
-size_t lrpt_qpsk_rb_length(
+inline size_t lrpt_qpsk_rb_length(
         const lrpt_qpsk_rb_t *rb) {
     if (!rb)
         return 0;
 
+    /* Account for empty/full detection */
     return (rb->len - 1);
 }
 
 /*************************************************************************************************/
 
 /* lrpt_qpsk_rb_used() */
-size_t lrpt_qpsk_rb_used(
+inline size_t lrpt_qpsk_rb_used(
         const lrpt_qpsk_rb_t *rb) {
     if (!rb)
         return 0;
 
-    /* Save as soon as possible */
+    /* Save as soon as possible, so we'll get largest assessment of used size */
     size_t t = rb->tail;
-    size_t h = rb->head; /* We're estimating largest possible used buffer size */
+    size_t h = rb->head;
 
     if (h >= t)
         return (h - t);
@@ -1304,18 +1657,19 @@ size_t lrpt_qpsk_rb_used(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_rb_avail() */
-size_t lrpt_qpsk_rb_avail(
+inline size_t lrpt_qpsk_rb_avail(
         const lrpt_qpsk_rb_t *rb) {
     if (!rb)
         return 0;
 
+    /* Account for empty/full detection */
     return (rb->len - 1 - lrpt_qpsk_rb_used(rb));
 }
 
 /*************************************************************************************************/
 
 /* lrpt_qpsk_rb_is_empty() */
-bool lrpt_qpsk_rb_is_empty(
+inline bool lrpt_qpsk_rb_is_empty(
         const lrpt_qpsk_rb_t *rb) {
     if (!rb)
         return false;
@@ -1326,7 +1680,7 @@ bool lrpt_qpsk_rb_is_empty(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_rb_is_full() */
-bool lrpt_qpsk_rb_is_full(
+inline bool lrpt_qpsk_rb_is_full(
         const lrpt_qpsk_rb_t *rb) {
     if (!rb)
         return false;
@@ -1339,72 +1693,113 @@ bool lrpt_qpsk_rb_is_full(
 /* lrpt_qpsk_rb_pop() */
 bool lrpt_qpsk_rb_pop(
         lrpt_qpsk_rb_t *rb,
-        lrpt_qpsk_data_t *data,
+        lrpt_qpsk_data_t *data_dest,
         size_t n,
         lrpt_error_t *err) {
-    if (!rb || !data) {
+    if (!rb) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK ring buffer object and/or QPSK data object are NULL");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "QPSK ring buffer object is NULL");
 
         return false;
     }
 
+    if (!data_dest) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination QPSK data object is NULL");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
     if (lrpt_qpsk_rb_used(rb) < n)
         n = lrpt_qpsk_rb_used(rb);
 
+    /* Just finish when nothing to do */
     if (n == 0) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "No QPSK data to pop");
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
 
-        return false;
+        return true;
     }
 
-    if (!lrpt_qpsk_data_resize(data, n, err))
+    /* Resize storage */
+    if (!lrpt_qpsk_data_resize(data_dest, n, err))
         return false;
 
     if (rb->tail < rb->head) /* Not wrapped data */
-        memcpy(data->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * n);
+        memcpy(data_dest->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * n);
     else { /* Wrapped data */
         if ((rb->tail + n) < rb->len) /* Contiguous chunk */
-            memcpy(data->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * n);
+            memcpy(data_dest->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * n);
         else { /* Non-contiguous chunk */
-            const size_t tn = (rb->len - rb->tail);
+            const size_t tn = rb->len - rb->tail;
 
-            memcpy(data->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * tn); /* Till the end */
-            memcpy(data->qpsk + 2 * tn, rb->qpsk, sizeof(int8_t) * 2 * (n - tn)); /* From the start */
+            /* Till the end */
+            memcpy(data_dest->qpsk, rb->qpsk + 2 * rb->tail, sizeof(int8_t) * 2 * tn);
+
+            /* From the start */
+            memcpy(data_dest->qpsk + 2 * tn, rb->qpsk, sizeof(int8_t) * 2 * (n - tn));
         }
     }
 
     /* Advance tail position */
-    rb->tail = ((rb->tail + n) % rb->len);
+    rb->tail = (rb->tail + n) % rb->len;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO add offset */
 /* lrpt_qpsk_rb_push() */
 bool lrpt_qpsk_rb_push(
         lrpt_qpsk_rb_t *rb,
-        const lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *data_src,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
-    if (!rb || !data || !data->qpsk) {
+    if (!rb) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK ring buffer object and/or QPSK data object are NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "QPSK ring buffer object is NULL");
 
         return false;
     }
 
-    if ((data->len == 0) || (n == 0))
-        return true;
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk)) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL or corrupted");
 
-    if (data->len < n)
-        n = data->len;
+        return false;
+    }
+
+    /* Ignore empty source QPSK data objects */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source QPSK data object is empty");
+
+        return true;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
 
     if ((lrpt_qpsk_rb_avail(rb) < n)) {
         if (err)
@@ -1415,20 +1810,26 @@ bool lrpt_qpsk_rb_push(
     }
 
     if (rb->head < rb->tail) /* Wrapped data */
-        memcpy(rb->qpsk + 2 * rb->head, data->qpsk, sizeof(int8_t) * 2 * n);
+        memcpy(rb->qpsk + 2 * rb->head, data_src->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
     else { /* Not wrapped data */
         if ((rb->head + n) < rb->len) /* Contiguous chunk */
-            memcpy(rb->qpsk + 2 * rb->head, data->qpsk, sizeof(int8_t) * 2 * n);
+            memcpy(rb->qpsk + 2 * rb->head, data_src->qpsk + 2 * offset, sizeof(int8_t) * 2 * n);
         else { /* Non-contiguous chunk */
-            const size_t tn = (rb->len - rb->head);
+            const size_t tn = rb->len - rb->head;
 
-            memcpy(rb->qpsk + 2 * rb->head, data->qpsk, sizeof(int8_t) * 2 * tn); /* Till the end */
-            memcpy(rb->qpsk, data->qpsk + 2 * tn, sizeof(int8_t) * 2 * (n - tn)); /* From the start */
+            /* Till the end */
+            memcpy(rb->qpsk + 2 * rb->head, data_src->qpsk + 2 * offset, sizeof(int8_t) * 2 * tn);
+
+            /* From the start */
+            memcpy(rb->qpsk, data_src->qpsk + 2 * offset + 2 * tn, sizeof(int8_t) * 2 * (n - tn));
         }
     }
 
     /* Advance head position */
-    rb->head = ((rb->head + n) % rb->len);
+    rb->head = (rb->head + n) % rb->len;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
