@@ -21,7 +21,7 @@
 
 /** \file
  *
- * Public internal API for basic data types and memory management.
+ * Public internal API for core data types management routines.
  */
 
 /*************************************************************************************************/
@@ -37,32 +37,32 @@
 
 /*************************************************************************************************/
 
-/** Storage type for I/Q data */
+/** I/Q samples data storage type */
 struct lrpt_iq_data__ {
     complex double *iq; /**< Array of I/Q samples */
-    size_t len; /**< Total number of I/Q samples */
+    size_t len; /**< Number of I/Q samples */
 };
 
 /** Ring buffer type for I/Q data */
 struct lrpt_iq_rb__ {
     complex double *iq; /**< Array of I/Q samples */
-    size_t len; /**< Total number of I/Q samples + 1, for determining full/empty states */
-    size_t head; /**< Pointer to the data head */
-    size_t tail; /**< Pointer to the data tail */
+    size_t len; /**< Number of I/Q samples + 1, for determining full/empty states */
+    size_t head; /**< Index of the data head */
+    size_t tail; /**< Index of the data tail */
 };
 
-/** Storage type for QPSK data */
+/** QPSK symbols data storage type */
 struct lrpt_qpsk_data__ {
-    int8_t *qpsk; /**< Array of QPSK bytes */
-    size_t len; /**< Total number of QPSK bytes */
+    int8_t *qpsk; /**< Array of QPSK bytes (1 symbol equals 2 bytes) */
+    size_t len; /**< Number of QPSK symbols */
 };
 
 /** Ring buffer type for QPSK data */
 struct lrpt_qpsk_rb__ {
     int8_t *qpsk; /**< Array of QPSK bytes */
-    size_t len; /**< Total number of QPSK samples + 1, for determining full/empty states */
-    size_t head; /**< Pointer to the data head */
-    size_t tail; /**< Pointer to the data tail */
+    size_t len; /**< Number of QPSK symbols + 1, for determining full/empty states */
+    size_t head; /**< Index of the data head */
+    size_t tail; /**< Index of the data tail */
 };
 
 /*************************************************************************************************/

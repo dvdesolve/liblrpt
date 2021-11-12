@@ -21,7 +21,7 @@
 
 /** \file
  *
- * Public internal API for basic image manipulation.
+ * Public internal API for basic image manipulation routines.
  */
 
 /*************************************************************************************************/
@@ -36,12 +36,12 @@
 
 /*************************************************************************************************/
 
-/** Storage type for LRPT images */
+/** LRPT image storage type */
 struct lrpt_image__ {
     size_t width; /**< Width of the image (in px) */
     size_t height; /**< Height of the image (in px) */
 
-    uint8_t *channels[6]; /**< Per-channel image storage */
+    uint8_t *channels[6]; /**< Per-channel image arrays */
 };
 
 /*************************************************************************************************/

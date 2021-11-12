@@ -21,9 +21,7 @@
 
 /** \file
  *
- * Basic data types, memory management and I/O routines.
- *
- * This source file contains common routines for internal data types and objects management etc.
+ * Core data types management routines.
  */
 
 /*************************************************************************************************/

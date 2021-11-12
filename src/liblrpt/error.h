@@ -35,10 +35,10 @@
 
 /*************************************************************************************************/
 
-/** Error object */
+/** Error object type */
 struct lrpt_error__ {
     lrpt_error_level_t level; /**< Error level */
-    lrpt_error_code_t code; /**< Numeric error code */
+    lrpt_error_code_t code; /**< Error code */
     char *msg; /**< Message */
 };
 
@@ -47,12 +47,11 @@ struct lrpt_error__ {
 /** Fill error object with data.
  *
  * \param err Pointer to the error object.
- * \param level Error level (see #lrpt_error_level_t for full list of levels).
+ * \param level Error level (see #lrpt_error_level_t for full list of supported error levels).
  * \param code Numeric error code (see #lrpt_error_code_t for full list of codes).
  * \param msg Pointer to the character string (null-terminated) containing optional message.
  *
- * \warning If non-empty \c msg was passed user must free claimed resources later with
- * #lrpt_error_cleanup() explicitly!
+ * \note If non-empty \c msg was passed user must free object with #lrpt_error_deinit() after use.
  */
 void lrpt_error_set(
         lrpt_error_t *err,

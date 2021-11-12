@@ -301,6 +301,7 @@ LRPT_API bool lrpt_iq_data_resize(
         size_t new_len,
         lrpt_error_t *err);
 
+/* TODO here and everywhere - the object should be first in the arguments list */
 /** Append I/Q data to the existing I/Q data object.
  *
  * Adds \p n I/Q samples from \p data_src object starting with position \p offset to the end of
@@ -1012,10 +1013,12 @@ LRPT_API bool lrpt_qpsk_rb_push(
 
 /** Allocate LRPT image object.
  *
- * If \p width or \p height are \c 0 empty image will be allocated.
+ * Tries to allocate LRPT image object of requested width \p width and height \p height. If either
+ * width or height is zero empty image object will be allocated. User should free object with
+ * #lrpt_image_free() after use.
  *
- * \param width Width of the image (in px).
- * \param height Height of the image (in px).
+ * \param width Width of the image in number of pixels.
+ * \param height Height of the image in number of pixels.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated LRPT image object or \c NULL in case of error.
@@ -1025,67 +1028,69 @@ LRPT_API lrpt_image_t *lrpt_image_alloc(
         size_t height,
         lrpt_error_t *err);
 
-/** Free allocated LRPT image object.
+/** Free LRPT image object.
  *
  * \param image Pointer to the LRPT image object.
  */
 LRPT_API void lrpt_image_free(
         lrpt_image_t *image);
 
-/** Width of LRPT image (in px).
+/** Width of LRPT image object.
  *
  * \param image Pointer to the LRPT image object.
  *
- * \return Width of LRPT image (in px) or \c 0 if \c NULL \p image was passed.
+ * \return Width of LRPT image object in pixels. \c 0 will be returned for \c NULL \p image.
  */
 LRPT_API size_t lrpt_image_width(
         const lrpt_image_t *image);
 
-/** Height of LRPT image (in px).
+/** Height of LRPT image object.
  *
  * \param image Pointer to the LRPT image object.
  *
- * \return Height of LRPT image (in px) or \c 0 if \c NULL \p image was passed.
+ * \return Height of LRPT image object in pixels. \c 0 will be returned for \c NULL \p image.
  */
 LRPT_API size_t lrpt_image_height(
         const lrpt_image_t *image);
 
-/** Resize LRPT image object and set new width (in px).
+/** Resize LRPT image object and set new width.
  *
  * \param image Pointer to the LRPT image object.
- * \param new_width New image width (in px).
+ * \param new_width New image width in number of pixels.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull resize and \c false otherwise (original object will not be
- * modified in that case).
+ * \return \c true on successfull resize and \c false in case of error.
+ *
+ * \note In case of error \p image object will not be modified.
  */
 LRPT_API bool lrpt_image_set_width(
         lrpt_image_t *image,
         size_t new_width,
         lrpt_error_t *err);
 
-/** Resize LRPT image object and set new height (in px).
+/** Resize LRPT image object and set new height.
  *
  * \param image Pointer to the LRPT image object.
- * \param new_height New image height (in px).
+ * \param new_height New image height in number of pixels.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull resize and \c false otherwise (original object will not be
- * modified in that case).
+ * \return \c true on successfull resize and \c false in case of error.
+ *
+ * \note In case of error \p image object will not be modified.
  */
 LRPT_API bool lrpt_image_set_height(
         lrpt_image_t *image,
         size_t new_height,
         lrpt_error_t *err);
 
-/** Get pixel value for specified position and APID channel.
+/** Get pixel value.
  *
- * Gets pixel value for specified position and selected APID channel. APIDs that are outside of
+ * Gets pixel value for specified absolute position and selected APID. APIDs that are outside of
  * 64-69 range are not supported.
  *
  * \param image Pointer to the LRPT image object.
  * \param apid APID number (must be within 64-69 range).
- * \param pos Position of pixel to get value of.
+ * \param pos Absolute position of pixel.
  *
  * \return Pixel value or \c 0 in case of error.
  */
@@ -1094,14 +1099,14 @@ LRPT_API uint8_t lrpt_image_get_px(
         uint8_t apid,
         size_t pos);
 
-/** Set pixel value for specified position and APID channel.
+/** Set pixel value.
  *
- * Sets pixel value for specified position and selected APID channel. APIDs that are outside of
+ * Sets pixel value for specified absolute position and selected APID. APIDs that are outside of
  * 64-69 range are not supported.
  *
  * \param image Pointer to the LRPT image object.
  * \param apid APID number (must be within 64-69 range).
- * \param pos Position of pixel to set value of.
+ * \param pos Absolute position of pixel.
  * \param val Value of pixel.
  */
 LRPT_API void lrpt_image_set_px(
@@ -1119,36 +1124,38 @@ LRPT_API void lrpt_image_set_px(
  */
 LRPT_API lrpt_error_t *lrpt_error_init(void);
 
-/** Free initialized error object.
+/** Free error object.
  *
  * \param err Pointer to the error object.
  */
 LRPT_API void lrpt_error_deinit(
         lrpt_error_t *err);
 
-/** Reset resources claimed for error object.
+/** Reset resources used by error object.
  *
- * Resets error level and code and frees internal string buffer (it will be set to \c NULL).
+ * Resets error level and code and frees internal message buffer used by error object. Object will
+ * not be freed at all.
  *
  * \param err Pointer to the error object.
  */
-LRPT_API void lrpt_error_cleanup(
+LRPT_API void lrpt_error_reset(
         lrpt_error_t *err);
 
-/** Error level.
+/** Numerical error level.
  *
  * \param err Pointer to the error object.
  *
- * \return Error category (see #lrpt_error_level_t) or \c 0 if \c NULL \p err was passed.
+ * \return Numerical error level category (see #lrpt_error_level_t). \c 0 will be returned for
+ * \c NULL \p err.
  */
 LRPT_API lrpt_error_level_t lrpt_error_level(
         const lrpt_error_t *err);
 
-/** Error code.
+/** Numerical error code.
  *
  * \param err Pointer to the error object.
  *
- * \return Numerical error code (see #lrpt_error_code_t) or \c 0 if \c NULL \p err was passed.
+ * \return Numerical error code (see #lrpt_error_code_t). \c 0 will be returned for \c NULL \p err.
  */
 LRPT_API lrpt_error_code_t lrpt_error_code(
         const lrpt_error_t *err);
@@ -1157,10 +1164,10 @@ LRPT_API lrpt_error_code_t lrpt_error_code(
  *
  * \param err Pointer to the error object.
  *
- * \return Character error message string or \c NULL if \c NULL \p err was passed or message is
- * empty.
+ * \return Pointer to the error message string or \c NULL for \c NULL \p err or if message is empty.
  *
- * \warning User should never free returned string!
+ * \warning User should never free returned string pointer! Use #lrpt_error_deinit() or
+ * #lrpt_error_reset() instead!
  */
 LRPT_API const char * lrpt_error_message(
         const lrpt_error_t *err);

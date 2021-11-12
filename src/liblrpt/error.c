@@ -21,9 +21,7 @@
 
 /** \file
  *
- * Error reporting and handling routines
- *
- * Routines for error reporting and handling.
+ * Error reporting and handling routines.
  */
 
 /*************************************************************************************************/
@@ -39,7 +37,7 @@
 /*************************************************************************************************/
 
 /* lrpt_error_init() */
-lrpt_error_t *lrpt_error_init(void) {
+inline lrpt_error_t *lrpt_error_init(void) {
     lrpt_error_t *err = malloc(sizeof(lrpt_error_t));
 
     if (!err)
@@ -55,7 +53,7 @@ lrpt_error_t *lrpt_error_init(void) {
 /*************************************************************************************************/
 
 /* lrpt_error_deinit() */
-void lrpt_error_deinit(
+inline void lrpt_error_deinit(
         lrpt_error_t *err) {
     if (!err)
         return;
@@ -87,8 +85,8 @@ void lrpt_error_set(
 
 /*************************************************************************************************/
 
-/* lrpt_error_cleanup() */
-void lrpt_error_cleanup(
+/* lrpt_error_reset() */
+inline void lrpt_error_reset(
         lrpt_error_t *err) {
     if (!err)
         return;
@@ -103,7 +101,7 @@ void lrpt_error_cleanup(
 /*************************************************************************************************/
 
 /* lrpt_error_level() */
-lrpt_error_level_t lrpt_error_level(
+inline lrpt_error_level_t lrpt_error_level(
         const lrpt_error_t *err) {
     if (!err)
         return 0;
@@ -114,7 +112,7 @@ lrpt_error_level_t lrpt_error_level(
 /*************************************************************************************************/
 
 /* lrpt_error_code() */
-lrpt_error_code_t lrpt_error_code(
+inline lrpt_error_code_t lrpt_error_code(
         const lrpt_error_t *err) {
     if (!err)
         return 0;
@@ -125,7 +123,7 @@ lrpt_error_code_t lrpt_error_code(
 /*************************************************************************************************/
 
 /* lrpt_error_message() */
-const char * lrpt_error_message(
+inline const char * lrpt_error_message(
         const lrpt_error_t *err) {
     if (!err || !err->msg)
         return NULL;
