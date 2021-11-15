@@ -37,7 +37,7 @@
 
 /*************************************************************************************************/
 
-/** Storage type for I/Q data file */
+/** I/Q samples data file type */
 struct lrpt_iq_file__ {
     FILE *fhandle; /**< File object handle */
 
@@ -56,7 +56,7 @@ struct lrpt_iq_file__ {
     unsigned char *iobuf; /**< Temporary buffer for reading/writing */
 };
 
-/** Storage type for QPSK data file */
+/** QPSK symbols data file type */
 struct lrpt_qpsk_file__ {
     FILE *fhandle; /**< File object handle */
 

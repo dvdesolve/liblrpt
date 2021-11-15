@@ -45,17 +45,17 @@
 /* For more information see section "6.2 Interleaving",
  * https://www-cdn.eumetsat.int/files/2020-04/pdf_mo_ds_esa_sy_0048_iss8.pdf
  */
-static const uint8_t INTLV_BRANCHES = 36;
-static const uint16_t INTLV_DELAY = 2048;
-static const uint32_t INTLV_BASE_LEN = INTLV_BRANCHES * INTLV_DELAY;
-static const uint8_t INTLV_DATA_LEN = 72; /* Number of interleaved bits */
-static const uint8_t INTLV_SYNC_LEN = 8; /* The length of sync word (in bits) */
-static const uint8_t INTLV_SYNCDATA = INTLV_DATA_LEN + INTLV_SYNC_LEN;
+static const uint8_t DEINT_INTLV_BRANCHES = 36;
+static const uint16_t DEINT_INTLV_DELAY = 2048;
+static const uint32_t DEINT_INTLV_BASE_LEN = DEINT_INTLV_BRANCHES * DEINT_INTLV_DELAY;
+static const uint8_t DEINT_INTLV_DATA_LEN = 72; /* Number of interleaved bits */
+static const uint8_t DEINT_INTLV_SYNC_LEN = 8; /* The length of sync word (in bits) */
+static const uint8_t DEINT_INTLV_SYNCDATA = DEINT_INTLV_DATA_LEN + DEINT_INTLV_SYNC_LEN;
 
-static const uint8_t SYNCD_DEPTH = 4; /* Number of consecutive sync words to search in stream */
-static const uint16_t SYNCD_BUF_MARGIN = SYNCD_DEPTH * INTLV_SYNCDATA;
-static const uint16_t SYNCD_BLOCK_SIZ = (SYNCD_DEPTH + 1) * INTLV_SYNCDATA;
-static const uint16_t SYNCD_BUF_STEP = (SYNCD_DEPTH - 1) * INTLV_SYNCDATA;
+static const uint8_t DEINT_SYNCD_DEPTH = 4; /* Number of consecutive sync words to search */
+static const uint16_t DEINT_SYNCD_BUF_MARGIN = DEINT_SYNCD_DEPTH * DEINT_INTLV_SYNCDATA;
+static const uint16_t DEINT_SYNCD_BLOCK_SIZ = (DEINT_SYNCD_DEPTH + 1) * DEINT_INTLV_SYNCDATA;
+static const uint16_t DEINT_SYNCD_BUF_STEP = (DEINT_SYNCD_DEPTH - 1) * DEINT_INTLV_SYNCDATA;
 
 /*************************************************************************************************/
 
@@ -132,18 +132,21 @@ static bool find_sync(
     bool result = false;
 
     /* Search for a sync byte at the beginning of block */
-    for (uint8_t i = 0; i < (SYNCD_BLOCK_SIZ - INTLV_SYNCDATA * SYNCD_DEPTH); i++) {
+    for (
+            uint8_t i = 0;
+            i < (DEINT_SYNCD_BLOCK_SIZ - DEINT_INTLV_SYNCDATA * DEINT_SYNCD_DEPTH);
+            i++) {
         result = true;
 
         /* Assemble a sync byte candidate */
         *sync = qpsk_to_byte(data + i);
 
-        /* Search ahead SYNCD_DEPTH times in buffer to see if there are exactly equal sync
+        /* Search ahead DEINT_SYNCD_DEPTH times in buffer to see if there are exactly equal sync
          * byte candidates at intervals of (sync + data = 80 syms) blocks
          */
-        for (uint8_t j = 1; j <= SYNCD_DEPTH; j++) {
+        for (uint8_t j = 1; j <= DEINT_SYNCD_DEPTH; j++) {
             /* Break if there is a mismatch at any position */
-            uint8_t test = qpsk_to_byte(data + i + j * INTLV_SYNCDATA);
+            uint8_t test = qpsk_to_byte(data + i + j * DEINT_INTLV_SYNCDATA);
 
             if (*sync != test) {
                 result = false;
@@ -170,7 +173,7 @@ static bool find_sync(
 /* resync_stream() */
 static bool resync_stream(
         lrpt_qpsk_data_t *data) {
-    if (((2 * data->len) < SYNCD_BUF_MARGIN) || ((2 * data->len) < INTLV_SYNCDATA))
+    if (((2 * data->len) < DEINT_SYNCD_BUF_MARGIN) || ((2 * data->len) < DEINT_INTLV_SYNCDATA))
         return false;
 
     /* Allocate temporary buffer for resyncing */
@@ -185,8 +188,8 @@ static bool resync_stream(
     size_t resync_size = 0;
     size_t posn = 0;
     uint8_t offset = 0;
-    size_t limit1 = (2 * data->len - SYNCD_BUF_MARGIN);
-    size_t limit2 = (2 * data->len - INTLV_SYNCDATA);
+    size_t limit1 = (2 * data->len - DEINT_SYNCD_BUF_MARGIN);
+    size_t limit2 = (2 * data->len - DEINT_INTLV_SYNCDATA);
 
     /* Do while there is a room in the raw buffer for the find_sync() to search for
      * sync candidates
@@ -196,7 +199,7 @@ static bool resync_stream(
 
         /* Only search for sync if look-forward below fails to find a sync train */
         if (!find_sync(tmp_buf + posn, &offset, &sync)) {
-            posn += SYNCD_BUF_STEP;
+            posn += DEINT_SYNCD_BUF_STEP;
 
             continue;
         }
@@ -209,7 +212,7 @@ static bool resync_stream(
             bool ok = false;
 
             for (uint8_t i = 0; i < 128; i++) {
-                size_t tmp = posn + i * INTLV_SYNCDATA;
+                size_t tmp = posn + i * DEINT_INTLV_SYNCDATA;
 
                 if (tmp < limit2) {
                     uint8_t test = qpsk_to_byte(tmp_buf + tmp);
@@ -228,11 +231,14 @@ static bool resync_stream(
             /* Copy the actual data after the sync train (8 bits) and update total number of
              * copied symbols
              */
-            memcpy(data->qpsk + resync_size, tmp_buf + posn + 8, sizeof(int8_t) * INTLV_DATA_LEN);
-            resync_size += INTLV_DATA_LEN;
+            memcpy(
+                    data->qpsk + resync_size,
+                    tmp_buf + posn + 8,
+                    sizeof(int8_t) * DEINT_INTLV_DATA_LEN);
+            resync_size += DEINT_INTLV_DATA_LEN;
 
             /* Move on to the next sync train position */
-            posn += INTLV_SYNCDATA;
+            posn += DEINT_INTLV_SYNCDATA;
         }
     }
 
@@ -263,7 +269,7 @@ bool lrpt_dsp_deinterleaver_exec(
     int8_t *res_buf = NULL;
 
     /* Resynchronize raw data at the bottom of the raw buffer after the
-     * INTLV_BRANCHES * INTLV_BASE_LEN and up to the end
+     * DEINT_INTLV_BRANCHES * DEINT_INTLV_BASE_LEN and up to the end
      */
     if (!resync_stream(data)) {
         if (err)
@@ -299,9 +305,9 @@ bool lrpt_dsp_deinterleaver_exec(
         /* Offset by half a message to include leading and trailing fuzz */
         int64_t pos =
             i +
-            (INTLV_BRANCHES - 1) * INTLV_DELAY -
-            (i % INTLV_BRANCHES) * INTLV_BASE_LEN +
-            (INTLV_BRANCHES / 2) * INTLV_BASE_LEN;
+            (DEINT_INTLV_BRANCHES - 1) * DEINT_INTLV_DELAY -
+            (i % DEINT_INTLV_BRANCHES) * DEINT_INTLV_BASE_LEN +
+            (DEINT_INTLV_BRANCHES / 2) * DEINT_INTLV_BASE_LEN;
 
         if ((pos >= 0) && (pos < (2 * data->len)))
             res_buf[pos] = data->qpsk[i];

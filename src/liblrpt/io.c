@@ -22,8 +22,6 @@
 /** \file
  *
  * I/O routines.
- *
- * Routines for dealing with I/O tasks.
  */
 
 #include "io.h"
@@ -48,7 +46,7 @@
 /** Block size for I/O operations with I/Q data (in number of samples) */
 static const size_t IO_IQ_DATA_N = 1024;
 
-/** Block size for I/O operations with I/Q data (in number of symbols; must be a multiple of 4) */
+/** Block size for I/O operations with QPSK data (in number of symbols; must be a multiple of 4) */
 static const size_t IO_QPSK_DATA_N = 1024;
 
 /*************************************************************************************************/
@@ -93,7 +91,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "I/Q file ver. 1 flags read error");
+                    "I/Q file Version 1 flags read error");
 
         return NULL;
     }
@@ -110,7 +108,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "I/Q file ver. 1 sample rate read error");
+                    "I/Q file Version 1 sampling rate read error");
 
         return NULL;
     }
@@ -128,7 +126,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "I/Q file ver. 1 bandwidth read error");
+                    "I/Q file Version 1 bandwidth read error");
 
         return NULL;
     }
@@ -146,7 +144,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "I/Q file ver. 1 device name length read error");
+                    "I/Q file Version 1 device name length read error");
 
         return NULL;
     }
@@ -161,13 +159,23 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     if (name_l > 0) {
         name = calloc(name_l + 1, sizeof(char));
 
-        if (!name || (fread(name, 1, name_l, fh) != name_l)) {
+        if (!name) {
+            fclose(fh);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                        "I/Q file Version 1 device name buffer allocation error");
+
+            return NULL;
+        }
+
+        if (fread(name, 1, name_l, fh) != name_l) {
             free(name);
             fclose(fh);
 
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                        "I/Q file ver. 1 device name allocation/read error");
+                        "I/Q file Version 1 device name read error");
 
             return NULL;
         }
@@ -186,7 +194,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "I/Q file ver. 1 data length read error");
+                    "I/Q file Version 1 data length read error");
 
         return NULL;
     }
@@ -259,6 +267,9 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
     file->data_len = data_l;
     file->current = 0;
     file->iobuf = iobuf;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return file;
 }
@@ -410,7 +421,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "I/Q file ver. 1 flags write error");
+                    "I/Q file Version 1 flags write error");
 
         return NULL;
     }
@@ -428,7 +439,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "I/Q file ver. 1 sample rate write error");
+                    "I/Q file Version 1 sampling rate write error");
 
         return NULL;
     }
@@ -446,7 +457,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "I/Q file ver. 1 bandwidth write error");
+                    "I/Q file Version 1 bandwidth write error");
 
         return NULL;
     }
@@ -467,7 +478,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "I/Q file ver. 1 device name length write error");
+                    "I/Q file Version 1 device name length write error");
 
         return NULL;
     }
@@ -481,13 +492,23 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     if (name_l > 0) {
         name = calloc(name_l + 1, sizeof(char));
 
-        if (!name || (fwrite(device_name, 1, name_l, fh) != name_l)) {
+        if (!name) {
+            fclose(fh);
+
+            if (err)
+                lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                        "I/Q file Version 1 device name buffer allocation error");
+
+            return NULL;
+        }
+
+        if (fwrite(device_name, 1, name_l, fh) != name_l) {
             free(name);
             fclose(fh);
 
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                        "I/Q file ver. 1 device name allocation/write error");
+                        "I/Q file Version 1 device name write error");
 
             return NULL;
         }
@@ -509,7 +530,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "I/Q file ver. 1 data length write error");
+                    "I/Q file Version 1 data length write error");
 
         return NULL;
     }
@@ -558,13 +579,16 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
     file->current = 0;
     file->iobuf = iobuf;
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return file;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_iq_file_close() */
-void lrpt_iq_file_close(
+inline void lrpt_iq_file_close(
         lrpt_iq_file_t *file) {
     if (!file)
         return;
@@ -580,7 +604,7 @@ void lrpt_iq_file_close(
 /*************************************************************************************************/
 
 /* lrpt_iq_file_version() */
-uint8_t lrpt_iq_file_version(
+inline uint8_t lrpt_iq_file_version(
         const lrpt_iq_file_t *file) {
     if (!file)
         return 0;
@@ -591,7 +615,7 @@ uint8_t lrpt_iq_file_version(
 /*************************************************************************************************/
 
 /* lrpt_iq_file_is_offsetted() */
-bool lrpt_iq_file_is_offsetted(
+inline bool lrpt_iq_file_is_offsetted(
         const lrpt_iq_file_t *file) {
     if (!file)
         return false;
@@ -602,7 +626,7 @@ bool lrpt_iq_file_is_offsetted(
 /*************************************************************************************************/
 
 /* lrpt_iq_file_samplerate() */
-uint32_t lrpt_iq_file_samplerate(
+inline uint32_t lrpt_iq_file_samplerate(
         const lrpt_iq_file_t *file) {
     if (!file)
         return 0;
@@ -613,7 +637,7 @@ uint32_t lrpt_iq_file_samplerate(
 /*************************************************************************************************/
 
 /* lrpt_iq_file_bandwidth() */
-uint32_t lrpt_iq_file_bandwidth(
+inline uint32_t lrpt_iq_file_bandwidth(
         const lrpt_iq_file_t *file) {
     if (!file)
         return 0;
@@ -623,7 +647,7 @@ uint32_t lrpt_iq_file_bandwidth(
 
 /*************************************************************************************************/
 
-/* lrpt_iq_file_devicename() */
+inline /* lrpt_iq_file_devicename() */
 const char *lrpt_iq_file_devicename(
         const lrpt_iq_file_t *file) {
     if (!file)
@@ -634,7 +658,7 @@ const char *lrpt_iq_file_devicename(
 
 /*************************************************************************************************/
 
-/* lrpt_iq_file_length() */
+inline /* lrpt_iq_file_length() */
 uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *file) {
     if (!file)
@@ -652,7 +676,7 @@ bool lrpt_iq_file_goto(
         lrpt_error_t *err) {
     if (!file) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
                     "I/Q file object is NULL");
 
         return false;
@@ -661,7 +685,7 @@ bool lrpt_iq_file_goto(
     if (file->write_mode) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                    "Can't goto in write mode");
+                    "Can't perform goto in write mode");
 
         return false;
     }
@@ -675,11 +699,14 @@ bool lrpt_iq_file_goto(
         else {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                        "Error during seeking in I/Q file");
+                        "Error during performing seek in I/Q file");
 
             return false;
         }
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -688,48 +715,68 @@ bool lrpt_iq_file_goto(
 
 /* lrpt_iq_data_read_from_file() */
 bool lrpt_iq_data_read_from_file(
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         lrpt_iq_file_t *file,
-        size_t len,
+        size_t n,
         bool rewind,
         lrpt_error_t *err) {
-    /* Sanity checks */
-    if (!data || !file || file->write_mode) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object and/or file pointer are NULL or incorrect mode is used");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination I/Q data object is NULL");
 
         return false;
     }
 
-    /* In case of empty read just exit */
-    if (len == 0)
-        return true;
+    if (!file) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "I/Q file object is NULL");
 
-    /* Check if we have enough data to read */
+        return false;
+    }
+
+    if (file->write_mode) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                    "Can't perform goto in write mode");
+
+        return false;
+    }
+
+    /* Check if we are at the end of file */
     if (file->current == file->data_len) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_WARN, LRPT_ERR_CODE_EOF,
-                    "Reached EOF");
+                    "EOF has been reached");
 
         return false;
     }
 
-    /* Read up to the end if requested length is bigger than remaining data */
-    if ((file->current + len) > file->data_len)
-        len = (file->data_len - file->current);
+    /* Handle oversized requests */
+    if ((file->current + n) > file->data_len)
+        n = file->data_len - file->current;
 
-    /* Resize storage */
-    if (!lrpt_iq_data_resize(data, len, err))
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
+    }
+
+    /* Resize destination storage */
+    if (!lrpt_iq_data_resize(data_dest, n, err))
         return false;
 
     if (file->version == LRPT_IQ_FILE_VER1) { /* Version 1 */
         /* Determine required number of reads */
-        const size_t n_reads = (len / IO_IQ_DATA_N);
+        const size_t n_reads = n / IO_IQ_DATA_N;
 
         for (size_t i = 0; i <= n_reads; i++) {
             /* Determine required number of samples for current read */
-            const size_t toread = (i == n_reads) ? (len - n_reads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
+            const size_t toread = (i == n_reads) ? (n - n_reads * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
             if (toread == 0)
                 break;
@@ -772,7 +819,7 @@ bool lrpt_iq_data_read_from_file(
                     return false;
                 }
 
-                data->iq[i * IO_IQ_DATA_N + j] = i_part + q_part * I;
+                data_dest->iq[i * IO_IQ_DATA_N + j] = i_part + q_part * I;
             }
         }
     }
@@ -782,35 +829,58 @@ bool lrpt_iq_data_read_from_file(
             return false;
     }
     else
-        file->current += len;
+        file->current += n;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO implement custom length writing (perhaps with start offset) */
 /* lrpt_iq_data_write_to_file() */
 bool lrpt_iq_data_write_to_file(
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         lrpt_iq_file_t *file,
         bool inplace,
         lrpt_error_t *err) {
-    if (!data || (data->len == 0) || !data->iq || !file || !file->write_mode) {
+    if (!data_src || ((data_src->len > 0) && !data_src->iq)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "I/Q data object and/or file pointer are NULL, incorrect mode is used or no data to write");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source I/Q data object is NULL or corrupted");
 
         return false;
     }
 
-    /* In case of empty write just exit */
-    if (data->len == 0)
+    if (!file) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "I/Q file object is NULL");
+
+        return false;
+    }
+
+    if (!file->write_mode) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "Can't perform write in read mode");
+
+        return false;
+    }
+
+    /* Just finish when nothing to do */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
         return true;
+    }
 
     if (file->version == LRPT_IQ_FILE_VER1) { /* Version 1 */
         /* Determine required number of writes */
-        const size_t len = data->len;
+        const size_t len = data_src->len;
         const size_t n_writes = (len / IO_IQ_DATA_N);
 
         for (size_t i = 0; i <= n_writes; i++) {
@@ -824,7 +894,7 @@ bool lrpt_iq_data_write_to_file(
                 unsigned char v_s[10];
 
                 /* I */
-                if (!lrpt_utils_s_double(creal(data->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
+                if (!lrpt_utils_s_double(creal(data_src->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't serialize double value");
@@ -837,7 +907,7 @@ bool lrpt_iq_data_write_to_file(
                         sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE);
 
                 /* Q */
-                if (!lrpt_utils_s_double(cimag(data->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
+                if (!lrpt_utils_s_double(cimag(data_src->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't serialize double value");
@@ -873,7 +943,7 @@ bool lrpt_iq_data_write_to_file(
                 if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                                "I/Q data length write error");
+                                "I/Q file Version 1 data length write error");
 
                     return false;
                 }
@@ -895,7 +965,7 @@ bool lrpt_iq_data_write_to_file(
             if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                            "I/Q data length write error");
+                            "I/Q file Version 1 data length write error");
 
                 return false;
             }
@@ -906,6 +976,9 @@ bool lrpt_iq_data_write_to_file(
                     SEEK_SET);
         }
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -928,7 +1001,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "QPSK file ver. 1 flags read error");
+                    "QPSK file Version 1 flags read error");
 
         return NULL;
     }
@@ -945,7 +1018,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "QPSK file ver. 1 symbol rate read error");
+                    "QPSK file Version 1 symbol rate read error");
 
         return NULL;
     }
@@ -963,7 +1036,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
-                    "QPSK file ver. 1 data length read error");
+                    "QPSK file Version 1 data length read error");
 
         return NULL;
     }
@@ -1208,7 +1281,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "QPSK file ver. 1 flags write error");
+                    "QPSK file Version 1 flags write error");
 
         return NULL;
     }
@@ -1226,7 +1299,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "QPSK file ver. 1 symbol rate write error");
+                    "QPSK file Version 1 symbol rate write error");
 
         return NULL;
     }
@@ -1244,7 +1317,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                    "QPSK file ver. 1 data length write error");
+                    "QPSK file Version 1 data length write error");
 
         return NULL;
     }

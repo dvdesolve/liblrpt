@@ -43,18 +43,18 @@
 /*************************************************************************************************/
 
 /* Classic normalization settings */
-static const uint8_t HIST_MIN_BLACK = 2; /* Needed to avoid black bands in source images */
-static const uint8_t HIST_CUTOFF_BLACK = 1;
-static const uint8_t HIST_CUTOFF_WHITE = 1;
+static const uint8_t NORM_HIST_MIN_BLACK = 2; /* Needed to avoid black bands in source images */
+static const uint8_t NORM_HIST_CUTOFF_BLACK = 1;
+static const uint8_t NORM_HIST_CUTOFF_WHITE = 1;
 
 /* CLAHE settings */
-static const uint8_t CLAHE_N_CONREG_X = 8;
-static const uint8_t CLAHE_N_CONREG_Y = 8;
-static const uint8_t CLAHE_N_CONREG_X_MAX = 16;
-static const uint8_t CLAHE_N_CONREG_Y_MAX = 16;
-static const uint16_t CLAHE_N_BINS = 256;
-static const uint16_t CLAHE_N_GREYS = 256;
-static const double CLAHE_CLIPLIMIT = 3.0;
+static const uint8_t NORM_CLAHE_N_CONREG_X = 8;
+static const uint8_t NORM_CLAHE_N_CONREG_Y = 8;
+static const uint8_t NORM_CLAHE_N_CONREG_X_MAX = 16; /**< Max number of context. regions along X */
+static const uint8_t NORM_CLAHE_N_CONREG_Y_MAX = 16; /**< Max number of context. regions along Y */
+static const uint16_t NORM_CLAHE_N_BINS = 256;
+static const uint16_t NORM_CLAHE_N_GREYS = 256;
+static const double NORM_CLAHE_CLIPLIMIT = 3.0;
 
 /*************************************************************************************************/
 
@@ -70,9 +70,9 @@ static const double CLAHE_CLIPLIMIT = 3.0;
  * \param grey_min Minimum grey value of input image.
  * \param grey_max Maximum grey value of input image.
  * \param n_crx Number of contextual regions in the X direction (should be between 2 and
- * #CLAHE_N_CONREG_X_MAX).
+ * #NORM_CLAHE_N_CONREG_X_MAX).
  * \param n_cry Number of contextual regions in the Y direction (should be between 2 and
- * #CLAHE_N_CONREG_Y_MAX).
+ * #NORM_CLAHE_N_CONREG_Y_MAX).
  * \param n_bins Number of bins for histogram (defines dynamic range).
  * \param limit Normalized clip limit value.
  */
@@ -112,7 +112,7 @@ static void make_histogram(
  * counted after clipping and then equally redistributed across the whole histogram.
  *
  * \param hist Pointer to the histogram.
- * \param Number of grey levels.
+ * \param n_greys Number of grey levels.
  * \param clip_limit Clip limit.
  */
 static void clip_histogram(
@@ -364,8 +364,8 @@ static void do_clahe(
 
     /* In case of errors just silently return without touching the image */
     if (
-            ((n_crx < 2) || (n_crx > CLAHE_N_CONREG_X_MAX)) ||
-            ((n_cry < 2) || (n_cry > CLAHE_N_CONREG_Y_MAX)) ||
+            ((n_crx < 2) || (n_crx > NORM_CLAHE_N_CONREG_X_MAX)) ||
+            ((n_cry < 2) || (n_cry > NORM_CLAHE_N_CONREG_Y_MAX)) ||
             (((width % n_crx) != 0) || ((height % n_cry) != 0)) ||
             (grey_min >= grey_max) ||
             (n_bins == 0) ||
@@ -390,7 +390,7 @@ static void do_clahe(
         clip_limit = 1;
 
     /* Create and populate lookup table for image scaling */
-    uint8_t lut[CLAHE_N_GREYS];
+    uint8_t lut[NORM_CLAHE_N_GREYS];
     const uint8_t sz_bin = (1 + (grey_max - grey_min) / n_bins);
 
     for (uint8_t i = grey_min; i <= grey_max; i++) {
@@ -521,14 +521,14 @@ bool lrpt_postproc_image_normalize(
             hist[image->channels[i][j]]++;
 
         /* Determine black/white cut-off counts */
-        size_t black_cutoff = (image->width * image->height * HIST_CUTOFF_BLACK) / 100;
-        size_t white_cutoff = (image->width * image->height * HIST_CUTOFF_WHITE) / 100;
+        size_t black_cutoff = (image->width * image->height * NORM_HIST_CUTOFF_BLACK) / 100;
+        size_t white_cutoff = (image->width * image->height * NORM_HIST_CUTOFF_WHITE) / 100;
 
         /* Find black cutoff intensity */
         size_t cnt = 0;
         uint8_t black_cutval = 0;
 
-        for (black_cutval = HIST_MIN_BLACK; black_cutval < 255; black_cutval++) {
+        for (black_cutval = NORM_HIST_MIN_BLACK; black_cutval < 255; black_cutval++) {
             cnt += hist[black_cutval];
 
             if (cnt >= black_cutoff)
@@ -578,10 +578,10 @@ bool lrpt_postproc_image_normalize(
                     image->height,
                     0,
                     255,
-                    CLAHE_N_CONREG_X,
-                    CLAHE_N_CONREG_Y,
-                    CLAHE_N_BINS,
-                    CLAHE_CLIPLIMIT);
+                    NORM_CLAHE_N_CONREG_X,
+                    NORM_CLAHE_N_CONREG_Y,
+                    NORM_CLAHE_N_BINS,
+                    NORM_CLAHE_CLIPLIMIT);
     }
 
     return true;

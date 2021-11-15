@@ -301,7 +301,6 @@ LRPT_API bool lrpt_iq_data_resize(
         size_t new_len,
         lrpt_error_t *err);
 
-/* TODO here and everywhere - the object should be first in the arguments list */
 /** Append I/Q data to the existing I/Q data object.
  *
  * Adds \p n I/Q samples from \p data_src object starting with position \p offset to the end of
@@ -864,7 +863,7 @@ LRPT_API bool lrpt_qpsk_data_from_hard(
  *
  * \note 4 QPSK symbols of internal format equal to 1 hard QPSK symbol.
  *
- * \todo implement offsetted access
+ * \todo Implement offsetted access
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
@@ -1192,17 +1191,17 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
         const char *fname,
         lrpt_error_t *err);
 
-/** Open I/Q data file of Version 1 for writing.
+/** Open I/Q data file, Version 1 for writing.
  *
  * File format is described at \ref lrptiq section. User should close file properly with
  * #lrpt_iq_file_close() after use.
  *
  * \param fname Name of file to write I/Q data to.
  * \param offset Whether offset QPSK was used or not.
- * \param samplerate Sampling rate.
- * \param bandwidth Bandwidth of the signal.
+ * \param samplerate Sampling rate in samples per second.
+ * \param bandwidth Bandwidth of the signal in Hertz.
  * \param device_name Device name string. If \p device_name is \c NULL no device name info will
- * be written.
+ * be written to the file.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the writable I/Q file object or \c NULL in case of error.
@@ -1215,7 +1214,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
         const char *device_name,
         lrpt_error_t *err);
 
-/** Close previously opened file with I/Q data.
+/** Close I/Q data file.
  *
  * \param file Pointer to the I/Q data file object.
  */
@@ -1226,17 +1225,17 @@ LRPT_API void lrpt_iq_file_close(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return File version number info or \c 0 in case of \c NULL \p file parameter.
+ * \return File version number info. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint8_t lrpt_iq_file_version(
         const lrpt_iq_file_t *file);
 
-/** Offset QPSK modulation presence.
+/** Check if file has offset QPSK modulation.
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return \c true if offset QPSK was used and \c false otherwise. \c false will be returned if
- * \c NULL \p file was passed.
+ * \return \c true if offset QPSK is used and \c false otherwise. \c false also will be returned
+ * for \c NULL \p file.
  */
 LRPT_API bool lrpt_iq_file_is_offsetted(
         const lrpt_iq_file_t *file);
@@ -1245,7 +1244,7 @@ LRPT_API bool lrpt_iq_file_is_offsetted(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return Sampling rate at which file was created or \c 0 in case of \c NULL \p file parameter.
+ * \return Sampling rate for I/Q data file. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint32_t lrpt_iq_file_samplerate(
         const lrpt_iq_file_t *file);
@@ -1254,18 +1253,19 @@ LRPT_API uint32_t lrpt_iq_file_samplerate(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return Signal bandwidth or \c 0 in case of \c NULL \p file parameter.
+ * \return Signal bandwidth of I/Q data file. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint32_t lrpt_iq_file_bandwidth(
         const lrpt_iq_file_t *file);
 
-/** Device name used to write file.
+/** Device name which was used during file creation.
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return Pointer to the device name string or \c NULL in case of \c NULL \p file parameter.
+ * \return Pointer to the device name string. \c NULL will be returned if no device name was set
+ * or if \p file is \c NULL.
  *
- * \warning User should never free returned string!
+ * \warning User should never free returned string pointer! Use #lrpt_iq_file_close() instead!
  */
 LRPT_API const char *lrpt_iq_file_devicename(
         const lrpt_iq_file_t *file);
@@ -1274,7 +1274,7 @@ LRPT_API const char *lrpt_iq_file_devicename(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return Number of I/Q samples stored in file or \c 0 in case of \c NULL \p file parameter.
+ * \return Number of I/Q samples stored in file. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *file);
@@ -1282,17 +1282,18 @@ LRPT_API uint64_t lrpt_iq_file_length(
 /** Set current position in I/Q data file stream.
  *
  * \param file Pointer to the I/Q data file object.
- * \param sample Sample index to set file pointer to. Index enumeration starts with 0.
+ * \param sample I/Q sample index to set file pointer to. Index enumeration starts with 0.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull positioning and \c false otherwise (if \p file is \c NULL,
- * position setting was unsuccessful).
+ * \return \c true on successfull positioning and \c false in case of error. \c false also will be
+ * returned for \c NULL \p file.
  *
- * \note If repositioning failed internal I/Q sample pointer will not be changed.
+ * \warning Seeking is disabled for files opened with write mode (\c false will be returned).
  *
- * \note If seekable sample index exceeds file length file pointer will be set to the end.
+ * \note If positioning has failed internal I/Q sample pointer will not be changed.
  *
- * \note Seeking is prohibited for files opened with write mode.
+ * \note If seekable sample index exceeds file length I/Q sample pointer will be set to the last
+ * I/Q sample.
  */
 LRPT_API bool lrpt_iq_file_goto(
         lrpt_iq_file_t *file,
@@ -1301,43 +1302,41 @@ LRPT_API bool lrpt_iq_file_goto(
 
 /** Read I/Q data from file.
  *
- * Reads \p len consecutive I/Q samples into I/Q data object \p data from file \p file.
- * Object will be auto-resized to proper length. If requested \p len exceeds number of samples
- * remaining all samples up to the end of file will be read.
+ * Reads \p n consecutive I/Q samples from I/Q data file \p file to \p data_dest object.
+ * If \p n exceeds available number of I/Q samples all I/Q samples up to the end of file will be
+ * read.
  *
- * \param[out] data Pointer to the I/Q data object.
- * \param file Pointer to the I/Q data file object.
- * \param len Number of I/Q samples to read.
- * \param rewind If true, sample position in file stream will be preserved after reading.
+ * \param[out] data_dest Pointer to the destination I/Q data object.
+ * \param[in] file Pointer to the source I/Q data file object.
+ * \param n Number of I/Q samples to read.
+ * \param rewind If set to \c true, sample position in file stream will be restored after reading.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull reading and \c false otherwise.
- *
- * \note File with I/Q data is expected to be compatible with internal library format, e. g.
- * written with #lrpt_iq_data_write_to_file(). For more details see \ref lrptiq section.
+ * \return \c true on successfull reading and \c false in case of error.
  */
 LRPT_API bool lrpt_iq_data_read_from_file(
-        lrpt_iq_data_t *data,
+        lrpt_iq_data_t *data_dest,
         lrpt_iq_file_t *file,
-        size_t len,
+        size_t n,
         bool rewind,
         lrpt_error_t *err);
 
 /** Write I/Q data to file.
  *
- * \param data Pointer to the I/Q data object.
- * \param file Pointer to the I/Q file object to write I/Q data to.
+ * Writes the whole contents of \p data_src object to the I/Q data file \p file.
+ *
+ * \param[in] data_src Pointer to the source I/Q data object.
+ * \param[out] file Pointer to the destination I/Q data file object.
  * \param inplace Determines whether data length should be dumped as soon as possible (after every
  * chunk, slower, more robust) or at the end of writing (faster).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull writing and \c false otherwise.
+ * \return \c true on successfull writing and \c false in case of error.
  *
- * \note Resulting file maintains internal library format. For more details see
- * \ref lrptiq section.
- */
+ * \todo Implement custom length writing with custom starting offset.
+  */
 LRPT_API bool lrpt_iq_data_write_to_file(
-        const lrpt_iq_data_t *data,
+        const lrpt_iq_data_t *data_src,
         lrpt_iq_file_t *file,
         bool inplace,
         lrpt_error_t *err);
