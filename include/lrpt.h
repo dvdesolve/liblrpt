@@ -1198,7 +1198,7 @@ LRPT_API lrpt_iq_file_t *lrpt_iq_file_open_r(
  *
  * \param fname Name of file to write I/Q data to.
  * \param offset Whether offset QPSK was used or not.
- * \param samplerate Sampling rate in samples per second.
+ * \param samplerate Sampling rate, samples per second.
  * \param bandwidth Bandwidth of the signal in Hertz.
  * \param device_name Device name string. If \p device_name is \c NULL no device name info will
  * be written to the file.
@@ -1334,7 +1334,7 @@ LRPT_API bool lrpt_iq_data_read_from_file(
  * \return \c true on successfull writing and \c false in case of error.
  *
  * \todo Implement custom length writing with custom starting offset.
-  */
+ */
 LRPT_API bool lrpt_iq_data_write_to_file(
         const lrpt_iq_data_t *data_src,
         lrpt_iq_file_t *file,
@@ -1355,7 +1355,7 @@ LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
         const char *fname,
         lrpt_error_t *err);
 
-/** Open QPSK data file of Version 1 for writing.
+/** Open QPSK data file, Version 1 for writing.
  *
  * File format is described at \ref lrptqpsk section. User should close file properly with
  * #lrpt_qpsk_file_close() after use.
@@ -1363,9 +1363,9 @@ LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_r(
  * \param fname Name of file to write QPSK data to.
  * \param differential Whether differential coding was used or not.
  * \param interleaved Whether interleaving was used or not.
- * \param hard Determines whether data is in hard symbols format (if \p hard is \c true) or soft
+ * \param hard Whether data is in hard symbols format (if \p hard is \c true) or soft
  * (\p hard is \c false).
- * \param symrate Symbol rate.
+ * \param symrate Symbol rate, symbols per second.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the writable QPSK file object or \c NULL in case of error.
@@ -1378,7 +1378,7 @@ LRPT_API lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
         uint32_t symrate,
         lrpt_error_t *err);
 
-/** Close previously opened file with QPSK data.
+/** Close QPSK data file.
  *
  * \param file Pointer to the QPSK data file object.
  */
@@ -1389,27 +1389,27 @@ LRPT_API void lrpt_qpsk_file_close(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return File version number info or \c 0 in case of \c NULL \p file parameter.
+ * \return File version number info. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint8_t lrpt_qpsk_file_version(
         const lrpt_qpsk_file_t *file);
 
-/** Differential coding modulation presence.
+/** Check if file has differential coding.
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return \c true if differential coding was used and \c false otherwise. \c false will be
- * returned if \c NULL \p file was passed.
+ * \return \c true if differential coding is used and \c false otherwise. \c false also will be
+ * returned for \c NULL \p file.
  */
 LRPT_API bool lrpt_qpsk_file_is_diffcoded(
         const lrpt_qpsk_file_t *file);
 
-/** Interleaving presence.
+/** Check if file has interleaving.
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return \c true if interleaving was used and \c false otherwise. \c false will be returned if
- * \c NULL \p file was passed.
+ * \return \c true if interleaving is used and \c false otherwise. \c false also will be returned
+ * for \c NULL \p file.
  */
 LRPT_API bool lrpt_qpsk_file_is_interleaved(
         const lrpt_qpsk_file_t *file);
@@ -1418,8 +1418,8 @@ LRPT_API bool lrpt_qpsk_file_is_interleaved(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return \c true if symbols are in hard format and \c false in case of soft format. \c false
- * will be returned if \c NULL \p file was passed.
+ * \return \c true if symbols are in hard format and \c false otherwise. \c false will be returned
+ * for \c NULL \p file.
  */
 LRPT_API bool lrpt_qpsk_file_is_hardsymboled(
         const lrpt_qpsk_file_t *file);
@@ -1428,16 +1428,16 @@ LRPT_API bool lrpt_qpsk_file_is_hardsymboled(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return Symbol rate at which file was created or \c 0 in case of \c NULL \p file parameter.
+ * \return Symbol rate for QPSK data file. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint32_t lrpt_qpsk_file_symrate(
         const lrpt_qpsk_file_t *file);
 
-/** Number of QPSK symbols stored in file.
+/** Number of QPSK symbols in file.
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return Number of QPSK symbols stored in file or \c 0 in case of \c NULL \p file parameter.
+ * \return Number of QPSK symbols stored in file. \c 0 will be returned for \c NULL \p file.
  */
 LRPT_API uint64_t lrpt_qpsk_file_length(
         const lrpt_qpsk_file_t *file);
@@ -1448,14 +1448,15 @@ LRPT_API uint64_t lrpt_qpsk_file_length(
  * \param symbol Symbol index to set file pointer to. Index enumeration starts with 0.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull positioning and \c false otherwise (if \p file is \c NULL,
- * position setting was unsuccessful.
+ * \return \c true on successfull positioning and \c false in case of error. \c false also will be
+ * returned for \c NULL \p file.
  *
- * \note If repositioning failed internal QPSK symbol pointer will not be changed.
+ * \warning Seeking is disabled for files opened with write mode (\c false will be returned).
  *
- * \note If seekable symbol index exceeds file length file pointer will be set to the end.
+ * \note If positioning has failed internal QPSK symbol pointer will not be changed.
  *
- * \note Seeking is prohibited for files opened with write mode.
+ * \note If seekable symbol index exceeds file length QPSK symbol pointer will be set to the last
+ * QPSK symbol.
  */
 LRPT_API bool lrpt_qpsk_file_goto(
         lrpt_qpsk_file_t *file,
@@ -1464,44 +1465,41 @@ LRPT_API bool lrpt_qpsk_file_goto(
 
 /** Read QPSK data from file.
  *
- * Reads \p len consecutive QPSK symbols into QPSK data object \p data from file \p file.
- * Object will be auto-resized to proper length.
+ * Reads \p n consecutive QPSK symbols from QPSK data file \p file to \p data_dest object.
+ * If \p n exceeds available number of QPSK symbols all QPSK symbols up to the end of file will be
+ * read.
  *
- * \param[out] data Pointer to the QPSK data object.
- * \param file Pointer to the QPSK data file object.
- * \param len Number of QPSK symbols to read.
- * \param rewind If true, symbol position in file stream will be preserved after reading.
+ * \param[out] data_dest Pointer to the destination QPSK data object.
+ * \param[in] file Pointer to the source QPSK data file object.
+ * \param n Number of QPSK symbols to read.
+ * \param rewind If set to \c true, symbol position in file stream will be restored after reading.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull reading and \c false otherwise.
- *
- * \note File with QPSK data is expected to be compatible with internal library format, e. g.
- * written with #lrpt_qpsk_data_write_to_file(). For more details see \ref lrptqpsk section.
+ * \return \c true on successfull reading and \c false in case of error.
  */
 LRPT_API bool lrpt_qpsk_data_read_from_file(
-        lrpt_qpsk_data_t *data,
+        lrpt_qpsk_data_t *data_dest,
         lrpt_qpsk_file_t *file,
-        size_t len,
+        size_t n,
         bool rewind,
         lrpt_error_t *err);
 
 /** Write QPSK data to file.
  *
- * Writes QPSK data pointed by \p data to file \p file.
+ * Writes the whole contents of \p data_src object to the QPSK data file \p file.
  *
- * \param data Pointer to the QPSK data object.
- * \param file Pointer to the QPSK file object to write QPSK data to.
+ * \param[in] data_src Pointer to the source QPSK data object.
+ * \param[out] file Pointer to the destination QPSK file object.
  * \param inplace Determines whether data length should be dumped as soon as possible (after every
- * chunk, slower) or at the end of writing (faster).
+ * chunk, slower, more robust) or at the end of writing (faster).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull writing and \c false otherwise.
+ * \return \c true on successfull writing and \c false in case of error.
  *
- * \note Resulting file maintains internal library format. For more details see \ref lrptqpsk
- * section.
+ * \todo Implement custom length writing with custom starting offset.
  */
 LRPT_API bool lrpt_qpsk_data_write_to_file(
-        const lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *data_src,
         lrpt_qpsk_file_t *file,
         bool inplace,
         lrpt_error_t *err);

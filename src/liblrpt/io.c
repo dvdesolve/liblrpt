@@ -647,8 +647,8 @@ inline uint32_t lrpt_iq_file_bandwidth(
 
 /*************************************************************************************************/
 
-inline /* lrpt_iq_file_devicename() */
-const char *lrpt_iq_file_devicename(
+/* lrpt_iq_file_devicename() */
+inline const char *lrpt_iq_file_devicename(
         const lrpt_iq_file_t *file) {
     if (!file)
         return NULL;
@@ -658,8 +658,8 @@ const char *lrpt_iq_file_devicename(
 
 /*************************************************************************************************/
 
-inline /* lrpt_iq_file_length() */
-uint64_t lrpt_iq_file_length(
+/* lrpt_iq_file_length() */
+inline uint64_t lrpt_iq_file_length(
         const lrpt_iq_file_t *file) {
     if (!file)
         return 0;
@@ -739,7 +739,7 @@ bool lrpt_iq_data_read_from_file(
     if (file->write_mode) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                    "Can't perform goto in write mode");
+                    "Can't read in write mode");
 
         return false;
     }
@@ -881,7 +881,7 @@ bool lrpt_iq_data_write_to_file(
     if (file->version == LRPT_IQ_FILE_VER1) { /* Version 1 */
         /* Determine required number of writes */
         const size_t len = data_src->len;
-        const size_t n_writes = (len / IO_IQ_DATA_N);
+        const size_t n_writes = len / IO_IQ_DATA_N;
 
         for (size_t i = 0; i <= n_writes; i++) {
             const size_t towrite = (i == n_writes) ? (len - n_writes * IO_IQ_DATA_N) : IO_IQ_DATA_N;
@@ -1125,6 +1125,9 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
     file->current = 0;
     file->iobuf = iobuf;
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return file;
 }
 
@@ -1366,13 +1369,16 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
     file->current = 0;
     file->iobuf = iobuf;
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return file;
 }
 
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_close() */
-void lrpt_qpsk_file_close(
+inline void lrpt_qpsk_file_close(
         lrpt_qpsk_file_t *file) {
     if (!file)
         return;
@@ -1387,7 +1393,7 @@ void lrpt_qpsk_file_close(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_version() */
-uint8_t lrpt_qpsk_file_version(
+inline uint8_t lrpt_qpsk_file_version(
         const lrpt_qpsk_file_t *file) {
     if (!file)
         return 0;
@@ -1398,7 +1404,7 @@ uint8_t lrpt_qpsk_file_version(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_is_diffcoded() */
-bool lrpt_qpsk_file_is_diffcoded(
+inline bool lrpt_qpsk_file_is_diffcoded(
         const lrpt_qpsk_file_t *file) {
     if (!file)
         return false;
@@ -1409,7 +1415,7 @@ bool lrpt_qpsk_file_is_diffcoded(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_is_interleaved() */
-bool lrpt_qpsk_file_is_interleaved(
+inline bool lrpt_qpsk_file_is_interleaved(
         const lrpt_qpsk_file_t *file) {
     if (!file)
         return false;
@@ -1420,7 +1426,7 @@ bool lrpt_qpsk_file_is_interleaved(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_is_hardsymboled() */
-bool lrpt_qpsk_file_is_hardsymboled(
+inline bool lrpt_qpsk_file_is_hardsymboled(
         const lrpt_qpsk_file_t *file) {
     if (!file)
         return false;
@@ -1431,7 +1437,7 @@ bool lrpt_qpsk_file_is_hardsymboled(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_symrate() */
-uint32_t lrpt_qpsk_file_symrate(
+inline uint32_t lrpt_qpsk_file_symrate(
         const lrpt_qpsk_file_t *file) {
     if (!file)
         return 0;
@@ -1442,7 +1448,7 @@ uint32_t lrpt_qpsk_file_symrate(
 /*************************************************************************************************/
 
 /* lrpt_qpsk_file_length() */
-uint64_t lrpt_qpsk_file_length(
+inline uint64_t lrpt_qpsk_file_length(
         const lrpt_qpsk_file_t *file) {
     if (!file)
         return 0;
@@ -1459,7 +1465,7 @@ bool lrpt_qpsk_file_goto(
         lrpt_error_t *err) {
     if (!file) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
                     "QPSK file object is NULL");
 
         return false;
@@ -1468,7 +1474,7 @@ bool lrpt_qpsk_file_goto(
     if (file->write_mode) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                    "Can't goto in write mode");
+                    "Can't perform goto in write mode");
 
         return false;
     }
@@ -1485,7 +1491,7 @@ bool lrpt_qpsk_file_goto(
         else {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                        "Error during seeking in QPSK file");
+                        "Error during performing seek in QPSK file");
 
             return false;
         }
@@ -1502,12 +1508,15 @@ bool lrpt_qpsk_file_goto(
             if (fseek(file->fhandle, -1, SEEK_CUR) != 0) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
-                            "Error during seeking in QPSK file");
+                            "Error during performing seek in QPSK file");
 
                 return false;
             }
         }
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
@@ -1516,31 +1525,55 @@ bool lrpt_qpsk_file_goto(
 
 /* lrpt_qpsk_data_read_from_file() */
 bool lrpt_qpsk_data_read_from_file(
-        lrpt_qpsk_data_t *data,
+        lrpt_qpsk_data_t *data_dest,
         lrpt_qpsk_file_t *file,
-        size_t len,
+        size_t n,
         bool rewind,
         lrpt_error_t *err) {
-    /* Sanity checks */
-    if (!data || !file || file->write_mode) {
+    if (!data_dest) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object and/or file pointer are NULL or incorrect mode is used");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Destination QPSK data object is NULL");
 
         return false;
     }
 
-    /* In case of empty read just exit */
-    if (len == 0)
-        return true;
+    if (!file) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "QPSK file object is NULL");
 
-    /* Check if we have enough data to read */
+        return false;
+    }
+
+    if (file->write_mode) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FSEEK,
+                    "Can't read in write mode");
+
+        return false;
+    }
+
+    /* Check if we are at the end of file */
     if (file->current == file->data_len) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_WARN, LRPT_ERR_CODE_EOF,
-                    "Reached EOF");
+                    "EOF has been reached");
 
         return false;
+    }
+
+    /* Handle oversized requests */
+    if ((file->current + n) > file->data_len)
+        n = file->data_len - file->current;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
+        return true;
     }
 
     /* Partial index in current hard symbol byte */
@@ -1549,18 +1582,14 @@ bool lrpt_qpsk_data_read_from_file(
     /* Remaining number of hard symbols to read */
     const uint8_t hardsym_rem = (hardsym_off == 0) ? 0 : (4 - hardsym_off);
 
-    /* Read up to the end if requested length is bigger than remaining data */
-    if ((file->current + len) > file->data_len)
-        len = (file->data_len - file->current);
-
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
         /* If we're in the middle of the byte in hardsymboled file restore remnants */
         if (lrpt_qpsk_file_is_hardsymboled(file) && (hardsym_off != 0)) {
             /* Offset from the start of hard symbol byte */
-            const unsigned char hardsyms = (file->last_hardsym << (2 * hardsym_off));
+            const unsigned char hardsyms = file->last_hardsym << (2 * hardsym_off);
 
             /* Use previously stored hard symbol byte */
-            if (!lrpt_qpsk_data_from_hard(data, &hardsyms, hardsym_rem, err)) {
+            if (!lrpt_qpsk_data_from_hard(data_dest, &hardsyms, hardsym_rem, err)) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
                             "Can't convert hanging hard symbols");
@@ -1570,12 +1599,12 @@ bool lrpt_qpsk_data_read_from_file(
         }
 
         /* Resize storage */
-        if (!lrpt_qpsk_data_resize(data, len, err))
+        if (!lrpt_qpsk_data_resize(data_dest, n, err))
             return false;
 
         /* Determine required number of block reads */
-        const size_t len_corr = (len - hardsym_rem); /* Account for the remnants */
-        const size_t n_reads = (len_corr / IO_QPSK_DATA_N);
+        const size_t len_corr = n - hardsym_rem; /* Account for the remnants */
+        const size_t n_reads = len_corr / IO_QPSK_DATA_N;
 
         for (size_t i = 0; i <= n_reads; i++) {
             /* Determine required number of symbols for current read */
@@ -1587,7 +1616,7 @@ bool lrpt_qpsk_data_read_from_file(
 
             if (lrpt_qpsk_file_is_hardsymboled(file)) {
                 /* Number of bytes to read */
-                const size_t n_bytes = ((toread - 1) / 4 + 1);
+                const size_t n_bytes = (toread - 1) / 4 + 1;
 
                 /* Read block of QPSK bytes into temporary buffer */
                 if (fread(file->iobuf, 1, n_bytes, file->fhandle) != n_bytes) {
@@ -1609,9 +1638,9 @@ bool lrpt_qpsk_data_read_from_file(
                                 (k == (2 * (toread % 4))))
                             break;
 
-                        const unsigned char b = ((file->iobuf[j] >> (7 - k)) & 0x01);
+                        const unsigned char b = (file->iobuf[j] >> (7 - k)) & 0x01;
 
-                        data->qpsk[2 * hardsym_rem + 2 * i * IO_QPSK_DATA_N + 8 * j + k] =
+                        data_dest->qpsk[2 * hardsym_rem + 2 * i * IO_QPSK_DATA_N + 8 * j + k] =
                             (b == 0x01) ? 127 : -127;
                     }
 
@@ -1622,7 +1651,7 @@ bool lrpt_qpsk_data_read_from_file(
             }
             else {
                 /* Read block of QPSK bytes directly */
-                if (fread(data->qpsk + 2 * i * IO_QPSK_DATA_N, 2, toread, file->fhandle) != toread) {
+                if (fread(data_dest->qpsk + 2 * i * IO_QPSK_DATA_N, 2, toread, file->fhandle) != toread) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FREAD,
                                 "Error during block read from QPSK file");
@@ -1638,34 +1667,57 @@ bool lrpt_qpsk_data_read_from_file(
             return false;
     }
     else
-        file->current += len;
+        file->current += n;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
 
 /*************************************************************************************************/
 
-/* TODO implement custom length writing (perhaps with start offset) */
 /* lrpt_qpsk_data_write_to_file() */
 bool lrpt_qpsk_data_write_to_file(
-        const lrpt_qpsk_data_t *data,
+        const lrpt_qpsk_data_t *data_src,
         lrpt_qpsk_file_t *file,
         bool inplace,
         lrpt_error_t *err) {
-    if (!data || (data->len == 0) || !data->qpsk || !file || !file->write_mode) {
+    if (!data_src || ((data_src->len > 0) && !data_src->qpsk)) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "QPSK data object and/or file pointer are NULL, incorrect mode is used or no data to write");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "Source QPSK data object is NULL or corrupted");
 
         return false;
     }
 
-    /* Get number of QPSK symbols */
-    size_t len = data->len;
+    if (!file) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "QPSK file object is NULL");
 
-    /* In case of empty write just exit */
-    if (len == 0)
+        return false;
+    }
+
+    if (!file->write_mode) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
+                    "Can't perform write in read mode");
+
+        return false;
+    }
+
+    /* Just finish when nothing to do */
+    if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "No data to process");
+
         return true;
+    }
+
+    /* Get number of QPSK symbols */
+    size_t len = data_src->len;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
         /* Final buffer for combined write */
@@ -1674,7 +1726,7 @@ bool lrpt_qpsk_data_write_to_file(
         /* Check if we're in the middle of the byte in hardsymboled file */
         if (lrpt_qpsk_file_is_hardsymboled(file) && ((file->current % 4) != 0)) {
             /* Offset from the start of hard symbol byte */
-            const uint8_t hardsym_off = (file->current % 4);
+            const uint8_t hardsym_off = file->current % 4;
 
             fin = lrpt_qpsk_data_create_from_hard(&file->last_hardsym, file->current % 4, err);
 
@@ -1686,7 +1738,7 @@ bool lrpt_qpsk_data_write_to_file(
                 return false;
             }
 
-            if (!lrpt_qpsk_data_append(fin, data, 0, data->len, err)) {
+            if (!lrpt_qpsk_data_append(fin, data_src, 0, data_src->len, err)) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                             "Can't append symbols to temporary buffer");
@@ -1694,7 +1746,7 @@ bool lrpt_qpsk_data_write_to_file(
                 return false;
             }
 
-            data = fin;
+            data_src = fin;
             len += hardsym_off;
 
             file->current -= hardsym_off;
@@ -1702,7 +1754,7 @@ bool lrpt_qpsk_data_write_to_file(
         }
 
         /* Determine required number of block writes */
-        const size_t n_writes = (len / IO_QPSK_DATA_N);
+        const size_t n_writes = len / IO_QPSK_DATA_N;
 
         for (size_t i = 0; i <= n_writes; i++) {
             const size_t towrite = (i == n_writes) ? (len - n_writes * IO_QPSK_DATA_N) : IO_QPSK_DATA_N;
@@ -1712,7 +1764,7 @@ bool lrpt_qpsk_data_write_to_file(
 
             if (lrpt_qpsk_file_is_hardsymboled(file)) {
                 /* Number of bytes to write */
-                const size_t n_bytes = ((towrite - 1) / 4 + 1);
+                const size_t n_bytes = (towrite - 1) / 4 + 1;
 
                 /* Prepare block */
                 for (size_t j = 0; j < n_bytes; j++) {
@@ -1727,8 +1779,8 @@ bool lrpt_qpsk_data_write_to_file(
                                 (k == (2 * (towrite % 4))))
                             break;
 
-                        if (data->qpsk[2 * i * IO_QPSK_DATA_N + 8 * j + k] >= 0)
-                            b |= (1 << (7 - k));
+                        if (data_src->qpsk[2 * i * IO_QPSK_DATA_N + 8 * j + k] >= 0)
+                            b |= 1 << (7 - k);
                     }
 
                     file->iobuf[j] = b;
@@ -1749,7 +1801,7 @@ bool lrpt_qpsk_data_write_to_file(
             }
             else {
                 /* Write block of QPSK bytes directly */
-                if (fwrite(data->qpsk + 2 * i * IO_QPSK_DATA_N, 2, towrite, file->fhandle) != towrite) {
+                if (fwrite(data_src->qpsk + 2 * i * IO_QPSK_DATA_N, 2, towrite, file->fhandle) != towrite) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
                                 "Error during block write to QPSK file");
@@ -1795,7 +1847,7 @@ bool lrpt_qpsk_data_write_to_file(
             if (fwrite(v_s, 1, 8, file->fhandle) != 8) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
-                            "QPSK data length write error");
+                            "QPSK file Version 1 data length write error");
 
                 return false;
             }
@@ -1810,6 +1862,9 @@ bool lrpt_qpsk_data_write_to_file(
 
         lrpt_qpsk_data_free(fin);
     }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
