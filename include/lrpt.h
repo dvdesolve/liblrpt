@@ -292,7 +292,7 @@ LRPT_API size_t lrpt_iq_data_length(
  * \param new_len Length \p data will be resized to.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull resize and \c false in case of error.
+ * \return \c true on successfull resize or \c false in case of error.
  *
  * \note In case of error \p data object will not be modified.
  */
@@ -313,7 +313,7 @@ LRPT_API bool lrpt_iq_data_resize(
  * \param n Number of I/Q samples to append.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull append and \c false in case of error.
+ * \return \c true on successfull append or \c false in case of error.
  *
  * \warning \p data_dest and \p data_src can't be the same object!
  *
@@ -339,7 +339,7 @@ LRPT_API bool lrpt_iq_data_append(
  * \param n Number of I/Q samples to copy.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull copying and \c false in case of error.
+ * \return \c true on successfull copying or \c false in case of error.
  *
  * \warning \p data_dest and \p data_src can't be the same object!
  *
@@ -382,7 +382,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_iq(
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull converting and \c false in case of error.
+ * \return \c true on successfull converting or \c false in case of error.
  *
  * \warning User should be responsible that \p samples array contains at least \p n elements
  * starting from \p offset and up to the end!
@@ -426,7 +426,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_complex(
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful conversion and \c false in case of error.
+ * \return \c true on successful conversion or \c false in case of error.
  *
  * \warning User should be responsible that \p samples array is large enough to keep at least
  * \p n elements!
@@ -453,7 +453,7 @@ LRPT_API bool lrpt_iq_data_to_complex(
  * \param n Number of I/Q samples of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull converting and \c false in case of error.
+ * \return \c true on successfull converting or \c false in case of error.
  *
  * \note 1 I/Q sample of internal format equals to 2 double-valued I/Q samples.
  *
@@ -502,7 +502,7 @@ LRPT_API lrpt_iq_data_t *lrpt_iq_data_create_from_doubles(
  * \param n Number of I/Q samples to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful conversion and \c false in case of error.
+ * \return \c true on successful conversion or \c false in case of error.
  *
  * \warning User should be responsible that \p samples array is large enough to keep at least
  * \c 2x \p n elements!
@@ -597,7 +597,7 @@ LRPT_API bool lrpt_iq_rb_is_full(
  * \param n Number of I/Q samples to pop.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful popping and \c false in case of error.
+ * \return \c true on successful popping or \c false in case of error.
  *
  * \note In case of error \p data_dest and \p rb objects will not be modified.
  */
@@ -619,7 +619,7 @@ LRPT_API bool lrpt_iq_rb_pop(
  * \param n Number of I/Q samples to push.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful pushing and \c false in case of error.
+ * \return \c true on successful pushing or \c false in case of error.
  *
  * \note In case of error \p rb object will not be modified.
  */
@@ -672,7 +672,7 @@ LRPT_API size_t lrpt_qpsk_data_length(
  * \param new_len Length \p data will be resized to.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull resize and \c false in case of error.
+ * \return \c true on successfull resize or \c false in case of error.
  *
  * \note In case of error \p data object will not be modified.
  */
@@ -693,7 +693,7 @@ LRPT_API bool lrpt_qpsk_data_resize(
  * \param n Number of QPSK symbols to append.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull append and \c false in case of error.
+ * \return \c true on successfull append or \c false in case of error.
  *
  * \warning \p data_dest and \p data_src can't be the same object!
  *
@@ -719,7 +719,7 @@ LRPT_API bool lrpt_qpsk_data_append(
  * \param n Number of QPSK symbols to copy.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull copying and \c false in case of error.
+ * \return \c true on successfull copying or \c false in case of error.
  *
  * \warning \p data_dest and \p data_src can't be the same object!
  *
@@ -763,7 +763,7 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_qpsk(
  * \param n Number of QPSK symbols of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull converting and \c false in case of error.
+ * \return \c true on successfull converting or \c false in case of error.
  *
  * \note 1 QPSK symbol of internal format equals to 2 soft QPSK symbols.
  *
@@ -810,7 +810,7 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_soft(
  * \param n Number of QPSK symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful conversion and \c false in case of error.
+ * \return \c true on successful conversion or \c false in case of error.
  *
  * \warning User should be responsible that \p symbols array is large enough to keep at least
  * \c 2x \p n elements!
@@ -835,7 +835,7 @@ LRPT_API bool lrpt_qpsk_data_to_soft(
  * \param n Number of QPSK symbols of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull converting and \c false in case of error.
+ * \return \c true on successfull converting or \c false in case of error.
  *
  * \note 4 QPSK symbols of internal format equal to 1 hard QPSK symbol.
  *
@@ -882,7 +882,7 @@ LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
  * \param n Number of QPSK symbols to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful conversion and \c false in case of error.
+ * \return \c true on successful conversion or \c false in case of error.
  *
  * \warning User should be responsible that \p symbols array is large enough to keep at least
  * \c 1/4 \p n elements!
@@ -977,7 +977,7 @@ LRPT_API bool lrpt_qpsk_rb_is_full(
  * \param n Number of QPSK symbols to pop.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful popping and \c false otherwise.
+ * \return \c true on successful popping or \c false otherwise.
  *
  * \note In case of error \p data_dest and \p rb objects will not be modified.
  */
@@ -999,7 +999,7 @@ LRPT_API bool lrpt_qpsk_rb_pop(
  * \param n Number of QPSK symbols to push.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful pushing and \c false in case of error.
+ * \return \c true on successful pushing or \c false in case of error.
  *
  * \note In case of error \p rb object will not be modified.
  */
@@ -1058,7 +1058,7 @@ LRPT_API size_t lrpt_image_height(
  * \param new_width New image width in number of pixels.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull resize and \c false in case of error.
+ * \return \c true on successfull resize or \c false in case of error.
  *
  * \note In case of error \p image object will not be modified.
  */
@@ -1073,7 +1073,7 @@ LRPT_API bool lrpt_image_set_width(
  * \param new_height New image height in number of pixels.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull resize and \c false in case of error.
+ * \return \c true on successfull resize or \c false in case of error.
  *
  * \note In case of error \p image object will not be modified.
  */
@@ -1234,7 +1234,7 @@ LRPT_API uint8_t lrpt_iq_file_version(
  *
  * \param file Pointer to the I/Q data file object.
  *
- * \return \c true if offset QPSK is used and \c false otherwise. \c false also will be returned
+ * \return \c true if offset QPSK is used or \c false otherwise. \c false also will be returned
  * for \c NULL \p file.
  */
 LRPT_API bool lrpt_iq_file_is_offsetted(
@@ -1285,7 +1285,7 @@ LRPT_API uint64_t lrpt_iq_file_length(
  * \param sample I/Q sample index to set file pointer to. Index enumeration starts with 0.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull positioning and \c false in case of error. \c false also will be
+ * \return \c true on successfull positioning or \c false in case of error. \c false also will be
  * returned for \c NULL \p file.
  *
  * \warning Seeking is disabled for files opened with write mode (\c false will be returned).
@@ -1312,7 +1312,7 @@ LRPT_API bool lrpt_iq_file_goto(
  * \param rewind If set to \c true, sample position in file stream will be restored after reading.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull reading and \c false in case of error.
+ * \return \c true on successfull reading or \c false in case of error.
  */
 LRPT_API bool lrpt_iq_data_read_from_file(
         lrpt_iq_data_t *data_dest,
@@ -1331,7 +1331,7 @@ LRPT_API bool lrpt_iq_data_read_from_file(
  * chunk, slower, more robust) or at the end of writing (faster).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull writing and \c false in case of error.
+ * \return \c true on successfull writing or \c false in case of error.
  *
  * \todo Implement custom length writing with custom starting offset.
  */
@@ -1398,7 +1398,7 @@ LRPT_API uint8_t lrpt_qpsk_file_version(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return \c true if differential coding is used and \c false otherwise. \c false also will be
+ * \return \c true if differential coding is used or \c false otherwise. \c false also will be
  * returned for \c NULL \p file.
  */
 LRPT_API bool lrpt_qpsk_file_is_diffcoded(
@@ -1408,7 +1408,7 @@ LRPT_API bool lrpt_qpsk_file_is_diffcoded(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return \c true if interleaving is used and \c false otherwise. \c false also will be returned
+ * \return \c true if interleaving is used or \c false otherwise. \c false also will be returned
  * for \c NULL \p file.
  */
 LRPT_API bool lrpt_qpsk_file_is_interleaved(
@@ -1418,7 +1418,7 @@ LRPT_API bool lrpt_qpsk_file_is_interleaved(
  *
  * \param file Pointer to the QPSK data file object.
  *
- * \return \c true if symbols are in hard format and \c false otherwise. \c false will be returned
+ * \return \c true if symbols are in hard format or \c false otherwise. \c false will be returned
  * for \c NULL \p file.
  */
 LRPT_API bool lrpt_qpsk_file_is_hardsymboled(
@@ -1448,7 +1448,7 @@ LRPT_API uint64_t lrpt_qpsk_file_length(
  * \param symbol Symbol index to set file pointer to. Index enumeration starts with 0.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull positioning and \c false in case of error. \c false also will be
+ * \return \c true on successfull positioning or \c false in case of error. \c false also will be
  * returned for \c NULL \p file.
  *
  * \warning Seeking is disabled for files opened with write mode (\c false will be returned).
@@ -1475,7 +1475,7 @@ LRPT_API bool lrpt_qpsk_file_goto(
  * \param rewind If set to \c true, symbol position in file stream will be restored after reading.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull reading and \c false in case of error.
+ * \return \c true on successfull reading or \c false in case of error.
  */
 LRPT_API bool lrpt_qpsk_data_read_from_file(
         lrpt_qpsk_data_t *data_dest,
@@ -1494,7 +1494,7 @@ LRPT_API bool lrpt_qpsk_data_read_from_file(
  * chunk, slower, more robust) or at the end of writing (faster).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull writing and \c false in case of error.
+ * \return \c true on successfull writing or \c false in case of error.
  *
  * \todo Implement custom length writing with custom starting offset.
  */
@@ -1504,18 +1504,18 @@ LRPT_API bool lrpt_qpsk_data_write_to_file(
         bool inplace,
         lrpt_error_t *err);
 
-/** Dump single channel as PNM file.
+/** Dump single channel image as PNM file.
  *
  * Saves specified APID channel image to the PNM file format.
  *
- * \param image Pointer to the LRPT image object.
+ * \param[in] image Pointer to the LRPT image object.
  * \param fname Name of file to save PNM image to.
- * \param apid Number of APID channel to save image to.
+ * \param apid Number of APID channel to save image from.
  * \param corr Whether to perform BT.709 gamma correction. If \c false linear PNM file will
  * be saved.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull saving and \c false otherwise.
+ * \return \c true on successfull saving or \c false in case of error.
  */
 LRPT_API bool lrpt_image_dump_channel_pnm(
         const lrpt_image_t *image,
@@ -1528,7 +1528,7 @@ LRPT_API bool lrpt_image_dump_channel_pnm(
  *
  * Saves specified APID channel images to the PNM file format.
  *
- * \param image Pointer to the LRPT image object.
+ * \param[in] image Pointer to the LRPT image object.
  * \param fname Name of file to save PNM image to.
  * \param apid_red Number of APID channel to use as red channel.
  * \param apid_green Number of APID channel to use as green channel.
@@ -1537,7 +1537,7 @@ LRPT_API bool lrpt_image_dump_channel_pnm(
  * be saved.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull saving and \c false otherwise.
+ * \return \c true on successfull saving or \c false in case of error.
  */
 LRPT_API bool lrpt_image_dump_combo_pnm(
         const lrpt_image_t *image,
@@ -1552,12 +1552,12 @@ LRPT_API bool lrpt_image_dump_combo_pnm(
  *
  * Saves specified APID channel image to the BMP file format.
  *
- * \param image Pointer to the LRPT image object.
+ * \param[in] image Pointer to the LRPT image object.
  * \param fname Name of file to save PNM image to.
- * \param apid Number of APID channel to save image to.
+ * \param apid Number of APID channel to save image from.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull saving and \c false otherwise.
+ * \return \c true on successfull saving or \c false in case of error.
  */
 LRPT_API bool lrpt_image_dump_channel_bmp(
         const lrpt_image_t *image,
@@ -1569,14 +1569,14 @@ LRPT_API bool lrpt_image_dump_channel_bmp(
  *
  * Saves specified APID channel images to the BMP file format.
  *
- * \param image Pointer to the LRPT image object.
+ * \param[in] image Pointer to the LRPT image object.
  * \param fname Name of file to save BMP image to.
  * \param apid_red Number of APID channel to use as red channel.
  * \param apid_green Number of APID channel to use as green channel.
  * \param apid_blue Number of APID channel to use as blue channel.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull saving and \c false otherwise.
+ * \return \c true on successfull saving or \c false in case of error.
  */
 LRPT_API bool lrpt_image_dump_combo_bmp(
         const lrpt_image_t *image,
@@ -1623,7 +1623,7 @@ LRPT_API void lrpt_dsp_filter_deinit(
  * \param filter Pointer to the Chebyshev filter object.
  * \param[in,out] data Pointer to the I/Q data object.
  *
- * \return \c false if \p filter and/or \p data are empty and \c true otherwise.
+ * \return \c false if \p filter and/or \p data are empty or \c true otherwise.
  */
 LRPT_API bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *filter,
@@ -1652,7 +1652,7 @@ LRPT_API void lrpt_dsp_dediffcoder_deinit(
  * \param dediff Pointer to the dediffcoder object.
  * \param[in,out] data Pointer to the QPSK data object.
  *
- * \return \c false if \p dediff and/or \p data are empty and \c true otherwise.
+ * \return \c false if \p dediff and/or \p data are empty or \c true otherwise.
  */
 LRPT_API bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
@@ -1665,7 +1665,7 @@ LRPT_API bool lrpt_dsp_dediffcoder_exec(
  * \param[in,out] data Pointer to the QPSK data object.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull deinterleaving and \c false otherwise.
+ * \return \c true on successfull deinterleaving or \c false otherwise.
  */
 LRPT_API bool lrpt_dsp_deinterleaver_exec(
         lrpt_qpsk_data_t *data,
@@ -1711,7 +1711,7 @@ LRPT_API void lrpt_dsp_ifft_exec(
  * \param image Pointer to the LRPT image object.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful flipping and \c false otherwise.
+ * \return \c true on successful flipping or \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_flip(
         lrpt_image_t *image,
@@ -1744,7 +1744,7 @@ LRPT_API lrpt_image_t *lrpt_postproc_image_rectify(
  * \param clahe Whether to perform contrast limited adaptive histogram equalization.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful equalization and \c false otherwise.
+ * \return \c true on successful equalization or \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_normalize(
         lrpt_image_t *image,
@@ -1762,7 +1762,7 @@ LRPT_API bool lrpt_postproc_image_normalize(
  * \param pxval_max Upper edge of desired color range.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful rescaling and \c false otherwise.
+ * \return \c true on successful rescaling or \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_rescale_range(
         lrpt_image_t *image,
@@ -1783,7 +1783,7 @@ LRPT_API bool lrpt_postproc_image_rescale_range(
  * \param pxval_max Upper edge of desired color range. Good starting value is 80.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful rescaling and \c false otherwise.
+ * \return \c true on successful rescaling or \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_fix_water(
         lrpt_image_t *image,
@@ -1809,7 +1809,7 @@ LRPT_API bool lrpt_postproc_image_fix_water(
  * \param threshold Threshold to determine where cloudy areas are. Good starting value is 210.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful rescaling and \c false otherwise.
+ * \return \c true on successful rescaling or \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_fix_clouds(
         lrpt_image_t *image,
@@ -1830,7 +1830,7 @@ LRPT_API bool lrpt_postproc_image_fix_clouds(
  * \param apid APID number which will be inverted.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful rescaling and \c false otherwise.
+ * \return \c true on successful rescaling or \c false otherwise.
  */
 LRPT_API bool lrpt_postproc_image_invert_channel(
         lrpt_image_t *image,
@@ -1912,7 +1912,7 @@ LRPT_API double lrpt_demodulator_siglvl(
  *
  * \param demod Pointer to the demodulator object.
  *
- * \return \c true if Costas loop is locked and \c false otherwise or in case of
+ * \return \c true if Costas loop is locked or \c false otherwise or in case of
  * \c NULL \p demod parameter.
  */
 LRPT_API bool lrpt_demodulator_pllstate(
@@ -1947,7 +1947,7 @@ LRPT_API double lrpt_demodulator_pllphaseerr(
  * \param[out] output Demodulated QPSK symbols.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull demodulation and \c false in case of error.
+ * \return \c true on successfull demodulation or \c false in case of error.
  */
 LRPT_API bool lrpt_demodulator_exec(
         lrpt_demodulator_t *demod,
@@ -1990,7 +1990,7 @@ LRPT_API void lrpt_decoder_deinit(
  * the number of processed symbols will be stored.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull decoding and \c false otherwise.
+ * \return \c true on successfull decoding or \c false otherwise.
  */
 LRPT_API bool lrpt_decoder_exec(
         lrpt_decoder_t *decoder,
@@ -2092,7 +2092,7 @@ LRPT_API void lrpt_decoder_pxls_avail(
  * \param n Number of pixels to get.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successful reading and \c false otherwise.
+ * \return \c true on successful reading or \c false otherwise.
  */
 LRPT_API bool lrpt_decoder_pxls_get(
         const lrpt_decoder_t *decoder,

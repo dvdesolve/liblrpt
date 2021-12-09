@@ -236,7 +236,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/O buffer allocation failed");
+                    "I/O buffer allocation has failed");
 
         return NULL;
     }
@@ -251,7 +251,7 @@ static lrpt_iq_file_t *iq_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/Q data file object allocation failed");
+                    "I/Q data file object allocation has failed");
 
         return NULL;
     }
@@ -548,7 +548,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/O buffer allocation failed");
+                    "I/O buffer allocation has failed");
 
         return NULL;
     }
@@ -563,7 +563,7 @@ lrpt_iq_file_t *lrpt_iq_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/Q data file object allocation failed");
+                    "I/Q data file object allocation has failed");
 
         return NULL;
     }
@@ -1096,7 +1096,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/O buffer allocation failed");
+                    "I/O buffer allocation has failed");
 
         return NULL;
     }
@@ -1110,7 +1110,7 @@ static lrpt_qpsk_file_t *qpsk_file_open_r_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "QPSK data file object allocation failed");
+                    "QPSK data file object allocation has failed");
 
         return NULL;
     }
@@ -1340,7 +1340,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "I/O buffer allocation failed");
+                    "I/O buffer allocation has failed");
 
         return NULL;
     }
@@ -1354,7 +1354,7 @@ lrpt_qpsk_file_t *lrpt_qpsk_file_open_w_v1(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "QPSK data file object allocation failed");
+                    "QPSK data file object allocation has failed");
 
         return NULL;
     }
@@ -1878,9 +1878,17 @@ bool lrpt_image_dump_channel_pnm(
         uint8_t apid,
         bool corr,
         lrpt_error_t *err) {
+    if (!image) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is NULL");
+
+        return false;
+    }
+
     bool good = true;
 
-    if (image && (image->height > 0)) {
+    if (image->height > 0) {
         for (uint8_t i = 0; i < 6; i++)
             if (!image->channels[i]) {
                 good = false;
@@ -1889,10 +1897,10 @@ bool lrpt_image_dump_channel_pnm(
             }
     }
 
-    if (!image || !good) {
+    if (!good) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "LRPT image object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is corrupted");
 
         return false;
     }
@@ -1929,7 +1937,7 @@ bool lrpt_image_dump_channel_pnm(
         if (!res) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Can't allocate temporary buffer for storing channel data");
+                        "Temporary image buffer allocation has failed");
 
             return false;
         }
@@ -1938,14 +1946,14 @@ bool lrpt_image_dump_channel_pnm(
         res = image->channels[apid - 64];
 
     /* Fill resulting buffer and perform gamma correction (if requested) */
-    if (need_fill)
+    if (need_fill) {
         for (size_t j = 0; j < h; j++)
             for (size_t i = 0; i < w; i++) {
                 uint8_t px = image->channels[apid - 64][i + j * image->width];
 
                 res[i + j * w] = (corr) ? lrpt_utils_bt709_gamma_encode(px) : px;
             }
-
+    }
 
     FILE *fh = fopen(fname, "wb");
 
@@ -1960,7 +1968,7 @@ bool lrpt_image_dump_channel_pnm(
         return false;
     }
 
-    /* Write PNM identifier */
+    /* Write PNM identifier - grayscale */
     fprintf(fh, "P5\n");
 
     /* Write creator comment */
@@ -1992,6 +2000,9 @@ bool lrpt_image_dump_channel_pnm(
     if (need_fill)
         free(res);
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -2006,9 +2017,17 @@ bool lrpt_image_dump_combo_pnm(
         uint8_t apid_blue,
         bool corr,
         lrpt_error_t *err) {
+    if (!image) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is NULL");
+
+        return false;
+    }
+
     bool good = true;
 
-    if (image && (image->height > 0)) {
+    if (image->height > 0) {
         for (uint8_t i = 0; i < 6; i++)
             if (!image->channels[i]) {
                 good = false;
@@ -2017,10 +2036,10 @@ bool lrpt_image_dump_combo_pnm(
             }
     }
 
-    if (!image || !good) {
+    if (!good) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "LRPT image object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is corrupted");
 
         return false;
     }
@@ -2059,13 +2078,13 @@ bool lrpt_image_dump_combo_pnm(
     if (!res) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Can't allocate temporary buffer for storing RGB data");
+                    "Temporary image buffer allocation has failed");
 
         return false;
     }
 
     /* Fill resulting buffer and perform gamma correction (if requested) */
-    for (size_t j = 0; j < h; j++)
+    for (size_t j = 0; j < h; j++) {
         for (size_t i = 0; i < w; i++) {
             uint8_t px_r = image->channels[apid_red - 64][i + j * image->width];
             uint8_t px_g = image->channels[apid_green - 64][i + j * image->width];
@@ -2075,6 +2094,7 @@ bool lrpt_image_dump_combo_pnm(
             res[3 * (i + j * w) + 1] = (corr) ? lrpt_utils_bt709_gamma_encode(px_g) : px_g;
             res[3 * (i + j * w) + 2] = (corr) ? lrpt_utils_bt709_gamma_encode(px_b) : px_b;
         }
+    }
 
     FILE *fh = fopen(fname, "wb");
 
@@ -2088,7 +2108,7 @@ bool lrpt_image_dump_combo_pnm(
         return false;
     }
 
-    /* Write PNM identifier */
+    /* Write PNM identifier - color */
     fprintf(fh, "P6\n");
 
     /* Write creator comment */
@@ -2117,6 +2137,9 @@ bool lrpt_image_dump_combo_pnm(
     fclose(fh);
     free(res);
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -2128,9 +2151,17 @@ bool lrpt_image_dump_channel_bmp(
         const char *fname,
         uint8_t apid,
         lrpt_error_t *err) {
+    if (!image) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is NULL");
+
+        return false;
+    }
+
     bool good = true;
 
-    if (image && (image->height > 0)) {
+    if (image->height > 0) {
         for (uint8_t i = 0; i < 6; i++)
             if (!image->channels[i]) {
                 good = false;
@@ -2139,10 +2170,10 @@ bool lrpt_image_dump_channel_bmp(
             }
     }
 
-    if (!image || !good) {
+    if (!good) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "LRPT image object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is corrupted");
 
         return false;
     }
@@ -2177,7 +2208,7 @@ bool lrpt_image_dump_channel_bmp(
     if (!res) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Can't allocate temporary buffer for storing channel data");
+                    "Temporary image buffer allocation has failed");
 
         return false;
     }
@@ -2352,6 +2383,9 @@ bool lrpt_image_dump_channel_bmp(
     fclose(fh);
     free(res);
 
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
     return true;
 }
 
@@ -2365,9 +2399,17 @@ bool lrpt_image_dump_combo_bmp(
         uint8_t apid_green,
         uint8_t apid_blue,
         lrpt_error_t *err) {
+    if (!image) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is NULL");
+
+        return false;
+    }
+
     bool good = true;
 
-    if (image && (image->height > 0)) {
+    if (image->height > 0) {
         for (uint8_t i = 0; i < 6; i++)
             if (!image->channels[i]) {
                 good = false;
@@ -2376,10 +2418,10 @@ bool lrpt_image_dump_combo_bmp(
             }
     }
 
-    if (!image || !good) {
+    if (!good) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
-                    "LRPT image object is NULL or corrupted");
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
+                    "LRPT image object is corrupted");
 
         return false;
     }
@@ -2422,7 +2464,7 @@ bool lrpt_image_dump_combo_bmp(
     if (!res) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Can't allocate temporary buffer for storing RGB data");
+                    "Temporary image buffer allocation has failed");
 
         return false;
     }
@@ -2582,6 +2624,9 @@ bool lrpt_image_dump_combo_bmp(
 
     fclose(fh);
     free(res);
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
