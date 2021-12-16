@@ -21,7 +21,7 @@
 
 /** \file
  *
- * Public internal API for different library utils.
+ * Public internal API for helper library utilities.
  */
 
 /*************************************************************************************************/
@@ -36,19 +36,19 @@
 
 /*************************************************************************************************/
 
-/** Each double serialized in form of 10 unsigned chars */
+/** Size of serialized double (in number of unsigned chars) */
 extern const uint8_t UTILS_DOUBLE_SER_SIZE;
 
-/** Each complex is two doubles */
+/** Size of serialized complex (in number of unsigned chars) */
 extern const uint8_t UTILS_COMPLEX_SER_SIZE;
 
 /*************************************************************************************************/
 
 /** Serialize \c uint16_t value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 2).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (\c false).
  */
 void lrpt_utils_s_uint16_t(
         uint16_t x,
@@ -57,7 +57,7 @@ void lrpt_utils_s_uint16_t(
 
 /** Deserialize to the \c uint16_t value.
  *
- * \param x Input value to be deserialized (should be a size of at least 2).
+ * \param x Value to be deserialized (should be a size of at least 2).
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
  * \return \c uint16_t value.
@@ -68,9 +68,9 @@ uint16_t lrpt_utils_ds_uint16_t(
 
 /** Serialize \c int16_t value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 2).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
  */
 void lrpt_utils_s_int16_t(
         int16_t x,
@@ -79,7 +79,7 @@ void lrpt_utils_s_int16_t(
 
 /** Deserialize to the \c int16_t value.
  *
- * \param x Input value to be deserialized (should be a size of at least 2).
+ * \param x Value to be deserialized (should be a size of at least 2).
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
  * \return \c int16_t value.
@@ -90,9 +90,9 @@ int16_t lrpt_utils_ds_int16_t(
 
 /** Serialize \c uint32_t value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 4).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
  */
 void lrpt_utils_s_uint32_t(
         uint32_t x,
@@ -101,7 +101,7 @@ void lrpt_utils_s_uint32_t(
 
 /** Deserialize to the \c uint32_t value.
  *
- * \param x Input value to be deserialized (should be a size of at least 4).
+ * \param x Value to be deserialized (should be a size of at least 4).
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
  * \return \c uint32_t value.
@@ -112,9 +112,9 @@ uint32_t lrpt_utils_ds_uint32_t(
 
 /** Serialize \c int32_t value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 4).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
  */
 void lrpt_utils_s_int32_t(
         int32_t x,
@@ -123,7 +123,7 @@ void lrpt_utils_s_int32_t(
 
 /** Deserialize to the \c int32_t value.
  *
- * \param x Input value to be deserialized (should be a size of at least 4).
+ * \param x Value to be deserialized (should be a size of at least 4).
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
  * \return \c int32_t value.
@@ -134,9 +134,9 @@ int32_t lrpt_utils_ds_int32_t(
 
 /** Serialize \c uint64_t value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 8).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
  */
 void lrpt_utils_s_uint64_t(
         uint64_t x,
@@ -145,7 +145,7 @@ void lrpt_utils_s_uint64_t(
 
 /** Deserialize to the \c uint64_t value.
  *
- * \param x Input value to be deserialized (should be a size of at least 8).
+ * \param x Value to be deserialized (should be a size of at least 8).
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
  * \return \c uint64_t value.
@@ -156,9 +156,9 @@ uint64_t lrpt_utils_ds_uint64_t(
 
 /** Serialize \c int64_t value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 8).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
  */
 void lrpt_utils_s_int64_t(
         int64_t x,
@@ -167,7 +167,7 @@ void lrpt_utils_s_int64_t(
 
 /** Deserialize to the \c int64_t value.
  *
- * \param x Input value to be deserialized (should be a size of at least 8).
+ * \param x Value to be deserialized (should be a size of at least 8).
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
  * \return \c int64_t value.
@@ -179,15 +179,15 @@ int64_t lrpt_utils_ds_int64_t(
 /** Serialize \c double value.
  *
  * Input \c double value is decomposed to the exponent and normalized mantissa. Exponent part is
- * serialized with the help of #lrpt_utils_s_int16_t() while mantissa is multiplied by 2^53 and
- * serialized with #lrpt_utils_s_int64_t(). Serialized exponent and mantissa then concatenated
- * to form single serialized value.
+ * serialized with the help of #lrpt_utils_s_int16_t() while mantissa is multiplied by factor
+ * \c 2^53 and serialized with #lrpt_utils_s_int64_t(). Serialized exponent and mantissa are then
+ * concatenated in mentioned order to form single serialized value.
  *
- * \param x Input value to be serialized.
+ * \param x Value to be serialized.
  * \param[out] v Resulting value in serialized form (should be a size of at least 10).
- * \param be Whether to serialize in Big Endian form (\c true) or Little Endian form (\c false).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
  *
- * \return \c true on successfull serialization and \c false otherwise.
+ * \return \c true on successfull serialization and \c false in case of error.
  *
  * \note If \p x is NaN or infinity (of any sign) then this function will return \c false and \p v
  * will not be modified.
@@ -200,13 +200,13 @@ bool lrpt_utils_s_double(
 /** Deserialize to the \c double value.
  *
  * Input value should be in form of serialized exponent and normalized mantissa (for more
- * details see #lrpt_utils_s_double()) parts concatenated in order.
+ * details see #lrpt_utils_s_double()) parts concatenated in mentioned order.
  *
- * \param x Input value to be deserialized (should be a size of at least 10).
+ * \param x Value to be deserialized (should be a size of at least 10).
  * \param[out] v Pointer to the resulting \c double value.
  * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
  *
- * \return \c true on successfull deserialization and \c false otherwise.
+ * \return \c true on successfull deserialization and \c false in case of error.
  *
  * \note If deserialized mantissa is NaN or infinity (of any sign) \c false will be returned and
  * \p v will not be modified. Also if numerical overflow has occured during exponent loading

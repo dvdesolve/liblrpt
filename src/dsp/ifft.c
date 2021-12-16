@@ -80,7 +80,7 @@ static inline int16_t int_mult(
 lrpt_dsp_ifft_t *lrpt_dsp_ifft_init(
         uint16_t width,
         lrpt_error_t *err) {
-    /* Try to allocate our IFFT object */
+    /* Try to allocate IFFT object */
     lrpt_dsp_ifft_t *ifft = malloc(sizeof(lrpt_dsp_ifft_t));
 
     if (!ifft) {
@@ -109,7 +109,7 @@ lrpt_dsp_ifft_t *lrpt_dsp_ifft_init(
     ifft->width = width;
     ifft->order = 0;
 
-    size_t len = (2 * width);
+    size_t len = 2 * width;
     ifft->len = len;
 
     /* Determine FFT order */
@@ -124,7 +124,7 @@ lrpt_dsp_ifft_t *lrpt_dsp_ifft_init(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Can't allocate sinewave lookup table for Integer FFT object");
+                    "Sinewave lookup table allocation has failed");
 
         return NULL;
     }
@@ -132,6 +132,9 @@ lrpt_dsp_ifft_t *lrpt_dsp_ifft_init(
     /* Initialize sinewave lookup table */
     for (size_t i = 0; i < ((len * 3) / 4); i++)
         ifft->sw_lut[i] = (int16_t)(32767 * sin(i * 2 * M_PI / len));
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return ifft;
 }
@@ -166,15 +169,15 @@ void lrpt_dsp_ifft_exec(
         /* Bit reversal of indices */
         for (uint8_t j = 0; j < ifft->order; j++) {
             t <<= 1;
-            t |= ((i >> j) & 0x01);
+            t |= (i >> j) & 0x01;
         }
 
         /* Fill data to locations with bit reversed indices */
         if (i < t) {
-            const uint32_t a1 = (2 * i);
-            const uint32_t b1 = (2 * t);
-            const uint32_t a2 = (a1 + 1);
-            const uint32_t b2 = (b1 + 1);
+            const uint32_t a1 = 2 * i;
+            const uint32_t b1 = 2 * t;
+            const uint32_t a2 = a1 + 1;
+            const uint32_t b2 = b1 + 1;
 
             const int16_t tr = data[a1];
             const int16_t ti = data[a2];
@@ -206,13 +209,13 @@ void lrpt_dsp_ifft_exec(
 
             /* Loop over each butterfly and build up the frequency domain */
             for (uint16_t k = j; k < ifft->width; k += a ) {
-                const uint32_t a1 = (2 * k);
-                const uint32_t b1 = (a1 + 1);
-                const uint32_t a2 = (2 * (k + b));
-                const uint32_t b2 = (a2 + 1);
+                const uint32_t a1 = 2 * k;
+                const uint32_t b1 = a1 + 1;
+                const uint32_t a2 = 2 * (k + b);
+                const uint32_t b2 = a2 + 1;
 
-                const int16_t tr = (int_mult(wr, data[a2]) - int_mult(wi, data[b2]));
-                const int16_t ti = (int_mult(wi, data[a2]) + int_mult(wr, data[b2]));
+                const int16_t tr = int_mult(wr, data[a2]) - int_mult(wi, data[b2]);
+                const int16_t ti = int_mult(wi, data[a2]) + int_mult(wr, data[b2]);
 
                 int16_t qr = data[a1];
                 int16_t qi = data[b1];
@@ -220,11 +223,10 @@ void lrpt_dsp_ifft_exec(
                 qr >>= 1;
                 qi >>= 1;
 
-                data[a2] = (qr - tr);
-                data[b2] = (qi - ti);
-                data[a1] = (qr + tr);
-                data[b1] = (qi + ti);
-
+                data[a2] = qr - tr;
+                data[b2] = qi - ti;
+                data[a1] = qr + tr;
+                data[b1] = qi + ti;
             }
         }
     }

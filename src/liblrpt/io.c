@@ -799,6 +799,7 @@ bool lrpt_iq_data_read_from_file(
                         file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
                         sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
 
+                /* TODO implement deserializer for complex type */
                 if (!lrpt_utils_ds_double(v_s, &i_part, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
@@ -893,6 +894,7 @@ bool lrpt_iq_data_write_to_file(
             for (size_t j = 0; j < towrite; j++) {
                 unsigned char v_s[10];
 
+                /* TODO implement serializer for complex type */
                 /* I */
                 if (!lrpt_utils_s_double(creal(data_src->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
                     if (err)

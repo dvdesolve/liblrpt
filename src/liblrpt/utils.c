@@ -21,9 +21,7 @@
 
 /** \file
  *
- * Different library utils.
- *
- * This source file contains routines for performing different library utils.
+ * Helper library utilities.
  */
 
 /*************************************************************************************************/

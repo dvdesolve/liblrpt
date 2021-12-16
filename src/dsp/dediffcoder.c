@@ -76,7 +76,7 @@ lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
     if (!dediff) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Dediffcoder object allocation failed");
+                    "Dediffcoder object allocation has failed");
 
         return NULL;
     }
@@ -89,16 +89,20 @@ lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
 
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                    "Lookup table allocation for dediffcoder object failed");
+                    "Lookup table allocation has failed");
 
         return NULL;
     }
 
+    /* Populate lookup table */
     for (uint16_t i = 0; i < 16385; i++)
         dediff->lut[i] = sqrt(i);
 
     dediff->pr_I = 0;
     dediff->pr_Q = 0;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return dediff;
 }
@@ -112,6 +116,7 @@ void lrpt_dsp_dediffcoder_deinit(
         return;
 
     free(dediff->lut);
+
     free(dediff);
 }
 

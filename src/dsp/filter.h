@@ -22,7 +22,7 @@
 
 /** \file
  *
- * Public internal API for I/Q data filtering.
+ * Public internal API for DSP filtering procedures.
  */
 
 /*************************************************************************************************/
@@ -39,7 +39,7 @@
 
 /** DSP filter object */
 struct lrpt_dsp_filter__ {
-    uint8_t npoles; /**< Number of poles, must be even. Max value is limited to the 252. */
+    uint8_t npoles; /**< Number of poles, must be even and not greater than 252 */
 
     /** @{ */
     /** a and b coefficients of the filter */
@@ -48,7 +48,7 @@ struct lrpt_dsp_filter__ {
     /** @} */
 
     /** @{ */
-    /** Saved input and output values for I/Q samples */
+    /** Cached input and output values for I/Q samples */
     complex double *x;
     complex double *y;
     /** @} */

@@ -179,10 +179,10 @@ typedef enum lrpt_qpsk_file_flags_ver1__ {
  * @{
  */
 
-/** Chebyshev filter object type */
+/** Recursive Chebyshev filter object type */
 typedef struct lrpt_dsp_filter__ lrpt_dsp_filter_t;
 
-/** Supported Chebyshev filter types */
+/** Supported recursive Chebyshev filter types */
 typedef enum lrpt_dsp_filter_type__ {
     LRPT_DSP_FILTER_TYPE_LOWPASS,  /**< Lowpass filter */
     LRPT_DSP_FILTER_TYPE_HIGHPASS, /**< Highpass filter */
@@ -191,6 +191,9 @@ typedef enum lrpt_dsp_filter_type__ {
 
 /** Dediffcoder object type */
 typedef struct lrpt_dsp_dediffcoder__ lrpt_dsp_dediffcoder_t;
+
+/** Deinterleaver object type */
+typedef struct lrpt_dsp_deinterleaver__ lrpt_dsp_deinterleaver_t;
 
 /** Integer FFT object type */
 typedef struct lrpt_dsp_ifft__ lrpt_dsp_ifft_t;
@@ -1594,14 +1597,20 @@ LRPT_API bool lrpt_image_dump_combo_bmp(
 
 /** Initialize recursive Chebyshev filter.
  *
- * \param bandwidth Bandwidth of the signal, Hz.
- * \param samplerate Signal sampling rate, samples/s.
- * \param ripple Ripple level, %.
+ * Tries to initialize recursive Chebyshev filter object for signal with bandwidth and sampling rate
+ * of \p bandwidth and \p samplerate, correspondingly. Ripple level is specified as percentage and
+ * set via \p ripple. Number of filter poles \p num_poles is limited to the even values in the range
+ * [2; 252]. User can select filter type in one of those provided by #lrpt_dsp_filter_type_t. User
+ * should free object with #lrpt_dsp_filter_deinit() after use.
+ *
+ * \param bandwidth Bandwidth of the signal in Hz.
+ * \param samplerate Signal sampling rate, samples per second.
+ * \param ripple Ripple level in %.
  * \param num_poles Number of filter poles. Must be even, non-zero and not greater than 252!
  * \param type Filter type (see #lrpt_dsp_filter_type_t for supported filter types).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return Pointer to the Chebyshev filter object or \c NULL in case of error.
+ * \return Pointer to the recursive Chebyshev filter object or \c NULL in case of error.
  */
 LRPT_API lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         uint32_t bandwidth,
@@ -1611,9 +1620,9 @@ LRPT_API lrpt_dsp_filter_t *lrpt_dsp_filter_init(
         lrpt_dsp_filter_type_t type,
         lrpt_error_t *err);
 
-/** Free initialized Chebyshev filter object.
+/** Free recursive Chebyshev filter object.
  *
- * \param filter Pointer to the Chebyshev filter object.
+ * \param filter Pointer to the recursive Chebyshev filter object.
  */
 LRPT_API void lrpt_dsp_filter_deinit(
         lrpt_dsp_filter_t *filter);
@@ -1623,15 +1632,19 @@ LRPT_API void lrpt_dsp_filter_deinit(
  * \param filter Pointer to the Chebyshev filter object.
  * \param[in,out] data Pointer to the I/Q data object.
  *
- * \return \c false if \p filter and/or \p data are empty or \c true otherwise.
+ * \return \c true on successfull execution or \c false if \p filter and/or \p data are empty or
+ * \c NULL.
+ *
+ * \todo Implement error reporting.
  */
 LRPT_API bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *filter,
         lrpt_iq_data_t *data);
 
-/** Allocate and initialize dediffcoder object.
+/** Initialize dediffcoder object.
  *
- * Allocates and initializes dediffcoder object for use with QPSK diffcoded data.
+ * Tries to initialize dediffcoder object for use with QPSK differentially coded data. User should
+ * free object with #lrpt_dsp_dediffcoder_deinit() after use.
  *
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -1640,7 +1653,7 @@ LRPT_API bool lrpt_dsp_filter_apply(
 LRPT_API lrpt_dsp_dediffcoder_t *lrpt_dsp_dediffcoder_init(
         lrpt_error_t *err);
 
-/** Free previously allocated dediffcoder object.
+/** Free dediffcoder object.
  *
  * \param dediff Pointer to the dediffcoder object.
  */
@@ -1652,28 +1665,51 @@ LRPT_API void lrpt_dsp_dediffcoder_deinit(
  * \param dediff Pointer to the dediffcoder object.
  * \param[in,out] data Pointer to the QPSK data object.
  *
- * \return \c false if \p dediff and/or \p data are empty or \c true otherwise.
+ * \return \c true on successfull execution or \c false if \p dediff and/or \p data are empty or
+ * \c NULL.
  */
 LRPT_API bool lrpt_dsp_dediffcoder_exec(
         lrpt_dsp_dediffcoder_t *dediff,
         lrpt_qpsk_data_t *data);
 
+/** Initialize deinterleaver object.
+ *
+ * Tries to initialize deinterleaver object for use with QPSK interleaved data. User should free
+ * object with #lrpt_dsp_deinterleaver_deinit() after use.
+ *
+ * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
+ *
+ * \return Pointer to the deinterleaver object or \c NULL in case of error.
+ */
+LRPT_API lrpt_dsp_deinterleaver_t *lrpt_dsp_deinterleaver_init(
+        lrpt_error_t *err);
+
+/** Free deinterleaver object.
+ *
+ * \param deintlv Pointer to the deinterleaver object.
+ */
+LRPT_API void lrpt_dsp_deinterleaver_deinit(
+        lrpt_dsp_deinterleaver_t *deintlv);
+
 /** Resynchronize and deinterleave a stream of QPSK symbols.
  *
- * Performs resynchronization and deinterleaving of QPSK symbols stream.
- *
+ * \param deintlv Pointer to the deinterleaver object.
  * \param[in,out] data Pointer to the QPSK data object.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
- * \return \c true on successfull deinterleaving or \c false otherwise.
+ * \return \c true on successfull deinterleaving or \c false in case of error.
  */
 LRPT_API bool lrpt_dsp_deinterleaver_exec(
+        lrpt_dsp_deinterleaver_t *deintlv,
         lrpt_qpsk_data_t *data,
         lrpt_error_t *err);
 
 /** Initialize Integer FFT object.
  *
- * \param width Width of the FFT.
+ * Tries to initialize Integer FFT object of specified width \p width. User should free object with
+ * #lrpt_dsp_ifft_deinit() after use.
+ *
+ * \param width Width of the FFT. Should be a power of 2.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the Integer FFT object or \c NULL in case of error.
@@ -1682,19 +1718,20 @@ LRPT_API lrpt_dsp_ifft_t *lrpt_dsp_ifft_init(
         uint16_t width,
         lrpt_error_t *err);
 
-/** Free previously allocated Integer FFT object.
+/** Free Integer FFT object.
  *
  * \param ifft Pointer to the Integer FFT object.
  */
 LRPT_API void lrpt_dsp_ifft_deinit(
         lrpt_dsp_ifft_t *ifft);
 
-/** Compute complex->complex radix-2 forward FFT in 16-bit integer arithmetics.
+/** Perform Integer FFT.
  *
- * \p data length should be twice the Integer FFT object's width.
+ * Computes complex->complex radix-2 forward FFT in 16-bit integer arithmetics. \p data length
+ * should be \c 2x longer than Integer FFT object's width.
  *
  * \param ifft Pointer to the Integer FFT object.
- * \param data Pointer to the resulting FFT coefficients storage.
+ * \param[in,out] data Pointer to the source data/resulting FFT coefficients.
  */
 LRPT_API void lrpt_dsp_ifft_exec(
         const lrpt_dsp_ifft_t *ifft,

@@ -188,8 +188,8 @@ static bool resync_stream(
     size_t resync_size = 0;
     size_t posn = 0;
     uint8_t offset = 0;
-    size_t limit1 = (2 * data->len - DEINT_SYNCD_BUF_MARGIN);
-    size_t limit2 = (2 * data->len - DEINT_INTLV_SYNCDATA);
+    size_t limit1 = 2 * data->len - DEINT_SYNCD_BUF_MARGIN;
+    size_t limit2 = 2 * data->len - DEINT_INTLV_SYNCDATA;
 
     /* Do while there is a room in the raw buffer for the find_sync() to search for
      * sync candidates
@@ -253,13 +253,44 @@ static bool resync_stream(
 
 /*************************************************************************************************/
 
+/* lrpt_dsp_deinterleaver_init() */
+lrpt_dsp_deinterleaver_t *lrpt_dsp_deinterleaver_init(
+        lrpt_error_t *err) {
+    /* Allocate deinterleaver object */
+    lrpt_dsp_deinterleaver_t *deintlv = malloc(sizeof(lrpt_dsp_deinterleaver_t));
+
+    if (!deintlv) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
+                    "Deinterleaver object allocation has failed");
+
+        return NULL;
+    }
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
+
+    return deintlv;
+}
+
+/*************************************************************************************************/
+
+/* lrpt_dsp_deinterleaver_deinit() */
+void lrpt_dsp_deinterleaver_deinit(
+        lrpt_dsp_deinterleaver_t *deintlv) {
+    free(deintlv);
+}
+
+/*************************************************************************************************/
+
 /* lrpt_dsp_deinterleaver_exec() */
 bool lrpt_dsp_deinterleaver_exec(
+        lrpt_dsp_deinterleaver_t *deintlv,
         lrpt_qpsk_data_t *data,
         lrpt_error_t *err) {
     if (!data) {
         if (err)
-            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_INVOBJ,
                     "QPSK data object is NULL");
 
         return false;
@@ -274,7 +305,7 @@ bool lrpt_dsp_deinterleaver_exec(
     if (!resync_stream(data)) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                    "Can't perform stream resynchronization");
+                    "Can't resynchronize QPSK data stream");
 
         return false;
     }
@@ -286,7 +317,7 @@ bool lrpt_dsp_deinterleaver_exec(
         if (!res_buf) {
             if (err)
                 lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
-                        "Deinterleaved data buffer allocation for QPSK data object failed");
+                        "Deinterleaved data buffer allocation has failed");
 
             return false;
         }
@@ -316,6 +347,9 @@ bool lrpt_dsp_deinterleaver_exec(
     /* Reassign pointers */
     free(data->qpsk);
     data->qpsk = res_buf;
+
+    if (err)
+        lrpt_error_set(err, LRPT_ERR_LVL_NONE, LRPT_ERR_CODE_NONE, NULL);
 
     return true;
 }
