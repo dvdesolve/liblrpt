@@ -1731,7 +1731,7 @@ LRPT_API void lrpt_dsp_ifft_deinit(
  * should be \c 2x longer than Integer FFT object's width.
  *
  * \param ifft Pointer to the Integer FFT object.
- * \param[in,out] data Pointer to the source data/resulting FFT coefficients.
+ * \param[in,out] data Pointer to the source data/resulting FFT coefficients array.
  */
 LRPT_API void lrpt_dsp_ifft_exec(
         const lrpt_dsp_ifft_t *ifft,

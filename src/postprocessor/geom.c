@@ -23,7 +23,7 @@
 
 /** \file
  *
- * Geometric image manipulation routines.
+ * Geometric image manipulations.
  */
 
 /*************************************************************************************************/
