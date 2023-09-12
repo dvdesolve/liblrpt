@@ -31,6 +31,7 @@
 
 /*************************************************************************************************/
 
+#include <complex.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -215,6 +216,45 @@ bool lrpt_utils_s_double(
 bool lrpt_utils_ds_double(
         const unsigned char *x,
         double *v,
+        bool be);
+
+/** Serialize \c complex value.
+ *
+ * Input \c complex value is decomposed to the real and imaginary parts and then serialized with
+ * #lrpt_utils_s_double().
+ *
+ * \param x Value to be serialized.
+ * \param[out] v Resulting value in serialized form (should be a size of at least 20).
+ * \param be Whether to serialize as Big Endian (\c true) or Little Endian (c false).
+ *
+ * \return \c true on successfull serialization and \c false in case of error.
+ *
+ * \note If \p x is NaN or infinity (of any sign) then this function will return \c false and \p v
+ * will not be modified.
+ */
+bool lrpt_utils_s_complex(
+        complex double x,
+        unsigned char *v,
+        bool be);
+
+/** Deserialize to the \c complex value.
+ *
+ * Input value should be in form of serialized complex double (for more details see
+ * #lrpt_utils_s_complex()).
+ *
+ * \param x Value to be deserialized (should be a size of at least 20).
+ * \param[out] v Pointer to the resulting \c complex value.
+ * \param be Whether to deserialize from Big Endian form (\c true) or Little Endian form (\c false).
+ *
+ * \return \c true on successfull deserialization and \c false in case of error.
+ *
+ * \note If deserialized number is NaN or infinity (of any sign) \c false will be returned and
+ * \p v will not be modified. Also if numerical overflow has occured during deserialization
+ * \c false will be returned as well (\p v will not be modified too).
+ */
+bool lrpt_utils_ds_complex(
+        const unsigned char *x,
+        complex double *v,
         bool be);
 
 /** Perform gamma correction according to the BT.709 transfer function.

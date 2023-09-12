@@ -30,6 +30,7 @@
 
 #include "../../include/lrpt.h"
 
+#include <complex.h>
 #include <errno.h>
 #include <math.h>
 #include <stdbool.h>
@@ -440,6 +441,38 @@ bool lrpt_utils_ds_double(
 
         return true;
     }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_s_complex() */
+inline bool lrpt_utils_s_complex(
+        complex double x,
+        unsigned char *v,
+        bool be) {
+    return (lrpt_utils_s_double(creal(x), v, be) &&
+            lrpt_utils_s_double(cimag(x), v + UTILS_DOUBLE_SER_SIZE, be));
+}
+
+/*************************************************************************************************/
+
+/* lrpt_utils_ds_complex() */
+bool lrpt_utils_ds_complex(
+        const unsigned char *x,
+        complex double *v,
+        bool be) {
+    double real, imag;
+
+    bool result = (lrpt_utils_ds_double(x, &real, be) &&
+            lrpt_utils_ds_double(x + UTILS_DOUBLE_SER_SIZE, &imag, be));
+
+    if (result) {
+        *v = real + imag * I;
+
+        return true;
+    }
+    else
+        return false;
 }
 
 /*************************************************************************************************/
