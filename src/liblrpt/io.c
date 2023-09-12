@@ -792,35 +792,22 @@ bool lrpt_iq_data_read_from_file(
 
             /* Parse block */
             for (size_t j = 0; j < toread; j++) {
-                unsigned char v_s[10];
-                double i_part, q_part;
+                unsigned char v_s[20];
+                complex double iq_val;
 
                 memcpy(v_s,
                         file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
-                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* I sample */
+                        sizeof(unsigned char) * UTILS_COMPLEX_SER_SIZE);
 
-                /* TODO implement deserializer for complex type */
-                if (!lrpt_utils_ds_double(v_s, &i_part, true)) {
+                if (!lrpt_utils_ds_complex(v_s, &iq_val, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                                "Can't deserialize double value");
+                                "Can't deserialize complex value");
 
                     return false;
                 }
 
-                memcpy(v_s,
-                        file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
-                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE); /* Q sample */
-
-                if (!lrpt_utils_ds_double(v_s, &q_part, true)) {
-                    if (err)
-                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                                "Can't deserialize double value");
-
-                    return false;
-                }
-
-                data_dest->iq[i * IO_IQ_DATA_N + j] = i_part + q_part * I;
+                data_dest->iq[i * IO_IQ_DATA_N + j] = iq_val;
             }
         }
     }
@@ -892,34 +879,19 @@ bool lrpt_iq_data_write_to_file(
 
             /* Prepare block */
             for (size_t j = 0; j < towrite; j++) {
-                unsigned char v_s[10];
+                unsigned char v_s[20];
 
-                /* TODO implement serializer for complex type */
-                /* I */
-                if (!lrpt_utils_s_double(creal(data_src->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
+                if (!lrpt_utils_s_complex(data_src->iq[i * IO_IQ_DATA_N + j], v_s, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                                "Can't serialize double value");
+                                "Can't serialize complex value");
 
                     return false;
                 }
 
                 memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j,
                         v_s,
-                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE);
-
-                /* Q */
-                if (!lrpt_utils_s_double(cimag(data_src->iq[i * IO_IQ_DATA_N + j]), v_s, true)) {
-                    if (err)
-                        lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
-                                "Can't serialize double value");
-
-                    return false;
-                }
-
-                memcpy(file->iobuf + UTILS_COMPLEX_SER_SIZE * j + UTILS_DOUBLE_SER_SIZE,
-                        v_s,
-                        sizeof(unsigned char) * UTILS_DOUBLE_SER_SIZE);
+                        sizeof(unsigned char) * UTILS_COMPLEX_SER_SIZE);
             }
 
             /* Write block */

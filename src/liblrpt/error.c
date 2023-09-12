@@ -73,11 +73,14 @@ void lrpt_error_set(
     if (msg) {
         const size_t len = strlen(msg);
 
+        free(err->msg);
         err->msg = calloc(len + 1, sizeof(char));
         strcpy(err->msg, msg);
     }
-    else
+    else {
+        free(err->msg);
         err->msg = NULL;
+    }
 
     err->level = level;
     err->code = code;
