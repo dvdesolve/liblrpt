@@ -786,7 +786,7 @@ LRPT_API bool lrpt_qpsk_data_from_soft(
  * data object automatically. User should free object with #lrpt_qpsk_data_free() after use.
  *
  * \param[in] symbols Pointer to the source array of soft QPSK symbols.
- * \param offset How much QPSK samples of internal format should be skipped from the beginning
+ * \param offset How much QPSK symbols of internal format should be skipped from the beginning
  * of \p symbols.
  * \param n Number of QPSK symbols of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
@@ -860,7 +860,7 @@ LRPT_API bool lrpt_qpsk_data_from_hard(
  * data object automatically. User should free object with #lrpt_qpsk_data_free() after use.
  *
  * \param[in] symbols Pointer to the source array of hard QPSK symbols.
- * \param offset How much QPSK samples of internal format should be skipped from the beginning
+ * \param offset How much QPSK symbols of internal format should be skipped from the beginning
  * of \p symbols.
  * \param n Number of QPSK symbols of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
@@ -995,12 +995,12 @@ LRPT_API bool lrpt_qpsk_rb_pop(
 /** Put QPSK data to QPSK ring buffer object.
  *
  * Pushes requested number of QPSK symbols to \p rb object. If \p n exceeds available number of
- * QPSK samples in \p data_src (considering offset) all QPSK samples starting from \p offset
+ * QPSK symbols in \p data_src (considering offset) all QPSK symbols starting from \p offset
  * will be pushed.
  *
  * \param rb Pointer to the QPSK ring buffer object.
  * \param[in] data_src Pointer to the source QPSK data object.
- * \param offset How much QPSK samples should be skipped from the beginning of \p data_src.
+ * \param offset How much QPSK symbols should be skipped from the beginning of \p data_src.
  * \param n Number of QPSK symbols to push.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -1328,21 +1328,25 @@ LRPT_API bool lrpt_iq_data_read_from_file(
 
 /** Write I/Q data to file.
  *
- * Writes the whole contents of \p data_src object to the I/Q data file \p file.
+ * Writes \p n I/Q samples from \p data_src object starting with position \p offset to the
+ * I/Q data file \p file. If \p n exceeds available number of I/Q samples in \p data_src
+ * (considering offset) all I/Q samples starting from \p offset will be written.
  *
  * \param[in] data_src Pointer to the source I/Q data object.
  * \param[out] file Pointer to the destination I/Q data file object.
+ * \param offset How much I/Q samples should be skipped from the beginning of \p data_src.
+ * \param n Number of I/Q samples to write.
  * \param inplace Determines whether data length should be dumped as soon as possible (after every
  * chunk, slower, more robust) or at the end of writing (faster).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull writing or \c false in case of error.
- *
- * \todo Implement custom length writing with custom starting offset.
  */
 LRPT_API bool lrpt_iq_data_write_to_file(
         const lrpt_iq_data_t *data_src,
         lrpt_iq_file_t *file,
+        size_t offset,
+        size_t n,
         bool inplace,
         lrpt_error_t *err);
 
@@ -1491,21 +1495,26 @@ LRPT_API bool lrpt_qpsk_data_read_from_file(
 
 /** Write QPSK data to file.
  *
- * Writes the whole contents of \p data_src object to the QPSK data file \p file.
+ * Writes \p n QPSK symbols from \p data_src object starting with position \p offset to the
+ * QPSK data file \p file. If \p n exceeds available number of QPSK symbols in \p data_src
+ * (considering offset) all QPSK symbols starting from \p offset will be written.
  *
  * \param[in] data_src Pointer to the source QPSK data object.
  * \param[out] file Pointer to the destination QPSK file object.
+ * \param offset How much QPSK symbols of internal format should be skipped from the beginning
+ * of \p data_src.
+ * \param n Number of QPSK symbols to write.
  * \param inplace Determines whether data length should be dumped as soon as possible (after every
  * chunk, slower, more robust) or at the end of writing (faster).
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return \c true on successfull writing or \c false in case of error.
- *
- * \todo Implement custom length writing with custom starting offset.
  */
 LRPT_API bool lrpt_qpsk_data_write_to_file(
         const lrpt_qpsk_data_t *data_src,
         lrpt_qpsk_file_t *file,
+        size_t offset,
+        size_t n,
         bool inplace,
         lrpt_error_t *err);
 
@@ -1636,8 +1645,6 @@ LRPT_API void lrpt_dsp_filter_deinit(
  *
  * \return \c true on successfull execution or \c false if \p filter and/or \p data are empty or
  * \c NULL.
- *
- * \todo Implement error reporting.
  */
 LRPT_API bool lrpt_dsp_filter_apply(
         lrpt_dsp_filter_t *filter,

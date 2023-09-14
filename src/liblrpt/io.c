@@ -831,6 +831,8 @@ bool lrpt_iq_data_read_from_file(
 bool lrpt_iq_data_write_to_file(
         const lrpt_iq_data_t *data_src,
         lrpt_iq_file_t *file,
+        size_t offset,
+        size_t n,
         bool inplace,
         lrpt_error_t *err) {
     if (!data_src || ((data_src->len > 0) && !data_src->iq)) {
@@ -857,8 +859,30 @@ bool lrpt_iq_data_write_to_file(
         return false;
     }
 
-    /* Just finish when nothing to do */
+    /* Ignore empty source I/Q data objects */
     if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source I/Q data object is empty");
+
+        return true;
+    }
+
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source I/Q data length");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
                     "No data to process");
@@ -868,11 +892,10 @@ bool lrpt_iq_data_write_to_file(
 
     if (file->version == LRPT_IQ_FILE_VER1) { /* Version 1 */
         /* Determine required number of writes */
-        const size_t len = data_src->len;
-        const size_t n_writes = len / IO_IQ_DATA_N;
+        const size_t n_writes = n / IO_IQ_DATA_N;
 
         for (size_t i = 0; i <= n_writes; i++) {
-            const size_t towrite = (i == n_writes) ? (len - n_writes * IO_IQ_DATA_N) : IO_IQ_DATA_N;
+            const size_t towrite = (i == n_writes) ? (n - n_writes * IO_IQ_DATA_N) : IO_IQ_DATA_N;
 
             if (towrite == 0)
                 break;
@@ -881,7 +904,7 @@ bool lrpt_iq_data_write_to_file(
             for (size_t j = 0; j < towrite; j++) {
                 unsigned char v_s[20];
 
-                if (!lrpt_utils_s_complex(data_src->iq[i * IO_IQ_DATA_N + j], v_s, true)) {
+                if (!lrpt_utils_s_complex(data_src->iq[i * IO_IQ_DATA_N + j + offset], v_s, true)) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_DATAPROC,
                                 "Can't serialize complex value");
@@ -1655,6 +1678,8 @@ bool lrpt_qpsk_data_read_from_file(
 bool lrpt_qpsk_data_write_to_file(
         const lrpt_qpsk_data_t *data_src,
         lrpt_qpsk_file_t *file,
+        size_t offset,
+        size_t n,
         bool inplace,
         lrpt_error_t *err) {
     if (!data_src || ((data_src->len > 0) && !data_src->qpsk)) {
@@ -1681,8 +1706,30 @@ bool lrpt_qpsk_data_write_to_file(
         return false;
     }
 
-    /* Just finish when nothing to do */
+    /* Ignore empty source QPSK data objects */
     if (data_src->len == 0) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
+                    "Source QPSK data object is empty");
+
+        return true;
+    }
+
+    /* Check for offset correctness */
+    if (offset >= data_src->len) {
+        if (err)
+            lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_PARAM,
+                    "Offset exceeds source QPSK data length");
+
+        return false;
+    }
+
+    /* Handle oversized requests */
+    if (n > (data_src->len - offset))
+        n = data_src->len - offset;
+
+    /* Just finish when nothing to do */
+    if (n == 0) {
         if (err)
             lrpt_error_set(err, LRPT_ERR_LVL_INFO, LRPT_ERR_CODE_NODATA,
                     "No data to process");
@@ -1691,7 +1738,7 @@ bool lrpt_qpsk_data_write_to_file(
     }
 
     /* Get number of QPSK symbols */
-    size_t len = data_src->len;
+    size_t len = n;
 
     if (file->version == LRPT_QPSK_FILE_VER1) { /* Version 1 */
         /* Final buffer for combined write */
@@ -1753,7 +1800,7 @@ bool lrpt_qpsk_data_write_to_file(
                                 (k == (2 * (towrite % 4))))
                             break;
 
-                        if (data_src->qpsk[2 * i * IO_QPSK_DATA_N + 8 * j + k] >= 0)
+                        if (data_src->qpsk[2 * (i * IO_QPSK_DATA_N + offset) + 8 * j + k] >= 0)
                             b |= 1 << (7 - k);
                     }
 
@@ -1775,7 +1822,7 @@ bool lrpt_qpsk_data_write_to_file(
             }
             else {
                 /* Write block of QPSK bytes directly */
-                if (fwrite(data_src->qpsk + 2 * i * IO_QPSK_DATA_N, 2, towrite, file->fhandle) != towrite) {
+                if (fwrite(data_src->qpsk + 2 * (i * IO_QPSK_DATA_N + offset), 2, towrite, file->fhandle) != towrite) {
                     if (err)
                         lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_FWRITE,
                                 "Error during block write to QPSK file");
