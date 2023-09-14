@@ -84,6 +84,8 @@ struct lrpt_decoder__ {
     size_t channel_image_width, channel_image_height;
     /** @} */
 
+    size_t onboard_time; /**< Onboard time in msec (Meteor-M2 series only) */
+
     /** @{ */
     /** Frame counters (only for stats) */
     size_t frm_ok_cnt, frm_tot_cnt;

@@ -2168,6 +2168,16 @@ LRPT_API size_t lrpt_decoder_imgwidth(
 LRPT_API size_t lrpt_decoder_spacecraft_imgwidth(
         lrpt_decoder_spacecraft_t sc);
 
+/** Current satellite onboard time (currently Meteor-M2 series only) in milliseconds.
+ *
+ * \param decoder Pointer to the decoder object.
+ *
+ * \return Current satellite onboard time in milliseconds or \c 0 if \c NULL \p decoder parameter
+ * or satellite is not supported.
+ */
+LRPT_API size_t lrpt_decoder_obtime(
+        const lrpt_decoder_t *decoder);
+
 /** LRPT decoder soft frame length.
  *
  * \return Length of decoder's soft frame (in bits).

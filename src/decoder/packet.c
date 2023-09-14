@@ -101,14 +101,10 @@ static void parse_70(
             (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
             (decoder->sc == LRPT_DECODER_SC_METEORM2_2) ||
             (decoder->sc == LRPT_DECODER_SC_METEORM2_3)) {
-        /* TODO implement properly */
         /* For more information see appendix "A",
          * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
          */
-        /*uint8_t hour = p[8];
-        uint8_t min = p[9];
-        uint8_t sec = p[10];
-        uint16_t msec = (p[11] * 4);*/
+        decoder->onboard_time = (p[8] * 3600 + p[9] * 60 + p[10]) * 1000 + p[11] * 4;
     }
 }
 

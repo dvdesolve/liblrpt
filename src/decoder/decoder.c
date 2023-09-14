@@ -145,6 +145,8 @@ lrpt_decoder_t *lrpt_decoder_init(
 
     decoder->sc = sc;
 
+    decoder->onboard_time = 0;
+
     decoder->frm_ok_cnt = 0;
     decoder->frm_tot_cnt = 0;
     decoder->cvcdu_cnt = 0;
@@ -449,6 +451,24 @@ size_t lrpt_decoder_spacecraft_imgwidth(
             return 0;
             break;
     }
+}
+
+/*************************************************************************************************/
+
+/* lrpt_decoder_obtime() */
+size_t lrpt_decoder_obtime(
+        const lrpt_decoder_t *decoder) {
+    if (!decoder)
+        return 0;
+
+    if (
+            (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_2) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_3))
+        return decoder->onboard_time;
+    else
+        return 0;
 }
 
 /*************************************************************************************************/
