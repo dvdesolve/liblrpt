@@ -295,7 +295,6 @@ static void interpolate(
     /* Normalization factor */
     size_t factor = (sz_x * sz_y);
 
-    /* TODO optimize and use single branch; need to set flag for the power of 2 */
     /* If normalization factor is not a power of 2, use division instead */
     if (factor & (factor - 1)) {
         for (

@@ -399,7 +399,6 @@ static lrpt_image_t *rectify_5b4az(
     }
 
     for (uint8_t i = 0; i < 6; i++) {
-        /* TODO that should be rechecked for possible arithmetic over/underflows while calculating diffs etc */
         /* Rectify image buffer line by line */
         for (size_t j = 0; j < image->height; j++) {
             /* Indices to input and output image buffers */
@@ -563,7 +562,6 @@ lrpt_image_t *lrpt_postproc_image_rectify(
         }
     }
 
-    /* TODO may be implement in such a way that a new image will be returned instead... */
     return result;
 }
 

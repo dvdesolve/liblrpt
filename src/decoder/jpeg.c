@@ -342,7 +342,7 @@ bool lrpt_decoder_jpeg_decode_mcus(
     int32_t dct[64];
     double img_dct[64];
 
-    /* TODO This is the code specific for Meteor-M2 only. For more information see section "I",
+    /* This code is specific for Meteor-M2 only. For more information see section "I",
      * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
      */
     for (uint8_t m = 0; m < 14; m++) { /* Each packet has 14 MCUs */
