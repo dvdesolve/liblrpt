@@ -99,7 +99,8 @@ static void parse_70(
     if (
             (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
             (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
-            (decoder->sc == LRPT_DECODER_SC_METEORM2_2)) {
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_2) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_3)) {
         /* TODO implement properly */
         /* For more information see appendix "A",
          * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
@@ -122,7 +123,8 @@ static void parse_img(
     if (
             (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
             (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
-            (decoder->sc == LRPT_DECODER_SC_METEORM2_2)) {
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_2) ||
+            (decoder->sc == LRPT_DECODER_SC_METEORM2_3)) {
         /* For more information see section "I",
          * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
          */

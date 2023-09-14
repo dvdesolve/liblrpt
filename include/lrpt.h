@@ -242,7 +242,8 @@ typedef struct lrpt_decoder__ lrpt_decoder_t;
 typedef enum lrpt_decoder_spacecraft__ {
     LRPT_DECODER_SC_METEORM2,   /**< Meteor-M2 */
     LRPT_DECODER_SC_METEORM2_1, /**< Meteor-M2-1 */
-    LRPT_DECODER_SC_METEORM2_2  /**< Meteor-M2-2 */
+    LRPT_DECODER_SC_METEORM2_2,  /**< Meteor-M2-2 */
+    LRPT_DECODER_SC_METEORM2_3  /**< Meteor-M2-3 */
 } lrpt_decoder_spacecraft_t;
 
 /** @} */

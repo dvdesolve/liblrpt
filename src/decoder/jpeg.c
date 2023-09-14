@@ -202,7 +202,8 @@ static bool progress_image(
         if (
                 (decoder->sc == LRPT_DECODER_SC_METEORM2) ||
                 (decoder->sc == LRPT_DECODER_SC_METEORM2_1) ||
-                (decoder->sc == LRPT_DECODER_SC_METEORM2_2)) {
+                (decoder->sc == LRPT_DECODER_SC_METEORM2_2) ||
+                (decoder->sc == LRPT_DECODER_SC_METEORM2_3)) {
             /* For more information see
              * http://planet.iitp.ru/spacecraft/meteor_m_n2_structure_2.pdf
              */
