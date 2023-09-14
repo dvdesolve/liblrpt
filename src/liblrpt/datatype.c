@@ -1396,6 +1396,7 @@ bool lrpt_qpsk_data_to_soft(
 bool lrpt_qpsk_data_from_hard(
         lrpt_qpsk_data_t *data_dest,
         const unsigned char *symbols,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!data_dest) {
@@ -1429,10 +1430,10 @@ bool lrpt_qpsk_data_from_hard(
 
     /* Convert hard symbols to soft and store them in QPSK data object */
     size_t i = 0;
-    uint8_t j = 0;
+    uint8_t j = (2 * offset) % 8;
 
     while (i < n) {
-        const unsigned char b = (symbols[i / 4] >> (7 - j)) & 0x01;
+        const unsigned char b = (symbols[(i + offset) / 4] >> (7 - j)) & 0x01;
 
         data_dest->qpsk[2 * i + j % 2] = (b == 0x01) ? 127 : -127;
         j = (j + 1) % 8;
@@ -1452,6 +1453,7 @@ bool lrpt_qpsk_data_from_hard(
 /* lrpt_qpsk_data_create_from_hard() */
 lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
+        size_t offset,
         size_t n,
         lrpt_error_t *err) {
     if (!symbols) {
@@ -1478,7 +1480,7 @@ lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         return NULL;
 
     /* Convert symbols */
-    if (!lrpt_qpsk_data_from_hard(data, symbols, n, err)) {
+    if (!lrpt_qpsk_data_from_hard(data, symbols, offset, n, err)) {
         lrpt_qpsk_data_free(data);
 
         return NULL;

@@ -1563,7 +1563,7 @@ bool lrpt_qpsk_data_read_from_file(
             const unsigned char hardsyms = file->last_hardsym << (2 * hardsym_off);
 
             /* Use previously stored hard symbol byte */
-            if (!lrpt_qpsk_data_from_hard(data_dest, &hardsyms, hardsym_rem, err)) {
+            if (!lrpt_qpsk_data_from_hard(data_dest, &hardsyms, 0, hardsym_rem, err)) {
                 if (err)
                     lrpt_error_set(err, LRPT_ERR_LVL_ERROR, LRPT_ERR_CODE_ALLOC,
                             "Can't convert hanging hard symbols");
@@ -1702,7 +1702,7 @@ bool lrpt_qpsk_data_write_to_file(
             /* Offset from the start of hard symbol byte */
             const uint8_t hardsym_off = file->current % 4;
 
-            fin = lrpt_qpsk_data_create_from_hard(&file->last_hardsym, file->current % 4, err);
+            fin = lrpt_qpsk_data_create_from_hard(&file->last_hardsym, 0, file->current % 4, err);
 
             if (!fin) {
                 if (err)

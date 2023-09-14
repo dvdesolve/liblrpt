@@ -829,12 +829,14 @@ LRPT_API bool lrpt_qpsk_data_to_soft(
 
 /** Convert array of hard QPSK symbols to the QPSK data object.
  *
- * Converts \p n QPSK symbols from array of hard QPSK symbols \p symbols to the internal format
- * of QPSK data storage and saves them to \p data_dest object which will be auto-resized to fit
- * requested number of QPSK symbols.
+ * Converts \p n QPSK symbols from array of hard QPSK symbols \p symbols starting with position
+ * \p offset to the internal format of QPSK data storage and saves them to \p data_dest object
+ * which will be auto-resized to fit requested number of QPSK symbols.
  *
  * \param[out] data_dest Pointer to the destination QPSK data object.
  * \param[in] symbols Pointer to the source array of hard QPSK symbols.
+ * \param offset How much QPSK symbols of internal format should be skipped from the beginning
+ * of \p symbols.
  * \param n Number of QPSK symbols of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
@@ -843,13 +845,12 @@ LRPT_API bool lrpt_qpsk_data_to_soft(
  * \note 4 QPSK symbols of internal format equal to 1 hard QPSK symbol.
  *
  * \warning User should be responsible that \p symbols array contains at least \c 1/4 of \p n
- * elements!
- *
- * \todo Implement offsetted access.
+ * elements (counting from proper \p offset)!
  */
 LRPT_API bool lrpt_qpsk_data_from_hard(
         lrpt_qpsk_data_t *data_dest,
         const unsigned char *symbols,
+        size_t offset,
         size_t n,
         lrpt_error_t *err);
 
@@ -859,17 +860,18 @@ LRPT_API bool lrpt_qpsk_data_from_hard(
  * data object automatically. User should free object with #lrpt_qpsk_data_free() after use.
  *
  * \param[in] symbols Pointer to the source array of hard QPSK symbols.
+ * \param offset How much QPSK samples of internal format should be skipped from the beginning
+ * of \p symbols.
  * \param n Number of QPSK symbols of internal format to convert.
  * \param err Pointer to the error object (set to \c NULL if no error reporting is needed).
  *
  * \return Pointer to the allocated QPSK data object or \c NULL in case of error.
  *
  * \note 4 QPSK symbols of internal format equal to 1 hard QPSK symbol.
- *
- * \todo Implement offsetted access
  */
 LRPT_API lrpt_qpsk_data_t *lrpt_qpsk_data_create_from_hard(
         const unsigned char *symbols,
+        size_t offset,
         size_t n,
         lrpt_error_t *err);
 
