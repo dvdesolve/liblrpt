@@ -16,8 +16,10 @@
 # Author: Viktor Drobot
 
 # global settings
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.19)
 project(liblrpt VERSION 0.1.0 LANGUAGES C DESCRIPTION "Demodulate, decode and post-process LRPT signals")
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -98,3 +100,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release" AND BUILD_DOC)
         message(WARNING "Doxygen needs to be installed to generate documentation")
     endif (DOXYGEN_FOUND)
 endif ()
+
+
+# unit testing
+enable_testing()
+add_subdirectory(tests)
