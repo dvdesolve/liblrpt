@@ -51,10 +51,10 @@ START_TEST(test_resize) {
 
     lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(0, NULL);
 
-    lrpt_qpsk_data_resize(data, len, NULL);
+    ck_assert(lrpt_qpsk_data_resize(data, len, NULL));
     ck_assert_int_eq(lrpt_qpsk_data_length(data), len);
 
-    lrpt_qpsk_data_resize(data, 0, NULL);
+    ck_assert(lrpt_qpsk_data_resize(data, 0, NULL));
     ck_assert_int_eq(lrpt_qpsk_data_length(data), 0);
 
     lrpt_qpsk_data_free(data);
