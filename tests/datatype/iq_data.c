@@ -32,6 +32,26 @@
 
 /*************************************************************************************************/
 
+static int TEST_len = 50;
+static complex double TEST_cdata[] = {
+    1.0 - 2.0 * I,
+    4.5 + 2.9 * I,
+    -3.1 + 9.5 * I,
+    102.4 - 0.04 * I,
+    2.4 - 7.5 * I,
+    0.75 + 1.25 * I
+};
+static double TEST_ddata[] = {
+    1.0,   -2.0,
+    4.5,    2.9,
+   -3.1,    9.5,
+    102.4, -0.04,
+    2.4,   -7.5,
+    0.75,   1.25
+};
+
+/*************************************************************************************************/
+
 START_TEST(test_alloc) {
     lrpt_iq_data_t *data = lrpt_iq_data_alloc(0, NULL);
 
@@ -41,26 +61,25 @@ START_TEST(test_alloc) {
 }
 
 START_TEST(test_length) {
-    int len = 50;
-
     lrpt_iq_data_t *data1 = lrpt_iq_data_alloc(0, NULL);
-    lrpt_iq_data_t *data2 = lrpt_iq_data_alloc(len, NULL);
+    lrpt_iq_data_t *data2 = lrpt_iq_data_alloc(TEST_len, NULL);
 
-    ck_assert_int_eq(lrpt_iq_data_length(data1), 0);
-    ck_assert_int_eq(lrpt_iq_data_length(data2), len);
+    ck_assert_int_eq(lrpt_iq_data_length(data1), 0); /* empty object */
+    ck_assert_int_eq(lrpt_iq_data_length(data2), TEST_len); /* object with length */
+    ck_assert_int_eq(lrpt_iq_data_length(NULL), 0); /* NULL pointer */
 
     lrpt_iq_data_free(data1);
     lrpt_iq_data_free(data2);
 }
 
 START_TEST(test_resize) {
-    int len = 50;
-
     lrpt_iq_data_t *data = lrpt_iq_data_alloc(0, NULL);
 
-    ck_assert(lrpt_iq_data_resize(data, len, NULL));
-    ck_assert_int_eq(lrpt_iq_data_length(data), len);
+    /* resize to length */
+    ck_assert(lrpt_iq_data_resize(data, TEST_len, NULL));
+    ck_assert_int_eq(lrpt_iq_data_length(data), TEST_len);
 
+    /* resize to zero length */
     ck_assert(lrpt_iq_data_resize(data, 0, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data), 0);
 
@@ -68,216 +87,184 @@ START_TEST(test_resize) {
 }
 
 START_TEST(test_from_complex) {
-    complex double cdata[] = {
-        1.0 - 2.0 * I,
-        4.5 + 2.9 * I,
-        -3.1 + 9.5 * I,
-        102.4 - 0.04 * I,
-        2.4 - 7.5 * I,
-        0.75 + 1.25 * I
-    };
-    int len = NEL(cdata);
+    int len = NEL(TEST_cdata);
 
     lrpt_iq_data_t *data1 = lrpt_iq_data_alloc(0, NULL);
     lrpt_iq_data_t *data2 = NULL;
 
-    /* full length */
-    ck_assert(lrpt_iq_data_from_complex(data1, cdata, 0, len, NULL));
+    /* assign to existing data object: full length */
+    ck_assert(lrpt_iq_data_from_complex(data1, TEST_cdata, 0, len, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data1), len);
 
-    /* length - 1, offset 1 */
-    ck_assert(lrpt_iq_data_from_complex(data1, cdata, 1, len - 1, NULL));
+    /* assign to existing data object: length - 1, offset 1 */
+    ck_assert(lrpt_iq_data_from_complex(data1, TEST_cdata, 1, len - 1, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data1), len - 1);
 
     lrpt_iq_data_free(data1);
 
-    /* full length */
-    data2 = lrpt_iq_data_create_from_complex(cdata, 0, len, NULL);
+
+    /* create new data object: full length */
+    data2 = lrpt_iq_data_create_from_complex(TEST_cdata, 0, len, NULL);
+
     ck_assert_ptr_nonnull(data2);
     ck_assert_int_eq(lrpt_iq_data_length(data2), len);
+
     lrpt_iq_data_free(data2);
 
-    /* length - 1, offset 1 */
-    data2 = lrpt_iq_data_create_from_complex(cdata, 1, len - 1, NULL);
+    /* create new data object: length - 1, offset 1 */
+    data2 = lrpt_iq_data_create_from_complex(TEST_cdata, 1, len - 1, NULL);
+
     ck_assert_ptr_nonnull(data2);
     ck_assert_int_eq(lrpt_iq_data_length(data2), len - 1);
+
     lrpt_iq_data_free(data2);
 }
 
 START_TEST(test_from_doubles) {
-    double ddata[] = {
-        1.0,   -2.0,
-        4.5,    2.9,
-       -3.1,    9.5,
-        102.4, -0.04,
-        2.4,   -7.5,
-        0.75,   1.25
-    };
-    int len = NEL(ddata) / 2;
+    int len = NEL(TEST_ddata) / 2;
 
     lrpt_iq_data_t *data1 = lrpt_iq_data_alloc(0, NULL);
     lrpt_iq_data_t *data2 = NULL;
 
-    /* full length */
-    ck_assert(lrpt_iq_data_from_doubles(data1, ddata, 0, len, NULL));
+    /* assign to existing data object: full length */
+    ck_assert(lrpt_iq_data_from_doubles(data1, TEST_ddata, 0, len, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data1), len);
 
-    /* length - 1, offset 1 */
-    ck_assert(lrpt_iq_data_from_doubles(data1, ddata, 1, len - 1, NULL));
+    /* assign to existing data object: length - 1, offset 1 */
+    ck_assert(lrpt_iq_data_from_doubles(data1, TEST_ddata, 1, len - 1, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data1), len - 1);
 
     lrpt_iq_data_free(data1);
 
-    /* full length */
-    data2 = lrpt_iq_data_create_from_doubles(ddata, 0, len, NULL);
+
+    /* create new data object: full length */
+    data2 = lrpt_iq_data_create_from_doubles(TEST_ddata, 0, len, NULL);
+
     ck_assert_ptr_nonnull(data2);
     ck_assert_int_eq(lrpt_iq_data_length(data2), len);
+
     lrpt_iq_data_free(data2);
 
-    /* length - 1, offset 1 */
-    data2 = lrpt_iq_data_create_from_doubles(ddata, 1, len - 1, NULL);
+    /* create new data object: length - 1, offset 1 */
+    data2 = lrpt_iq_data_create_from_doubles(TEST_ddata, 1, len - 1, NULL);
+
     ck_assert_ptr_nonnull(data2);
     ck_assert_int_eq(lrpt_iq_data_length(data2), len - 1);
+
     lrpt_iq_data_free(data2);
 }
 
 START_TEST(test_to_complex) {
-    complex double cdata[] = {
-        1.0 - 2.0 * I,
-        4.5 + 2.9 * I,
-        -3.1 + 9.5 * I,
-        102.4 - 0.04 * I,
-        2.4 - 7.5 * I,
-        0.75 + 1.25 * I
-    };
-    int len = NEL(cdata);
+    int len = NEL(TEST_cdata);
 
-    lrpt_iq_data_t *data = lrpt_iq_data_create_from_complex(cdata, 0, len, NULL);
-    ck_assert_ptr_nonnull(data);
-    ck_assert_int_eq(lrpt_iq_data_length(data), len);
+    lrpt_iq_data_t *data = lrpt_iq_data_create_from_complex(TEST_cdata, 0, len, NULL);
 
     complex double rcdata1[len], rcdata2[len - 1];
 
     /* full length */
     ck_assert(lrpt_iq_data_to_complex(rcdata1, data, 0, len, NULL));
 
+    for (int i = 0; i < len; i++) {
+        ck_assert_double_eq(creal(TEST_cdata[i]), creal(rcdata1[i]));
+        ck_assert_double_eq(cimag(TEST_cdata[i]), cimag(rcdata1[i]));
+    }
+
     /* length - 1, offset 1 */
     ck_assert(lrpt_iq_data_to_complex(rcdata2, data, 1, len - 1, NULL));
 
-    for (int i = 0; i < len; i++) {
-        ck_assert_double_eq(creal(cdata[i]), creal(rcdata1[i]));
-        ck_assert_double_eq(cimag(cdata[i]), cimag(rcdata1[i]));
-    }
-
     for (int i = 0; i < (len - 1); i++) {
-        ck_assert_double_eq(creal(cdata[1 + i]), creal(rcdata1[1 + i]));
-        ck_assert_double_eq(cimag(cdata[1 + i]), cimag(rcdata1[1 + i]));
+        ck_assert_double_eq(creal(TEST_cdata[1 + i]), creal(rcdata1[1 + i]));
+        ck_assert_double_eq(cimag(TEST_cdata[1 + i]), cimag(rcdata1[1 + i]));
     }
 
     lrpt_iq_data_free(data);
 }
 
 START_TEST(test_to_doubles) {
-    double ddata[] = {
-        1.0,   -2.0,
-        4.5,    2.9,
-       -3.1,    9.5,
-        102.4, -0.04,
-        2.4,   -7.5,
-        0.75,   1.25
-    };
-    int len = NEL(ddata) / 2;
+    int len = NEL(TEST_ddata) / 2;
 
-    lrpt_iq_data_t *data = lrpt_iq_data_create_from_doubles(ddata, 0, len, NULL);
-    ck_assert_ptr_nonnull(data);
-    ck_assert_int_eq(lrpt_iq_data_length(data), len);
+    lrpt_iq_data_t *data = lrpt_iq_data_create_from_doubles(TEST_ddata, 0, len, NULL);
 
     double rddata1[2 * len], rddata2[2 * (len - 1)];
 
     /* full length */
     ck_assert(lrpt_iq_data_to_doubles(rddata1, data, 0, len, NULL));
 
+    for (int i = 0; i < len; i++) {
+        ck_assert_double_eq(TEST_ddata[2 * i], rddata1[2 * i]);
+        ck_assert_double_eq(TEST_ddata[2 * i + 1], rddata1[2 * i + 1]);
+    }
+
     /* length - 1, offset 1 */
     ck_assert(lrpt_iq_data_to_doubles(rddata2, data, 1, len - 1, NULL));
 
-    for (int i = 0; i < len; i++) {
-        ck_assert_double_eq(ddata[2 * i], rddata1[2 * i]);
-        ck_assert_double_eq(ddata[2 * i + 1], rddata1[2 * i + 1]);
-    }
-
     for (int i = 0; i < (len - 1); i++) {
-        ck_assert_double_eq(ddata[2 + 2 * i], rddata1[2 + 2 * i]);
-        ck_assert_double_eq(ddata[2 + 2 * i + 1], rddata1[2 + 2 * i + 1]);
+        ck_assert_double_eq(TEST_ddata[2 + 2 * i], rddata1[2 + 2 * i]);
+        ck_assert_double_eq(TEST_ddata[2 + 2 * i + 1], rddata1[2 + 2 * i + 1]);
     }
 
     lrpt_iq_data_free(data);
 }
 
 START_TEST(test_from_iq) {
-    complex double cdata[] = {
-        1.0 - 2.0 * I,
-        4.5 + 2.9 * I,
-        -3.1 + 9.5 * I,
-        102.4 - 0.04 * I,
-        2.4 - 7.5 * I,
-        0.75 + 1.25 * I
-    };
-    int len = NEL(cdata);
+    int len = NEL(TEST_cdata);
 
-    lrpt_iq_data_t *data = lrpt_iq_data_create_from_complex(cdata, 0, len, NULL);
+    lrpt_iq_data_t *data = lrpt_iq_data_create_from_complex(TEST_cdata, 0, len, NULL);
     lrpt_iq_data_t *rdata1 = lrpt_iq_data_alloc(0, NULL);
     lrpt_iq_data_t *rdata2 = NULL;
-    complex double rcdata1[len];
-    complex double rcdata2[len - 1];
+    complex double rcdata1[len], rcdata2[len - 1];
 
-    /* full length */
+    /* assign to existing data object: full length */
     ck_assert(lrpt_iq_data_from_iq(rdata1, data, 0, len, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(rdata1), len);
 
     lrpt_iq_data_to_complex(rcdata1, rdata1, 0, len, NULL);
 
     for (int i = 0; i < len; i++) {
-        ck_assert_double_eq(creal(cdata[i]), creal(rcdata1[i]));
-        ck_assert_double_eq(cimag(cdata[i]), cimag(rcdata1[i]));
+        ck_assert_double_eq(creal(TEST_cdata[i]), creal(rcdata1[i]));
+        ck_assert_double_eq(cimag(TEST_cdata[i]), cimag(rcdata1[i]));
     }
 
-    /* length - 1, offset 1 */
+    /* assign to existing data object: length - 1, offset 1 */
     ck_assert(lrpt_iq_data_from_iq(rdata1, data, 1, len - 1, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(rdata1), len - 1);
 
     lrpt_iq_data_to_complex(rcdata2, rdata1, 0, len - 1, NULL);
 
     for (int i = 0; i < (len - 1); i++) {
-        ck_assert_double_eq(creal(cdata[1 + i]), creal(rcdata2[i]));
-        ck_assert_double_eq(cimag(cdata[1 + i]), cimag(rcdata2[i]));
+        ck_assert_double_eq(creal(TEST_cdata[1 + i]), creal(rcdata2[i]));
+        ck_assert_double_eq(cimag(TEST_cdata[1 + i]), cimag(rcdata2[i]));
     }
 
     lrpt_iq_data_free(rdata1);
 
-    /* full length */
+
+    /* create new data object: full length */
     rdata2 = lrpt_iq_data_create_from_iq(data, 0, len, NULL);
+
     ck_assert_ptr_nonnull(rdata2);
     ck_assert_int_eq(lrpt_iq_data_length(rdata2), len);
 
     lrpt_iq_data_to_complex(rcdata1, rdata2, 0, len, NULL);
 
     for (int i = 0; i < len; i++) {
-        ck_assert_double_eq(creal(cdata[i]), creal(rcdata1[i]));
-        ck_assert_double_eq(cimag(cdata[i]), cimag(rcdata1[i]));
+        ck_assert_double_eq(creal(TEST_cdata[i]), creal(rcdata1[i]));
+        ck_assert_double_eq(cimag(TEST_cdata[i]), cimag(rcdata1[i]));
     }
 
     lrpt_iq_data_free(rdata2);
 
-    /* length - 1, offset 1 */
+    /* create new data object: length - 1, offset 1 */
     rdata2 = lrpt_iq_data_create_from_iq(data, 1, len - 1, NULL);
+
     ck_assert_ptr_nonnull(rdata2);
     ck_assert_int_eq(lrpt_iq_data_length(rdata2), len - 1);
 
     lrpt_iq_data_to_complex(rcdata2, rdata2, 0, len - 1, NULL);
 
     for (int i = 0; i < (len - 1); i++) {
-        ck_assert_double_eq(creal(cdata[1 + i]), creal(rcdata2[i]));
-        ck_assert_double_eq(cimag(cdata[1 + i]), cimag(rcdata2[i]));
+        ck_assert_double_eq(creal(TEST_cdata[1 + i]), creal(rcdata2[i]));
+        ck_assert_double_eq(cimag(TEST_cdata[1 + i]), cimag(rcdata2[i]));
     }
 
     lrpt_iq_data_free(rdata2);
@@ -286,24 +273,16 @@ START_TEST(test_from_iq) {
 }
 
 START_TEST(test_append) {
-    complex double cdata[] = {
-        1.0 - 2.0 * I,
-        4.5 + 2.9 * I,
-        -3.1 + 9.5 * I,
-        102.4 - 0.04 * I,
-        2.4 - 7.5 * I,
-        0.75 + 1.25 * I
-    };
-    int len = NEL(cdata);
+    int len = NEL(TEST_cdata);
 
-    lrpt_iq_data_t *data1 = lrpt_iq_data_create_from_complex(cdata, 0, len, NULL);
-    lrpt_iq_data_t *data2 = lrpt_iq_data_create_from_complex(cdata, 0, len, NULL);
+    lrpt_iq_data_t *data1 = lrpt_iq_data_create_from_complex(TEST_cdata, 0, len, NULL);
+    lrpt_iq_data_t *data2 = lrpt_iq_data_create_from_complex(TEST_cdata, 0, len, NULL);
 
-    /* full length */
+    /* full length addition */
     ck_assert(lrpt_iq_data_append(data2, data1, 0, len, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data2), 2 * len);
 
-    /* length - 1, offset 1 */
+    /* partial addition: length - 1, offset 1 */
     ck_assert(lrpt_iq_data_append(data2, data1, 1, len - 1, NULL));
     ck_assert_int_eq(lrpt_iq_data_length(data2), 3 * len - 1);
 
@@ -347,6 +326,7 @@ int main(void) {
     s = iq_data_suite();
     sr = srunner_create(s);
 
+    srunner_set_fork_status(sr, CK_NOFORK);
     srunner_run_all(sr, CK_NORMAL);
     num_failed = srunner_ntests_failed(sr);
     srunner_free(sr);

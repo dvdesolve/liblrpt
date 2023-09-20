@@ -103,5 +103,10 @@ endif ()
 
 
 # unit testing
-enable_testing()
-add_subdirectory(tests)
+set(MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full --show-leak-kinds=all --show-reachable=yes --track-origins=yes --num-callers=50 --verbose")
+
+include(CTest)
+
+if (BUILD_TESTING)
+    add_subdirectory(tests)
+endif ()

@@ -25,6 +25,16 @@
 
 #include "lrpt.h"
 
+/*************************************************************************************************/
+
+#define NEL(x) (sizeof(x) / sizeof((x)[0]))
+
+/*************************************************************************************************/
+
+static int TEST_len = 50;
+
+/*************************************************************************************************/
+
 START_TEST(test_alloc) {
     lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(0, NULL);
 
@@ -34,26 +44,25 @@ START_TEST(test_alloc) {
 }
 
 START_TEST(test_length) {
-    int len = 50;
-
     lrpt_qpsk_data_t *data1 = lrpt_qpsk_data_alloc(0, NULL);
-    lrpt_qpsk_data_t *data2 = lrpt_qpsk_data_alloc(len, NULL);
+    lrpt_qpsk_data_t *data2 = lrpt_qpsk_data_alloc(TEST_len, NULL);
 
-    ck_assert_int_eq(lrpt_qpsk_data_length(data1), 0);
-    ck_assert_int_eq(lrpt_qpsk_data_length(data2), len);
+    ck_assert_int_eq(lrpt_qpsk_data_length(data1), 0); /* empty object */
+    ck_assert_int_eq(lrpt_qpsk_data_length(data2), TEST_len); /* object with length */
+    ck_assert_int_eq(lrpt_qpsk_data_length(NULL), 0); /* NULL pointer */
 
     lrpt_qpsk_data_free(data1);
     lrpt_qpsk_data_free(data2);
 }
 
 START_TEST(test_resize) {
-    int len = 50;
-
     lrpt_qpsk_data_t *data = lrpt_qpsk_data_alloc(0, NULL);
 
-    ck_assert(lrpt_qpsk_data_resize(data, len, NULL));
-    ck_assert_int_eq(lrpt_qpsk_data_length(data), len);
+    /* resize to length */
+    ck_assert(lrpt_qpsk_data_resize(data, TEST_len, NULL));
+    ck_assert_int_eq(lrpt_qpsk_data_length(data), TEST_len);
 
+    /* resize to zero length */
     ck_assert(lrpt_qpsk_data_resize(data, 0, NULL));
     ck_assert_int_eq(lrpt_qpsk_data_length(data), 0);
 
@@ -62,11 +71,13 @@ START_TEST(test_resize) {
 
 Suite *qpsk_data_suite(void) {
     Suite *s;
-    TCase *tc_alloc, *tc_length;
+    TCase *tc_alloc, *tc_length, *tc_construct, *tc_convert;
 
     s = suite_create("QPSK data");
     tc_alloc = tcase_create("allocation/freeing");
-    tc_length = tcase_create("length checking");
+    tc_length = tcase_create("length manipulation");
+    tc_construct = tcase_create("constructors");
+    tc_convert = tcase_create("conversions");
 
     tcase_add_test(tc_alloc, test_alloc);
     tcase_add_test(tc_length, test_length);
@@ -74,6 +85,8 @@ Suite *qpsk_data_suite(void) {
 
     suite_add_tcase(s, tc_alloc);
     suite_add_tcase(s, tc_length);
+    suite_add_tcase(s, tc_construct);
+    suite_add_tcase(s, tc_convert);
 
     return s;
 }
@@ -86,6 +99,7 @@ int main(void) {
     s = qpsk_data_suite();
     sr = srunner_create(s);
 
+    srunner_set_fork_status(sr, CK_NOFORK);
     srunner_run_all(sr, CK_NORMAL);
     num_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
