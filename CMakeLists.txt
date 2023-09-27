@@ -16,6 +16,7 @@
 # Author: Viktor Drobot
 
 # global settings
+# minimum version is determined by CMP0110 policy
 cmake_minimum_required(VERSION 3.19)
 project(liblrpt VERSION 0.1.0 LANGUAGES C DESCRIPTION "Demodulate, decode and post-process LRPT signals")
 

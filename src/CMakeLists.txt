@@ -87,7 +87,6 @@ target_compile_definitions(lrpt PRIVATE LIBLRPT_VERSION_PATCH=${PROJECT_VERSION_
 
 # extra compiler options
 target_compile_options(lrpt PRIVATE -Wall -pedantic)
-target_compile_options(lrpt PRIVATE -fvisibility=hidden)
 target_compile_options(lrpt PRIVATE -fstack-protector-strong)
 
 
@@ -100,6 +99,8 @@ set_target_properties(lrpt PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(lrpt PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 set_target_properties(lrpt PROPERTIES PUBLIC_HEADER "../include/lrpt.h")
 set_target_properties(lrpt PROPERTIES DEFINE_SYMBOL "LRPT_DLL_EXPORTS")
+set_target_properties(lrpt PROPERTIES C_VISIBILITY_PRESET hidden)
+set_target_properties(lrpt PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
 
 
 # install library

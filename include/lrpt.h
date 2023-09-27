@@ -1113,6 +1113,8 @@ LRPT_API uint8_t lrpt_image_get_px(
  * \param apid APID number (must be within 64-69 range).
  * \param pos Absolute position of pixel.
  * \param val Value of pixel.
+ *
+ * \todo add version for pixels array
  */
 LRPT_API void lrpt_image_set_px(
         lrpt_image_t *image,
