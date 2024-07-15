@@ -61,6 +61,9 @@
   #define LRPT_LOCAL
 #endif
 
+/* TODO may be use ABI compliance checker tool before release */
+/* TODO may be use goto instead of nested if-else during error handling */
+
 /*************************************************************************************************/
 
 #include <stdbool.h>
@@ -238,7 +241,9 @@ typedef struct lrpt_demodulator__ lrpt_demodulator_t;
 /** Decoder object type */
 typedef struct lrpt_decoder__ lrpt_decoder_t;
 
-/** Supported spacecrafts */
+/** Supported spacecrafts
+ * \todo may be move this to the common part
+ */
 typedef enum lrpt_decoder_spacecraft__ {
     LRPT_DECODER_SC_METEORM2,   /**< Meteor-M2 */
     LRPT_DECODER_SC_METEORM2_1, /**< Meteor-M2-1 */

@@ -36,7 +36,11 @@
 
 /*************************************************************************************************/
 
-/** LRPT image storage type */
+/** LRPT image storage type
+ * \todo rectified flag
+ * \todo flipped flag
+ * \todo normalized flag
+ */
 struct lrpt_image__ {
     size_t width; /**< Width of the image (in px) */
     size_t height; /**< Height of the image (in px) */

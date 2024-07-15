@@ -38,7 +38,9 @@
 
 /*************************************************************************************************/
 
-/** Bit I/O object */
+/** Bit I/O object
+ * \todo null-init
+ */
 typedef struct lrpt_decoder_bitop__ {
     uint8_t *p; /**< Data */
 
